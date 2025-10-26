@@ -1,4 +1,9 @@
-# Building TrackStack: A Framework for Rapid MVP Development
+---
+title: 'What is TrackStack'
+description: 'Here is a sample of some basic Markdown syntax that can be used when writing Markdown content in Astro.'
+pubDate: '2025-10-26'
+heroImage: '../../assets/blog-placeholder-2.jpg'
+---
 
 ## The Problem: Ideas Without Execution
 
