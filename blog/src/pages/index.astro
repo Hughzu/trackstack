@@ -1,76 +1,105 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import BaseHead from "../components/BaseHead.astro";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
+import StLogo from "../assets/23St-logo.svg";
+import { Image } from "astro:assets";
 ---
+
 <!doctype html>
 <html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main>
-			<h1>Welcome to TrackStack</h1>
-			
-			<p>
-				I'm a software engineer with 8 years of experience transitioning into SRE/DevOps. 
-				This blog documents my journey building <strong>TrackStack</strong> - a personal tracking 
-				platform that evolves from scrappy MVP to enterprise-grade architecture.
-			</p>
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <div>
+        <Image src={StLogo} priority alt="23St Logo" width="700" />
+      </div>
+      <h1>Welcome to TrackStack</h1>
 
-			<h2>Why This Exists</h2>
-			<p>
-				Ideas are worthless without execution. I have daily frustrations - expense tracking, 
-				heat consumption monitoring, recipe management, calorie counting - that I could solve 
-				with code. But premature optimization kills projects.
-			</p>
-			<p>
-				So I'm building pragmatically: validate the problem first, use it daily, then invest 
-				in architecture. <strong>Business first, technology second.</strong>
-			</p>
+      <p>
+        I'm a software engineer with 8 years of experience transitioning into
+        SRE/DevOps. This blog documents my journey building <strong
+          >TrackStack</strong
+        > - a personal tracking platform that evolves from scrappy MVP to enterprise-grade
+        architecture.
+      </p>
 
-			<h2>The Journey</h2>
-			<p>
-				TrackStack evolves through five phases, each documented here:
-			</p>
-			<ul>
-				<li><strong>Phase 1:</strong> Scrappy MVP - Astro + Angular micro-frontends, daily validation</li>
-				<li><strong>Phase 2:</strong> Pragmatic Backend - C# monolith with hexagonal architecture</li>
-				<li><strong>Phase 3:</strong> Observability - Logging, metrics, and sustainable monitoring</li>
-				<li><strong>Phase 4:</strong> Enterprise-Grade - Microservices, multi-AZ, event-driven architecture</li>
-				<li><strong>Phase 5:</strong> Multi-Cloud - Rebuilding on Azure to prove cloud-agnostic thinking</li>
-			</ul>
+      <h2>Why This Exists</h2>
+      <p>
+        Ideas are worthless without execution. I have daily frustrations -
+        expense tracking, heat consumption monitoring, recipe management,
+        calorie counting - that I could solve with code. But premature
+        optimization kills projects.
+      </p>
+      <p>
+        So I'm building pragmatically: validate the problem first, use it daily,
+        then invest in architecture. <strong
+          >Business first, technology second.</strong
+        >
+      </p>
 
-			<h2>What You'll Learn</h2>
-			<p>
-				This isn't a tutorial series. It's real-world architectural evolution with honest 
-				documentation of successes, failures, and trade-offs. You'll see:
-			</p>
-			<ul>
-				<li>How to validate ideas before over-engineering them</li>
-				<li>Pragmatic cost-conscious infrastructure decisions</li>
-				<li>Event-driven patterns and domain-driven design in practice</li>
-				<li>The right way to evolve from monolith to microservices</li>
-				<li>Modern DevOps: IaC, OIDC, observability, and FinOps</li>
-			</ul>
+      <h2>The Journey</h2>
+      <p>TrackStack evolves through five phases, each documented here:</p>
+      <ul>
+        <li>
+          <strong>Phase 1:</strong> Scrappy MVP - Astro + Angular micro-frontends,
+          daily validation
+        </li>
+        <li>
+          <strong>Phase 2:</strong> Pragmatic Backend - C# monolith with hexagonal
+          architecture
+        </li>
+        <li>
+          <strong>Phase 3:</strong> Observability - Logging, metrics, and sustainable
+          monitoring
+        </li>
+        <li>
+          <strong>Phase 4:</strong> Enterprise-Grade - Microservices, multi-AZ, event-driven
+          architecture
+        </li>
+        <li>
+          <strong>Phase 5:</strong> Multi-Cloud - Rebuilding on Azure to prove cloud-agnostic
+          thinking
+        </li>
+      </ul>
 
-			<h2>Follow Along</h2>
-			<p>
-				The code is open source on <a href="https://github.com/Hughzu/trackstack/">GitHub</a>. 
-				Each blog post dives deeper into specific architectural decisions, implementation details, 
-				and lessons learned.
-			</p>
-			<p>
-				<strong>Note:</strong> I'm a young dad working in the messy middle of life. 
-				This is a marathon with nap-time interruptions, not a sprint. And that's perfectly fine.
-			</p>
+      <h2>What You'll Learn</h2>
+      <p>
+        This isn't a tutorial series. It's real-world architectural evolution
+        with honest documentation of successes, failures, and trade-offs. You'll
+        see:
+      </p>
+      <ul>
+        <li>How to validate ideas before over-engineering them</li>
+        <li>Pragmatic cost-conscious infrastructure decisions</li>
+        <li>Event-driven patterns and domain-driven design in practice</li>
+        <li>The right way to evolve from monolith to microservices</li>
+        <li>Modern DevOps: IaC, OIDC, observability, and FinOps</li>
+      </ul>
 
-			<p style="margin-top: 2em;">
-				<strong>Start reading:</strong> Check out the <a href="/blog">blog posts</a> to dive into the details.
-			</p>
-		</main>
-		<Footer />
-	</body>
+      <h2>Follow Along</h2>
+      <p>
+        The code is open source on <a
+          href="https://github.com/Hughzu/trackstack/">GitHub</a
+        >. Each blog post dives deeper into specific architectural decisions,
+        implementation details, and lessons learned.
+      </p>
+      <p>
+        <strong>Note:</strong> I'm a young dad working in the messy middle of life.
+        This is a marathon with nap-time interruptions, not a sprint. And that's
+        perfectly fine.
+      </p>
+
+      <p style="margin-top: 2em;">
+        <strong>Start reading:</strong> Check out the <a href="/blog"
+          >blog posts</a
+        > to dive into the details.
+      </p>
+    </main>
+    <Footer />
+  </body>
 </html>
