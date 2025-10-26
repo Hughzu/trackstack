@@ -7,7 +7,7 @@ heroImage: '../../assets/blog-placeholder-2.jpg'
 
 ## The Problem: Ideas Without Execution
 
-As a software engineer with 7 years of experience transitioning into SRE/DevOps, I have a constant stream of ideas. Small frustrations in daily life that I *know* I could solve with code. But here's the thing: **ideas are worthless without execution**, and execution is expensive.
+As a software engineer with 8 years of experience transitioning into SRE/DevOps, I have a constant stream of ideas. Small frustrations in daily life that I *know* I could solve with code. But here's the thing: **ideas are worthless without execution**, and execution is expensive.
 
 I needed a framework. A system that lets me:
 1. Validate multiple ideas quickly
