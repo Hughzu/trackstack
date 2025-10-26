@@ -1,6 +1,6 @@
 ---
-title: 'What is TrackStack'
-description: 'Here is a sample of some basic Markdown syntax that can be used when writing Markdown content in Astro.'
+title: '1. What is TrackStack'
+description: 'TrackStack first blog'
 pubDate: '2025-10-26'
 heroImage: '../../assets/hero-gradient.svg'
 ---
