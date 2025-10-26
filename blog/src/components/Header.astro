@@ -30,8 +30,9 @@ import StLogo from "../assets/23St-logo.svg";
   header {
     margin: 0;
     padding: 0 1em;
-    background: white;
-    box-shadow: 0 2px 8px rgba(var(--black), 5%);
+    background: #22272b;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid #383e47;
   }
   h2 {
     margin: 0;
@@ -49,17 +50,27 @@ import StLogo from "../assets/23St-logo.svg";
   }
   nav a {
     padding: 1em 0.5em;
-    color: var(--black);
+    color: #9fadbc;
     border-bottom: 4px solid transparent;
     text-decoration: none;
   }
   nav a.active {
     text-decoration: none;
     border-bottom-color: var(--accent);
+    color: var(--accent);
+  }
+  nav a:hover {
+    color: #dfe1e6;
   }
   .social-links,
   .social-links a {
     display: flex;
+  }
+  .social-links a {
+    color: #9fadbc;
+  }
+  .social-links a:hover {
+    color: var(--accent);
   }
   @media (max-width: 720px) {
     .social-links {
