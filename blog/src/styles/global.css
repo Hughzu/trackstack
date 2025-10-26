@@ -89,7 +89,24 @@ p {
 	margin-bottom: 1em;
 }
 .prose p {
-	margin-bottom: 2em;
+	margin-bottom: 1.5em;
+}
+.prose ul,
+.prose ol {
+	margin-top: -0.5em;
+	margin-bottom: 1em;
+}
+.prose li {
+	margin-bottom: 0.25em;
+}
+.prose li > ul,
+.prose li > ol {
+	margin-top: 0.25em;
+	margin-bottom: 0.5em;
+}
+ul, ol {
+	margin-top: 0.5em;
+	margin-bottom: 1.5em;
 }
 textarea {
 	width: 100%;
