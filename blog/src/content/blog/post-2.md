@@ -7,4 +7,7 @@ heroImage: '../../assets/hero-gradient.svg'
 
 ## Building in public
 
-WIP
+TODO : 
+- Make OIDC connection work with github repo
+- deploy terraform backend (s3 state etc, check dynamo db ?)
+- deploy the blog post to AWS with cloudfront and S3 (public dns in route53?)
