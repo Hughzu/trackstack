@@ -17,7 +17,7 @@ module "blog_budget" {
   alert_emails         = ["hughes.stiernon@gmail.com"]
 
   cost_filters = {
-    "tag:App" = [local.app-name]
+    "TagKeyValue" = ["user:App$blog"]
   }
 }
 
