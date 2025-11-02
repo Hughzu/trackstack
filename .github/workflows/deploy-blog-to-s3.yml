@@ -1,0 +1,83 @@
+name: Deploy Blog Application
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'astro.config.mjs'
+      - 'package.json'
+      - '.github/workflows/deploy-blog-app.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # Required for OIDC
+  contents: read    # Required for checkout
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          echo "📦 Installing dependencies..."
+          npm ci
+
+      - name: Build Astro site
+        run: |
+          echo "🏗️ Building Astro site..."
+          npm run build
+          echo "✅ Build complete!"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-BlogDeploy-${{ github.run_number }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to S3
+        run: |
+          echo "☁️ Deploying to S3..."
+          aws s3 sync dist/ s3://${{ secrets.BLOG_S3_BUCKET_NAME }} --delete
+          echo "✅ S3 deployment complete!"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          echo "🔄 Invalidating CloudFront cache..."
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.BLOG_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+          
+          echo "Invalidation ID: $INVALIDATION_ID"
+          echo "✅ CloudFront cache invalidation initiated!"
+          
+          echo "⏳ Waiting for invalidation to complete..."
+          aws cloudfront wait invalidation-completed \
+            --distribution-id ${{ secrets.BLOG_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --id $INVALIDATION_ID
+          
+          echo "✅ CloudFront cache invalidation complete!"
+
+      - name: Deployment Summary
+        run: |
+          echo "🎉 Deployment Summary:"
+          echo "================================"
+          echo "S3 Bucket: ${{ secrets.BLOG_S3_BUCKET_NAME }}"
+          echo "CloudFront: ${{ secrets.BLOG_CLOUDFRONT_DISTRIBUTION_ID }}"
+          echo "Workflow Run: ${{ github.run_number }}"
+          echo "================================"
+          echo "✅ Blog deployed successfully!"
