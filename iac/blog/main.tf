@@ -9,6 +9,18 @@ provider "aws" {
   }
 }
 
+module "blog_budget" {
+  source = "../common/modules/budget"
+
+  budget_name          = "trackstack-blog-budget"
+  monthly_budget_limit = "3.00"
+  alert_emails         = ["hughes.stiernon@gmail.com"]
+
+  cost_filters = {
+    "tag:App" = [local.app-name]
+  }
+}
+
 module "blog" {
   source = "../common/modules/static-website"
   bucket_name = "trackstack-blog"
