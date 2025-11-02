@@ -1,0 +1,128 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'iac/blog/**'
+      - '.github/workflows/deploy-blog-iac.yml'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform action to perform'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+permissions:
+  id-token: write   # Required for OIDC
+  contents: read    # Required for checkout
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: iac/blog
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.0
+          terraform_wrapper: false
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-Terraform-${{ github.run_number }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init
+          echo "✅ Terraform initialized successfully"
+
+      - name: Terraform Validate
+        id: validate
+        run: |
+          terraform validate
+          echo "✅ Terraform configuration is valid"
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          echo "🔍 Planning infrastructure changes..."
+          set +e  # Don't exit on non-zero exit codes
+          terraform plan -detailed-exitcode -no-color -out=tfplan
+          PLAN_EXIT_CODE=$?
+          set -e  # Re-enable exit on error
+          
+          if [ $PLAN_EXIT_CODE -eq 0 ]; then
+            echo "✅ No changes needed"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "plan_result=no-changes" >> $GITHUB_OUTPUT
+          elif [ $PLAN_EXIT_CODE -eq 2 ]; then
+            echo "📋 Changes detected, ready to apply"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "plan_result=changes-detected" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Plan failed with exit code $PLAN_EXIT_CODE"
+            echo "plan_result=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Terraform Apply (Auto on Push to Main)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.plan.outputs.has_changes == 'true'
+        run: |
+          echo "🚀 Auto-applying infrastructure changes..."
+          terraform apply tfplan
+          echo "✅ Infrastructure deployed successfully!"
+
+      - name: Manual Apply
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
+        run: |
+          echo "🚀 Manually applying Terraform changes..."
+          terraform apply tfplan
+          echo "✅ Infrastructure deployed successfully!"
+
+      - name: Terraform Destroy
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+        run: |
+          echo "🗑️ Destroying infrastructure..."
+          terraform destroy -auto-approve
+          echo "✅ Infrastructure destroyed successfully!"
+
+      - name: Output Infrastructure Details
+        if: |
+          (github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.plan.outputs.has_changes == 'true') ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+        run: |
+          echo "📋 Infrastructure Outputs:"
+          terraform output -json > infrastructure-outputs.json
+          cat infrastructure-outputs.json
+
+      - name: Save Infrastructure Outputs
+        if: |
+          (github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.plan.outputs.has_changes == 'true') ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+        uses: actions/upload-artifact@v4
+        with:
+          name: infrastructure-outputs-${{ github.run_number }}
+          path: terraform/app/infrastructure-outputs.json
+          retention-days: 15
