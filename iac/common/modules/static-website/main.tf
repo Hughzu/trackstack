@@ -45,6 +45,27 @@ resource "aws_cloudfront_origin_access_control" "website" {
   signing_protocol                  = "sigv4"
 }
 
+resource "aws_cloudfront_function" "url_rewrite" {
+  name    = "${var.bucket_name}-url-rewrite"
+  runtime = "cloudfront-js-1.0"
+  comment = "Append index.html to directory requests for Astro static site"
+  publish = true
+  code    = <<-EOT
+function handler(event) {
+    var request = event.request;
+    var uri = request.uri;
+    
+    if (!uri.includes('.') && !uri.endsWith('/')) {
+        request.uri = uri + '/index.html';
+    } else if (uri.endsWith('/')) {
+        request.uri = uri + 'index.html';
+    }
+    
+    return request;
+}
+EOT
+}
+
 resource "aws_cloudfront_distribution" "website" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -59,14 +80,18 @@ resource "aws_cloudfront_distribution" "website" {
   }
 
   default_cache_behavior {
-    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "S3-${var.bucket_name}"
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
-
-    cache_policy_id = var.cache_policy_id
+    allowed_methods          = ["GET", "HEAD", "OPTIONS"]
+    cached_methods           = ["GET", "HEAD"]
+    target_origin_id         = "S3-${var.bucket_name}"
+    viewer_protocol_policy   = "redirect-to-https"
+    compress                 = true
+    cache_policy_id          = var.cache_policy_id
     origin_request_policy_id = var.origin_request_policy_id
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.url_rewrite.arn
+    }
   }
 
   # Custom error responses for SPA routing
@@ -83,7 +108,7 @@ resource "aws_cloudfront_distribution" "website" {
   restrictions {
     geo_restriction {
       restriction_type = "whitelist"
-      locations = ["BE", "FR", "NL", "GB", "CH", "LU"]
+      locations        = ["BE", "FR", "NL", "GB", "CH", "LU"]
     }
   }
 
