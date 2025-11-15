@@ -1,7 +1,7 @@
 ---
 title: '3. Deploying the Blog: Infrastructure as Code with OIDC'
 description: 'Setting up S3, CloudFront, and GitHub Actions OIDC for secure deployments'
-pubDate: '2025-10-26'
+pubDate: '2025-11-15'
 heroImage: '../../assets/hero-gradient.svg'
 ---
 
