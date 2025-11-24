@@ -31,7 +31,6 @@ trackstack/app/
 │   ├── modules/                    # Business capability modules (extraction candidates)
 │   │   ├── expense-tracker/
 │   │   │   ├── components/        # Domain-specific UI components
-│   │   │   ├── pages/             # Module routing pages
 │   │   │   ├── services/          # API clients and business logic
 │   │   │   │   └── api.ts         # Expense API endpoints
 │   │   │   ├── types/             # TypeScript types and interfaces
@@ -40,7 +39,6 @@ trackstack/app/
 │   │   │
 │   │   ├── heat-monitor/
 │   │   │   ├── components/
-│   │   │   ├── pages/
 │   │   │   ├── services/
 │   │   │   │   └── api.ts         # Heat monitoring API
 │   │   │   ├── types/
@@ -49,7 +47,6 @@ trackstack/app/
 │   │   │
 │   │   ├── recipe-book/
 │   │   │   ├── components/
-│   │   │   ├── pages/
 │   │   │   ├── services/
 │   │   │   │   └── api.ts         # Recipe API
 │   │   │   ├── types/
@@ -58,7 +55,6 @@ trackstack/app/
 │   │   │
 │   │   └── calorie-tracker/
 │   │       ├── components/
-│   │       ├── pages/
 │   │       ├── services/
 │   │       │   └── api.ts         # Calorie tracking API
 │   │       ├── types/
