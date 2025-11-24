@@ -27,12 +27,29 @@ Each domain is architecturally isolated and can become an independent applicatio
 
 ```
 trackstack/app/
+├── data/                           # SQLite databases (git-ignored, backup to S3)
+│   ├── auth.db                     # Users, sessions, tokens
+│   ├── auth.db-wal                 # Write-Ahead Log
+│   ├── auth.db-shm                 # Shared memory
+│   ├── expenses.db                 # Expense tracker data
+│   ├── heat.db                     # Heat monitoring data
+│   ├── recipes.db                  # Recipe book data
+│   └── calories.db                 # Calorie tracking data
+│
 ├── src/
 │   ├── modules/                    # Business capability modules (extraction candidates)
 │   │   ├── expense-tracker/
-│   │   │   ├── components/        # Domain-specific UI components
+│   │   │   ├── components/        # Domain-specific UI components (Astro + Angular)
+│   │   │   │   ├── ExpenseList.astro          # Static list component
+│   │   │   │   ├── ExpenseCard.astro          # Static card component
+│   │   │   │   ├── ExpenseForm.component.ts   # Dynamic Angular form
+│   │   │   │   └── ExpenseChart.component.ts  # Dynamic Angular chart
 │   │   │   ├── services/          # API clients and business logic
 │   │   │   │   └── api.ts         # Expense API endpoints
+│   │   │   ├── repositories/      # Database access layer
+│   │   │   │   └── expenseRepository.ts
+│   │   │   ├── migrations/        # Database schema migrations
+│   │   │   │   └── index.ts       # SQLite migration definitions
 │   │   │   ├── types/             # TypeScript types and interfaces
 │   │   │   ├── utils/             # Domain utilities (formatters, validators)
 │   │   │   └── index.ts           # Public API - only export what's needed
@@ -40,7 +57,8 @@ trackstack/app/
 │   │   ├── heat-monitor/
 │   │   │   ├── components/
 │   │   │   ├── services/
-│   │   │   │   └── api.ts         # Heat monitoring API
+│   │   │   ├── repositories/
+│   │   │   ├── migrations/
 │   │   │   ├── types/
 │   │   │   ├── utils/
 │   │   │   └── index.ts
@@ -48,7 +66,8 @@ trackstack/app/
 │   │   ├── recipe-book/
 │   │   │   ├── components/
 │   │   │   ├── services/
-│   │   │   │   └── api.ts         # Recipe API
+│   │   │   ├── repositories/
+│   │   │   ├── migrations/
 │   │   │   ├── types/
 │   │   │   ├── utils/
 │   │   │   └── index.ts
@@ -56,12 +75,18 @@ trackstack/app/
 │   │   └── calorie-tracker/
 │   │       ├── components/
 │   │       ├── services/
-│   │       │   └── api.ts         # Calorie tracking API
+│   │       ├── repositories/
+│   │       ├── migrations/
 │   │       ├── types/
 │   │       ├── utils/
 │   │       └── index.ts
 │   │
 │   ├── core/                       # Shared infrastructure (extraction = npm package)
+│   │   ├── database/               # Database infrastructure
+│   │   │   ├── connection.ts      # SQLite connection management
+│   │   │   ├── migrations.ts      # Migration runner
+│   │   │   └── init.ts            # Database initialization
+│   │   │
 │   │   ├── auth/                   # Authentication & authorization
 │   │   │   ├── components/        # Login, Logout, AuthGuard components
 │   │   │   │   ├── LoginForm.astro
@@ -72,6 +97,10 @@ trackstack/app/
 │   │   │   ├── services/          # Auth API client
 │   │   │   │   ├── authClient.ts  # Core auth logic
 │   │   │   │   └── tokenManager.ts # JWT storage & refresh
+│   │   │   ├── repositories/      # Auth database access
+│   │   │   │   └── userRepository.ts
+│   │   │   ├── migrations/        # Auth schema migrations
+│   │   │   │   └── index.ts
 │   │   │   └── types/
 │   │   │       └── auth.ts        # User, Session, Token types
 │   │   │
@@ -120,6 +149,14 @@ trackstack/app/
 │   ├── pages/                      # Astro routing (file-based)
 │   │   ├── index.astro             # Landing page (/)
 │   │   ├── dashboard.astro         # Main dashboard (/dashboard)
+│   │   │
+│   │   ├── api/                    # API routes
+│   │   │   ├── expenses/          # Expense API endpoints
+│   │   │   │   ├── index.ts       # GET/POST /api/expenses
+│   │   │   │   └── [id].ts        # GET/PUT/DELETE /api/expenses/:id
+│   │   │   ├── heat/              # Heat monitoring API
+│   │   │   ├── recipes/           # Recipe API
+│   │   │   └── calories/          # Calorie tracking API
 │   │   │
 │   │   ├── expenses/               # Expense tracker routes
 │   │   │   ├── index.astro         # /expenses - list view
@@ -236,29 +273,34 @@ Every module follows the same internal structure for consistency:
 
 ```
 src/modules/expense-tracker/
-├── components/              # UI components
-│   ├── ExpenseList.astro   # List all expenses
-│   ├── ExpenseForm.astro   # Create/edit form
-│   └── ExpenseCard.astro   # Single expense display
+├── components/                      # UI components (Astro + Angular)
+│   ├── ExpenseList.astro           # Static list component (Astro)
+│   ├── ExpenseCard.astro           # Static card component (Astro)
+│   ├── ExpenseForm.component.ts    # Dynamic form (Angular)
+│   └── ExpenseChart.component.ts   # Dynamic chart (Angular)
 │
-├── pages/                   # Module-specific pages (optional)
-│   └── ExpenseDetail.astro # Could be used in routing
+├── services/                        # Business logic and API
+│   ├── api.ts                      # HTTP calls to backend
+│   └── expenseCalculations.ts     # Domain logic
 │
-├── services/                # Business logic and API
-│   ├── api.ts              # HTTP calls to backend
-│   └── expenseCalculations.ts # Domain logic
+├── repositories/                    # Database access layer
+│   └── expenseRepository.ts        # SQLite CRUD operations
 │
-├── types/                   # TypeScript definitions
-│   ├── expense.ts          # Expense, ExpenseCategory types
-│   └── api.ts              # API request/response types
+├── migrations/                      # Database schema migrations
+│   └── index.ts                    # Migration definitions
 │
-├── utils/                   # Module-specific utilities
-│   ├── formatters.ts       # Currency, date formatting
-│   └── validators.ts       # Form validation rules
+├── types/                           # TypeScript definitions
+│   ├── expense.ts                  # Expense, ExpenseCategory types
+│   └── api.ts                      # API request/response types
 │
-└── index.ts                 # Public API
+├── utils/                           # Module-specific utilities
+│   ├── formatters.ts               # Currency, date formatting
+│   └── validators.ts               # Form validation rules
+│
+└── index.ts                         # Public API
     // Only export what other parts of the app need
-    export { ExpenseList, ExpenseForm } from './components';
+    export { ExpenseList, ExpenseCard } from './components';
+    export { ExpenseFormComponent, ExpenseChartComponent } from './components';
     export { expenseApi } from './services/api';
     export type { Expense, ExpenseCategory } from './types/expense';
 ```
@@ -465,7 +507,288 @@ export const apiClient = new ApiClient(import.meta.env.PUBLIC_API_URL || '/api')
 
 ---
 
-## Shared Design System (`shared/`)
+## Database & Persistence Strategy
+
+### SQLite: The Pragmatic Choice
+
+TrackStack uses **SQLite in production** with one database per business capability. For a 5-user application, SQLite provides:
+
+- **Zero configuration** - No database server to manage
+- **Zero cost** - No RDS fees
+- **Fast performance** - Often faster than network-based databases for small datasets
+- **Simple backups** - Just copy the `.db` files to S3
+- **Perfect for extraction** - Each module has its own database ready to move
+
+**Database per module:**
+```
+data/
+├── auth.db         # Users, sessions, tokens (shared infrastructure)
+├── expenses.db     # Expense tracker (domain-specific)
+├── heat.db         # Heat monitoring (domain-specific)
+├── recipes.db      # Recipe book (domain-specific)
+└── calories.db     # Calorie tracking (domain-specific)
+```
+
+### Schema Strategy: snake_case Now, Migration Later
+
+**Current approach (Phase 1): snake_case**
+```sql
+CREATE TABLE expenses (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  amount REAL NOT NULL,
+  category TEXT NOT NULL,
+  description TEXT,
+  date TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+```
+
+**Why snake_case now?**
+- Standard SQLite convention
+- Readable in database tools
+- Clear visual distinction from application code
+
+**Future approach (Phase 2): Migration to PascalCase for EF Core**
+
+When migrating to .NET with Entity Framework Core, we'll run a migration script to transform the schema:
+
+```sql
+-- Migration script (executed once during backend transition)
+CREATE TABLE Expenses (
+  Id TEXT PRIMARY KEY,
+  UserId TEXT NOT NULL,
+  Amount REAL NOT NULL,
+  Category TEXT NOT NULL,
+  Description TEXT,
+  Date TEXT NOT NULL,
+  CreatedAt TEXT NOT NULL,
+  UpdatedAt TEXT NOT NULL
+);
+
+INSERT INTO Expenses (Id, UserId, Amount, Category, Description, Date, CreatedAt, UpdatedAt)
+SELECT id, user_id, amount, category, description, date, created_at, updated_at
+FROM expenses;
+
+DROP TABLE expenses;
+```
+
+**This is intentional** - we accept a one-time migration cost rather than prematurely optimizing for a future that may not happen.
+
+### Database Connection Management
+
+```typescript
+// src/core/database/connection.ts
+import Database from 'better-sqlite3';
+import path from 'path';
+
+const DB_DIR = path.join(process.cwd(), 'data');
+
+export function getDatabase(name: string): Database.Database {
+  const dbPath = path.join(DB_DIR, `${name}.db`);
+  const db = new Database(dbPath);
+  
+  // Enable WAL mode for better concurrent read performance
+  db.pragma('journal_mode = WAL');
+  
+  // Enable foreign keys (not enabled by default in SQLite!)
+  db.pragma('foreign_keys = ON');
+  
+  return db;
+}
+
+// Pre-initialized connections for each domain
+export const authDb = getDatabase('auth');
+export const expensesDb = getDatabase('expenses');
+export const heatDb = getDatabase('heat');
+export const recipesDb = getDatabase('recipes');
+export const caloriesDb = getDatabase('calories');
+```
+
+### Migration System
+
+Each module owns its schema migrations:
+
+```typescript
+// src/modules/expense-tracker/migrations/index.ts
+import type { Migration } from '@/core/database/migrations';
+
+export const expenseMigrations: Migration[] = [
+  {
+    version: 1,
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE expenses (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          amount REAL NOT NULL,
+          category TEXT NOT NULL,
+          description TEXT,
+          date TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX idx_expenses_user_id ON expenses(user_id);
+        CREATE INDEX idx_expenses_date ON expenses(date);
+        CREATE INDEX idx_expenses_category ON expenses(category);
+      `);
+    },
+    down: (db) => {
+      db.exec('DROP TABLE expenses');
+    }
+  }
+];
+```
+
+Migrations run automatically on startup:
+
+```typescript
+// src/core/database/init.ts
+import { authDb, expensesDb, heatDb, recipesDb, caloriesDb } from './connection';
+import { runMigrations } from './migrations';
+
+import { authMigrations } from '@/core/auth/migrations';
+import { expenseMigrations } from '@/modules/expense-tracker/migrations';
+// ... other migrations
+
+export function initializeDatabases() {
+  console.log('Initializing databases...');
+  
+  runMigrations(authDb, authMigrations);
+  runMigrations(expensesDb, expenseMigrations);
+  runMigrations(heatDb, heatMigrations);
+  runMigrations(recipesDb, recipeMigrations);
+  runMigrations(caloriesDb, calorieMigrations);
+  
+  console.log('Databases initialized successfully');
+}
+```
+
+### Repository Pattern
+
+Each module uses repositories to abstract database access:
+
+```typescript
+// src/modules/expense-tracker/repositories/expenseRepository.ts
+import { expensesDb } from '@/core/database/connection';
+import type { Expense, CreateExpenseDto } from '../types/expense';
+import { randomUUID } from 'crypto';
+
+export class ExpenseRepository {
+  create(userId: string, data: CreateExpenseDto): Expense {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    
+    const stmt = expensesDb.prepare(`
+      INSERT INTO expenses (id, user_id, amount, category, description, date, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    stmt.run(id, userId, data.amount, data.category, data.description, data.date, now, now);
+    
+    return this.findById(id)!;
+  }
+
+  findById(id: string): Expense | null {
+    const stmt = expensesDb.prepare('SELECT * FROM expenses WHERE id = ?');
+    return stmt.get(id) as Expense | null;
+  }
+
+  findByUserId(userId: string): Expense[] {
+    const stmt = expensesDb.prepare('SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC');
+    return stmt.all(userId) as Expense[];
+  }
+
+  update(id: string, data: Partial<CreateExpenseDto>): Expense {
+    const now = new Date().toISOString();
+    
+    const updates: string[] = [];
+    const values: any[] = [];
+    
+    if (data.amount !== undefined) {
+      updates.push('amount = ?');
+      values.push(data.amount);
+    }
+    if (data.category !== undefined) {
+      updates.push('category = ?');
+      values.push(data.category);
+    }
+    
+    updates.push('updated_at = ?');
+    values.push(now);
+    values.push(id);
+    
+    const stmt = expensesDb.prepare(`
+      UPDATE expenses 
+      SET ${updates.join(', ')}
+      WHERE id = ?
+    `);
+    
+    stmt.run(...values);
+    return this.findById(id)!;
+  }
+
+  delete(id: string): void {
+    const stmt = expensesDb.prepare('DELETE FROM expenses WHERE id = ?');
+    stmt.run(id);
+  }
+}
+
+export const expenseRepository = new ExpenseRepository();
+```
+
+### Backup Strategy
+
+Simple daily backups to S3:
+
+```bash
+#!/bin/bash
+# scripts/backup-databases.sh
+
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="/tmp/trackstack-backup-$DATE"
+
+mkdir -p $BACKUP_DIR
+
+# Copy all databases
+cp data/*.db $BACKUP_DIR/
+
+# Upload to S3
+aws s3 sync $BACKUP_DIR s3://trackstack-backups/$DATE/
+
+# Clean up local backup
+rm -rf $BACKUP_DIR
+
+# Keep only last 30 days in S3
+aws s3 ls s3://trackstack-backups/ | \
+  awk '{print $2}' | \
+  head -n -30 | \
+  xargs -I {} aws s3 rm --recursive s3://trackstack-backups/{}
+```
+
+Run via cron:
+```cron
+0 2 * * * /app/scripts/backup-databases.sh
+```
+
+### Migration to .NET + EF Core (Future Phase 2)
+
+When transitioning to .NET backend:
+
+1. **Export current SQLite data** to JSON/CSV
+2. **Create EF Core models** matching the domain
+3. **Run migration script** to transform snake_case → PascalCase
+4. **Point EF Core at the transformed databases**
+5. **Verify data integrity**
+6. **Update Astro API clients** to call .NET endpoints
+
+**Estimated effort:** 2-3 days per module
+
+The snake_case → PascalCase transformation is intentional technical debt that keeps us moving fast now and costs us a predictable, one-time migration later.
+
+---
 
 Will eventually become `@trackstack/ui` npm package.
 
@@ -597,8 +920,10 @@ npm run preview
 ## Tech Stack
 
 - **Framework:** Astro 5.x (static-first with SSR capabilities)
+- **Interactive Components:** Angular (for dynamic forms, charts, filters)
 - **Styling:** Tailwind CSS 4.x
 - **Type Safety:** TypeScript with strict mode
+- **Database:** SQLite with better-sqlite3 driver
 - **Package Manager:** pnpm (fast, disk-efficient)
 - **Hosting:** AWS S3 + CloudFront (via Terraform)
 
@@ -608,42 +933,62 @@ npm run preview
 
 ### Phase 1: Monolith Validation (Current)
 - ✅ Set up Astro monolith structure
+- ✅ Define database strategy (SQLite with one DB per module)
 - ✅ Implement module boundaries
-- ⏳ Build core authentication
-- ⏳ Implement all four tracking modules
-- ⏳ Use daily for 3+ months to validate
+- ⏳ Build core authentication with SQLite
+- ⏳ Implement all four tracking modules with repositories
+- ⏳ Use daily for 3+ months to validate business value
 
-### Phase 2: First Extraction
-- Extract authentication to `@trackstack/auth` npm package
-- Extract design system to `@trackstack/ui` npm package
-- Identify first module candidate for standalone app
-
-### Phase 3: Microservices Backend
-- Replace embedded backend with C# monolith
+### Phase 2: Backend Migration to .NET
+- Migrate to C# backend with Entity Framework Core
+- Run one-time schema migration (snake_case → PascalCase)
 - Implement hexagonal architecture
+- Keep SQLite initially (no need to move to PostgreSQL yet)
+- Extract authentication to `@trackstack/auth` npm package
 - Add observability (logging, metrics, tracing)
 
-### Phase 4: Module Extraction
-- Extract highest-value module to standalone app
-- Migrate to dedicated backend microservice
-- Implement event-driven communication
+### Phase 3: First Module Extraction
+- Extract design system to `@trackstack/ui` npm package
+- Identify highest-value module for standalone app
+- Extract module to independent application
+- Deploy with dedicated infrastructure
+
+### Phase 4: Scale Database if Needed
+- Evaluate if SQLite is still sufficient (it probably is)
+- If needed: migrate to PostgreSQL/SQL Server
+- Keep one database per service for clean boundaries
+
+**Philosophy:** Build with SQLite, migrate when there's actual proof of need. Premature optimization is the root of all evil.
 
 ---
 
 ## Cost Considerations
 
 **Current monthly cost:** <€1
-- S3 storage: ~€0.02
+- S3 storage: ~€0.02 (database backups + static assets)
 - CloudFront: Free tier covers typical usage
-- No compute costs (static hosting)
+- No database hosting costs (SQLite is serverless)
+- No compute costs (static hosting with API routes)
 
-**Post-extraction estimated:** €5-15/month
+**Post .NET migration estimated:** €3-8/month
+- S3 storage: ~€0.05 (slightly more backup data)
+- CloudFront: ~€0.50
+- Backend hosting (AWS Fargate): €2-5
+- Still using SQLite: €0 (no RDS needed!)
+
+**Post module extraction estimated:** €8-15/month
 - Additional S3 buckets: +€0.10
-- CloudFront distributions: +€0.50
-- Backend hosting (Fargate/EC2): €5-10
-- RDS database: €3-5
+- Additional CloudFront distributions: +€0.50
+- Multiple backend services: €5-10
+- Still using SQLite: €0
 
-**Philosophy:** Optimize for learning and agility, not premature cost optimization.
+**When to migrate from SQLite:**
+- If concurrent writes become a bottleneck (unlikely with <50 users)
+- If horizontal scaling is needed (multiple servers)
+- If database replication is required for HA
+- **For 5 users: SQLite is perfect, potentially forever**
+
+**Philosophy:** Optimize for learning and speed. SQLite saves ~€30-50/month vs. managed databases while being faster and simpler. Migrate to PostgreSQL only when actual load demands it.
 
 ---
 
