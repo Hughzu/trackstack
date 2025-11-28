@@ -17,24 +17,14 @@
   }
 }
 
-/* DARK THEME VALUES */
-:root {
-  --color-primary: #ffc25b;  /* TrackStack Yellow pops on dark */
-  
-  /* Deep dark background (Trade Republic style) */
-  --color-background: #0f1115; 
-  
-  /* Slightly lighter for cards/bars */
-  --color-surface: #1a1d23;    
-  
-  /* Text Logic */
-  --color-text-main: #ffffff;
-  --color-text-muted: #9ca3af; /* Gray-400 */
-  
-  /* Borders */
-  --color-border: #2d3139;
 
-  /* Keep your existing gradients */
+:root {
+  --color-primary: #ffc25b;
+  --color-background: #0f1115; 
+  --color-surface: #1a1d23;    
+  --color-text-main: #ffffff;
+  --color-text-muted: #9ca3af;
+  --color-border: #2d3139;
   --gray-gradient: rgba(34, 39, 43, 50%), #1a1d23;
 }
 
