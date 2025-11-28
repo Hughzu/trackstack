@@ -1,16 +1,141 @@
 ---
 import AppShell from '@/shared/layouts/AppShell.astro';
+import Card from '@/shared/components/UI/Card.astro';
+import PercentageBar from '@/shared/components/UI/PercentageBar.astro';
 import Fab from '@/shared/components/UI/Fab.astro';
+
+// MOCK DATA
+const balance = { remaining: 855, income: 2215 };
+
+const ratios = [
+  { percent: 60, color: 'bg-red-500', label: 'Fund.', value: 1329 },
+  { percent: 20, color: 'bg-orange-500', label: 'Fun', value: 443 },
+  { percent: 20, color: 'bg-emerald-500', label: 'Future', value: 443 },
+];
+
+// OBLIGATIONS: Only showing what is NOT yet paid
+// "Mortgage" is missing here because it is paid (see History)
+const pendingObligations = [
+  { label: "Luminus", amount: 35 },
+  { label: "Investments", amount: 50 },
+  { label: "Spotify", amount: 15 },
+  { label: "Internet", amount: 45 },
+];
+
+// HISTORY: Includes the "Paid" obligations + manual expenses
+const history = [
+  { id: 1, title: 'Mortgage', amount: 650, cat: 'Fund.', date: 'Today', type: 'obligation' }, // Was an obligation
+  { id: 2, title: 'Groceries', amount: 65.50, cat: 'Fund.', date: 'Today', type: 'manual' },
+  { id: 3, title: 'Cinema', amount: 14.20, cat: 'Fun', date: 'Yesterday', type: 'manual' },
+];
 ---
 
-<AppShell title="Overview" currentDomain="expenses">
+<AppShell title="Wealth" currentDomain="expenses">
   
-  <h1 class="text-3xl font-bold mb-4">Good Morning</h1>
-  <p class="text-text-muted">Expenses domain.</p>
+  <div class="flex flex-col gap-5 pb-24">
 
-  <div slot="actions" class="flex gap-2">
-    <Fab variant="secondary"> Scan </Fab>
-    <Fab variant="primary"> + Quick Add </Fab>
+    <section>
+      <Card class="bg-gradient-to-br from-surface to-[#23262d]">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <span class="text-xs text-text-muted uppercase tracking-widest">Remaining</span>
+            <div class="text-3xl font-bold text-text-main">€{balance.remaining}</div>
+          </div>
+          <div class="text-right">
+             <span class="text-xs text-text-muted uppercase tracking-widest">Income</span>
+             <div class="text-sm font-mono text-text-muted">€{balance.income}</div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <PercentageBar segments={ratios} />
+        </div>
+
+        <div class="flex justify-between text-center divide-x divide-white/10">
+          {ratios.map(r => (
+             <div class="flex-1 px-1">
+               <div class={`w-1.5 h-1.5 rounded-full ${r.color} mx-auto mb-1`}></div>
+               <div class="text-[10px] text-text-muted uppercase">{r.label}</div>
+               <div class="text-xs font-bold">€{r.value}</div>
+             </div>
+          ))}
+        </div>
+      </Card>
+    </section>
+
+    <section>
+       <details class="group" open>
+         <summary class="list-none flex justify-between items-center mb-2 px-1 cursor-pointer">
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-bold text-text-muted">Obligations</h3>
+              <span class="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full">
+                {pendingObligations.length} Left
+              </span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4 text-text-muted group-open:rotate-180 transition-transform">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+         </summary>
+         
+         <div class="flex flex-col gap-2 animate-fade-in">
+           {pendingObligations.map(item => (
+             <div class="flex justify-between items-center p-3 rounded-xl border bg-surface border-border hover:border-primary/50 transition-colors">
+                <div class="flex items-center gap-3">
+                  <button class="w-5 h-5 rounded-md border border-gray-600 hover:border-emerald-500 hover:bg-emerald-500/20 flex items-center justify-center transition-all group/btn">
+                    <svg class="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover/btn:opacity-100" viewBox="0 0 20 20" fill="currentColor"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                  </button>
+                  <span>{item.label}</span>
+                </div>
+                <span class="font-mono text-sm">€{item.amount}</span>
+             </div>
+           ))}
+           
+           {pendingObligations.length === 0 && (
+             <div class="text-center py-4 text-xs text-text-muted italic">
+               🎉 All obligations paid for this month!
+             </div>
+           )}
+         </div>
+       </details>
+    </section>
+
+    <section>
+      <h3 class="text-sm font-bold text-text-muted mb-2 px-1">History</h3>
+      <div class="bg-surface border border-border rounded-xl divide-y divide-white/5">
+        {history.map(tx => (
+          <div class="p-3 flex justify-between items-center group">
+            <div>
+              <div class="font-medium text-sm flex items-center gap-2">
+                {tx.title}
+                {/* Visual indicator for auto-generated obligation expenses */}
+                {tx.type === 'obligation' && <span class="text-[8px] border border-white/10 px-1 rounded text-text-muted">AUTO</span>}
+              </div>
+              <div class="text-[10px] text-text-muted">{tx.date} • {tx.cat}</div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-sm text-red-400">-€{tx.amount}</span>
+              <button class="text-gray-600 hover:text-red-500 transition-colors p-1" aria-label="Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+  </div>
+
+  <div slot="actions" class="flex gap-2 w-full max-w-sm mx-auto">
+    <Fab variant="secondary" href="/expenses/settings" class="flex-1 justify-center"> 
+      <svg slot="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149 1.081c.07.47.023.955-.133 1.41-.138.402-.38.746-.689.997a2.535 2.535 0 0 1-1.086.438l-1.46.257a1.125 1.125 0 0 1-1.285-1.07l.149-1.081c.06-.434.333-.806.721-.994Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+      Config
+    </Fab>
+    <Fab variant="primary" href="/expenses/new" class="flex-[2] justify-center"> 
+      <svg slot="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+      Add Expense 
+    </Fab>
   </div>
 
 </AppShell>
