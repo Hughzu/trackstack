@@ -1,0 +1,44 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import '@/shared/styles/global.css';
+import DomainNav from '../components/DomainNav.astro';
+import TopBar from '../components/TopBar.astro';
+
+interface Props {
+  title?: string;
+  currentDomain?: 'expenses' | 'heat' | 'recipes' | 'calories' | 'home';
+}
+
+const { title = "TrackStack", currentDomain = 'home' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    
+    <ClientRouter />
+  </head>
+  <body class="bg-background text-text-main antialiased pb-32 selection:bg-primary/30">
+    
+    <header class="sticky top-0 z-50 bg-background/95 backdrop-blur-md transition-all duration-300 border-b border-transparent transition-border">
+      <TopBar />
+      <DomainNav current={currentDomain} />
+    </header>
+
+    <main class="max-w-md mx-auto px-4 pt-6 animate-fade-in min-h-[60vh]">
+      <slot />
+    </main>
+
+    <div class="fixed bottom-8 left-0 right-0 z-40 flex justify-center pointer-events-none px-4">
+      <div class="pointer-events-auto flex gap-3 shadow-xl rounded-full p-1 bg-surface/5 backdrop-blur-sm">
+        <slot name="actions" />
+      </div>
+    </div>
+
+  </body>
+</html>

@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: var(--color-primary);
+  --color-surface: var(--color-surface);
+  --color-background: var(--color-background);
+  --color-text-main: var(--color-text-main);
+  --color-text-muted: var(--color-text-muted);
+  --color-border: var(--color-border);
+  
+  --font-sans: "Atkinson", sans-serif;
+  
+  --animate-fade-in: fade-in 0.3s ease-out forwards;
+  @keyframes fade-in {
+    0% { opacity: 0; transform: translateY(5px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* DARK THEME VALUES */
+:root {
+  --color-primary: #ffc25b;  /* TrackStack Yellow pops on dark */
+  
+  /* Deep dark background (Trade Republic style) */
+  --color-background: #0f1115; 
+  
+  /* Slightly lighter for cards/bars */
+  --color-surface: #1a1d23;    
+  
+  /* Text Logic */
+  --color-text-main: #ffffff;
+  --color-text-muted: #9ca3af; /* Gray-400 */
+  
+  /* Borders */
+  --color-border: #2d3139;
+
+  /* Keep your existing gradients */
+  --gray-gradient: rgba(34, 39, 43, 50%), #1a1d23;
+}
+
+/* Font Setup */
+@font-face {
+  font-family: "Atkinson";
+  src: url("/fonts/atkinson-regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson";
+  src: url("/fonts/atkinson-bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-text-main);
+}

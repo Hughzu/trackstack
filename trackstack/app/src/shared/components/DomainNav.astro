@@ -1,0 +1,42 @@
+---
+interface Props {
+  current: 'expenses' | 'heat' | 'recipes' | 'calories' | 'home';
+}
+
+const { current } = Astro.props;
+
+const domains = [
+  { id: 'home', label: 'Overview', href: '/' },
+  { id: 'expenses', label: 'Wealth', href: '/expenses' },
+  { id: 'heat', label: 'Heat', href: '/heat' },
+  { id: 'recipes', label: 'Recipes', href: '/recipes' },
+  { id: 'calories', label: 'Health', href: '/calories' },
+];
+---
+
+<nav class="overflow-x-auto no-scrollbar pb-2 px-4 max-w-md mx-auto flex gap-6 mask-fade-right">
+  {domains.map(d => (
+    <a 
+      href={d.href} 
+      class:list={[
+        "text-sm font-medium whitespace-nowrap transition-all duration-200 select-none",
+        current === d.id 
+          ? "text-text-main border-b-2 border-text-main pb-1" 
+          : "text-text-muted hover:text-text-main"
+      ]}
+    >
+      {d.label}
+    </a>
+  ))}
+</nav>
+
+<style>
+  /* Hide scrollbar but allow functionality */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>
