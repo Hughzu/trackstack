@@ -882,41 +882,6 @@ npm run build
 
 ---
 
-## Development Workflow
-
-### Getting Started
-
-```bash
-# Install dependencies
-npm install
-
-# Start dev server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-### Adding a New Module
-
-1. Create folder: `src/modules/my-new-module/`
-2. Add required subfolders: `components/`, `services/`, `types/`, `utils/`
-3. Create `index.ts` with public API exports
-4. Add routes in `src/pages/my-module/`
-5. Update this README
-
-### Adding a New Component to Design System
-
-1. Create folder: `src/shared/components/MyComponent/`
-2. Add `MyComponent.astro` and `MyComponent.types.ts`
-3. Export from `src/shared/components/index.ts`
-4. Document usage in component file
-
----
-
 ## Tech Stack
 
 - **Framework:** Astro 5.x (static-first with SSR capabilities)
@@ -927,40 +892,6 @@ npm run preview
 - **Package Manager:** pnpm (fast, disk-efficient)
 - **Hosting:** AWS S3 + CloudFront (via Terraform)
 
----
-
-## Future Roadmap
-
-### Phase 1: Monolith Validation (Current)
-- ✅ Set up Astro monolith structure
-- ✅ Define database strategy (SQLite with one DB per module)
-- ✅ Implement module boundaries
-- ⏳ Build core authentication with SQLite
-- ⏳ Implement all four tracking modules with repositories
-- ⏳ Use daily for 3+ months to validate business value
-
-### Phase 2: Backend Migration to .NET
-- Migrate to C# backend with Entity Framework Core
-- Run one-time schema migration (snake_case → PascalCase)
-- Implement hexagonal architecture
-- Keep SQLite initially (no need to move to PostgreSQL yet)
-- Extract authentication to `@trackstack/auth` npm package
-- Add observability (logging, metrics, tracing)
-
-### Phase 3: First Module Extraction
-- Extract design system to `@trackstack/ui` npm package
-- Identify highest-value module for standalone app
-- Extract module to independent application
-- Deploy with dedicated infrastructure
-
-### Phase 4: Scale Database if Needed
-- Evaluate if SQLite is still sufficient (it probably is)
-- If needed: migrate to PostgreSQL/SQL Server
-- Keep one database per service for clean boundaries
-
-**Philosophy:** Build with SQLite, migrate when there's actual proof of need. Premature optimization is the root of all evil.
-
----
 
 ## Cost Considerations
 
@@ -991,23 +922,3 @@ npm run preview
 **Philosophy:** Optimize for learning and speed. SQLite saves ~€30-50/month vs. managed databases while being faster and simpler. Migrate to PostgreSQL only when actual load demands it.
 
 ---
-
-## Contributing
-
-This is a personal project, but feedback is welcome:
-
-1. Open an issue for bugs or suggestions
-2. Fork and submit PRs for improvements
-3. Follow existing code structure and patterns
-
----
-
-## License
-
-MIT - Build whatever you want with this structure.
-
----
-
-## Questions?
-
-Refer to the [TrackStack blog](https://blog.trackstack.com) for detailed architectural decisions and evolution journey.
