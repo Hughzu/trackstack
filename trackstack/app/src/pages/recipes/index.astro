@@ -1,16 +1,11 @@
 ---
 import AppShell from '@/shared/layouts/AppShell.astro';
-import Fab from '@/shared/components/UI/Fab.astro';
+import WipState from '@/shared/components/UI/WipState.astro';
 ---
 
-<AppShell title="Overview" currentDomain="recipes">
-  
-  <h1 class="text-3xl font-bold mb-4">Good Morning</h1>
-  <p class="text-text-muted">Recipes domain.</p>
-
-  <div slot="actions" class="flex gap-2">
-    <Fab variant="secondary"> Scan </Fab>
-    <Fab variant="primary"> + Quick Add </Fab>
-  </div>
-
+<AppShell title="Recipes" currentDomain="recipes">
+  <WipState 
+    title="Recipe Book" 
+    description="Shared recipe collection with nutritional breakdown." 
+  />
 </AppShell>
