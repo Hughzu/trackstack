@@ -1,16 +1,76 @@
 ---
 import AppShell from '@/shared/layouts/AppShell.astro';
-import Fab from '@/shared/components/UI/Fab.astro';
+import Card from '@/shared/components/UI/Card.astro';
+import PercentageBar from '@/shared/components/UI/PercentageBar.astro';
+
+import NbaRecap from '@/modules/nba/components/NightlyRecap.astro';
+
+// Updated Color Palette: Red (Fundamentals), Orange (Fun), Green (Future)
+const expenseData = [
+  { percent: 60, color: 'bg-red-500', label: 'Fund.' },
+  { percent: 20, color: 'bg-orange-500', label: 'Fun' },
+  { percent: 20, color: 'bg-emerald-500', label: 'Future' },
+];
+
+const heatData = { daysSince: 14, status: "Refill Soon" };
+const healthData = { current: 1850, target: 2500, protein: 145 };
 ---
 
 <AppShell title="Overview" currentDomain="home">
   
-  <h1 class="text-3xl font-bold mb-4">Good Morning</h1>
-  <p class="text-text-muted">Select a domain above to get started.</p>
+  <div class="flex flex-col gap-4 pb-24">
+    
+    <section>
+      <NbaRecap />
+    </section>
 
-  <div slot="actions" class="flex gap-2">
-    <Fab variant="secondary"> Scan </Fab>
-    <Fab variant="primary"> + Quick Add </Fab>
+    <section class="grid grid-cols-2 gap-3">
+      
+      <Card title="Wealth" href="/expenses" class="col-span-1">
+        <div class="flex flex-col justify-center h-full">
+           <PercentageBar segments={expenseData} />
+           <p class="text-[10px] text-text-muted mt-2 text-center">
+             Monthly Allocation
+           </p>
+        </div>
+      </Card>
+
+      <Card title="Health" href="/calories" class="col-span-1">
+        <div class="flex flex-col h-full justify-between">
+          <div>
+            <div class="flex items-baseline gap-1">
+              <span class="text-2xl font-bold">{healthData.current}</span>
+              <span class="text-xs text-text-muted">kcal</span>
+            </div>
+            <div class="w-full bg-gray-800 h-1.5 rounded-full mt-2">
+              <div class="bg-orange-400 h-1.5 rounded-full" style="width: 74%"></div>
+            </div>
+          </div>
+          
+          <div class="flex justify-between items-center mt-2 p-2 bg-white/5 rounded-lg">
+            <span class="text-xs text-text-muted">Prot.</span>
+            <span class="text-sm font-bold text-orange-200">{healthData.protein}g</span>
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Heating" href="/heat" class="col-span-1">
+        <div class="flex flex-col items-center justify-center h-full py-2">
+          <span class="text-4xl font-bold text-text-main">{heatData.daysSince}</span>
+          <span class="text-[10px] uppercase tracking-widest text-text-muted mt-1">Days since refill</span>
+        </div>
+      </Card>
+
+      <Card title="Recipes" href="/recipes" class="col-span-1 group">
+        <div class="flex flex-col items-center justify-center h-full text-text-muted group-hover:text-primary transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 mb-2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+          </svg>
+          <span class="text-xs font-medium">Browse</span>
+        </div>
+      </Card>
+
+    </section>
   </div>
-
-</AppShell>
+  
+  </AppShell>

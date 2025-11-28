@@ -1,0 +1,29 @@
+---
+interface Props {
+  title?: string;
+  href?: string;  
+  variant?: 'default' | 'highlight';
+  class?: string;
+}
+
+const { title, href, variant = 'default', class: className } = Astro.props;
+
+const baseClasses = "relative flex flex-col p-5 rounded-2xl border transition-all duration-300 overflow-hidden";
+const variants = {
+  default: "bg-surface border-border text-text-main hover:border-gray-600",
+  highlight: "bg-[#1e2128] border-primary/20 shadow-lg shadow-black/40"
+};
+
+const Tag = href ? 'a' : 'div';
+---
+
+<Tag href={href} class:list={[baseClasses, variants[variant], className]}>
+  {title && (
+    <h3 class="text-xs font-bold text-text-muted uppercase tracking-widest mb-4">
+      {title}
+    </h3>
+  )}
+  <div class="flex-1 flex flex-col">
+    <slot />
+  </div>
+</Tag>
