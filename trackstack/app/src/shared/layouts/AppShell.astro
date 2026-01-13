@@ -6,7 +6,7 @@ import TopBar from '../components/TopBar.astro';
 
 interface Props {
   title?: string;
-  currentDomain?: 'expenses' | 'heat' | 'recipes' | 'calories' | 'home';
+  currentDomain?: 'expenses' | 'heat' | 'calories' | 'home';
 }
 
 const { title = "TrackStack", currentDomain = 'home' } = Astro.props;
