@@ -1,0 +1,36 @@
+---
+interface Props {
+  data: number[];
+  year: number;
+}
+
+const { data, year } = Astro.props;
+
+const maxVal = Math.max(...data, 1);
+---
+
+<section>
+  <h3 class="text-sm font-bold text-text-muted mb-2 px-1">{year} Consumption</h3>
+  <div class="h-32 flex items-end justify-between gap-2 px-2 pt-4 pb-2">
+    {Array.from({ length: 12 }).map((_, i) => {
+      const value = data[i] || 0;
+      const heightPercent = Math.round((value / maxVal) * 100);
+      
+      return (
+        <div class="h-full w-full bg-surface rounded-t-sm relative group">
+          <div 
+            class="bg-orange-500/40 group-hover:bg-orange-500/60 transition-colors rounded-t-sm w-full absolute bottom-0"
+            style={`height: ${heightPercent}%`}
+          ></div>
+          {/* Tooltip for exact value */}
+          <div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-surface border border-border text-xs px-1.5 py-0.5 rounded transition-opacity pointer-events-none whitespace-nowrap z-10">
+            {value} bags
+          </div>
+          <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-text-muted">
+            {i + 1}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+</section>

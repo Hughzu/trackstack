@@ -1,0 +1,121 @@
+---
+import Layout from '@/shared/layouts/Layout.astro';
+import '@/shared/styles/global.css';
+
+const today = new Date().toISOString().split('T')[0];
+---
+
+<Layout>
+  <form id="refill-form" class="min-h-screen bg-background flex flex-col animate-fade-in relative max-w-lg mx-auto text-text-main font-sans">
+    
+    <header class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
+      <a href="/heat" class="text-text-muted hover:text-text-main text-sm transition-colors">Cancel</a>
+      <h1 class="text-base font-bold">Log Refill</h1>
+      <button type="submit" class="text-primary font-bold text-sm hover:text-primary/80 transition-colors">
+        Save
+      </button>
+    </header>
+
+    <main class="flex-1 p-6 flex flex-col gap-8">
+      
+      <div class="flex flex-col items-center gap-2 mt-4">
+        <label for="bags" class="text-xs text-text-muted uppercase tracking-widest">Bags Added</label>
+        <div class="relative w-full max-w-[200px]">
+          <input 
+            type="number" 
+            id="bags" 
+            name="bags" 
+            placeholder="0" 
+            min="1"
+            value="1"
+            required
+            autofocus
+            class="w-full bg-transparent border-b-2 border-border text-center text-5xl font-bold text-text-main focus:outline-none focus:border-primary pb-2 placeholder:text-text-muted/20"
+          />
+          <span class="absolute right-8 top-1/2 -translate-y-1/2 text-sm text-text-muted">bags</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-4 bg-surface rounded-2xl p-4 border border-border">
+        
+        <div class="flex flex-col gap-1">
+          <label for="weightKg" class="text-xs text-text-muted ml-1">Total Weight (kg)</label>
+          <input 
+            type="number" 
+            id="weightKg" 
+            name="weightKg" 
+            value="15"
+            required
+            class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors"
+          />
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="temperature" class="text-xs text-text-muted ml-1">Avg Temperature (°C)</label>
+          <input 
+            type="number" 
+            id="temperature" 
+            name="temperature" 
+            placeholder="e.g. 12" 
+            class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors"
+          />
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="date" class="text-xs text-text-muted ml-1">Date</label>
+          <input 
+            type="date" 
+            id="date" 
+            name="date" 
+            value={today}
+            required
+            class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
+          />
+        </div>
+
+      </div>
+
+    </main>
+  </form>
+</Layout>
+
+<script>
+  // TODO - MESSY
+  const form = document.getElementById('refill-form') as HTMLFormElement;
+  const bagsInput = document.getElementById('bags') as HTMLInputElement;
+  const weightInput = document.getElementById('weightKg') as HTMLInputElement;
+
+  // Auto-calculate weight when bags change (assuming 15kg/bag)
+  bagsInput?.addEventListener('input', () => {
+    const bags = parseInt(bagsInput.value) || 0;
+    if (weightInput) {
+      weightInput.value = (bags * 15).toString();
+    }
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    
+    try {
+      const res = await fetch('/api/heat/refill', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        window.location.href = '/heat';
+      } else {
+        alert('Failed to save refill');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error saving refill');
+    }
+  });
+</script>

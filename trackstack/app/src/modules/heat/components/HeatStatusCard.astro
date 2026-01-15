@@ -1,0 +1,29 @@
+---
+import Card from '@/shared/components/UI/Card.astro';
+
+interface Props {
+  daysSinceRefill: number;
+  warningThreshold?: number;
+}
+
+const { daysSinceRefill, warningThreshold = 14 } = Astro.props;
+
+const isWarning = daysSinceRefill > warningThreshold;
+---
+
+<Card class="bg-gradient-to-br from-surface to-[#23262d] relative overflow-hidden">
+  
+  {isWarning && (
+    <div class="absolute top-0 right-0 p-3">
+      <span class="flex h-3 w-3 relative">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+      </span>
+    </div>
+  )}
+
+  <div class="flex flex-col items-center justify-center py-4">
+    <span class="text-xs text-text-muted uppercase tracking-widest mb-1">Days Since Refill</span>
+    <span class="text-6xl font-bold text-text-main tracking-tighter">{daysSinceRefill}</span>
+  </div>
+</Card>

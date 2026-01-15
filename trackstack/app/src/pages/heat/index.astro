@@ -1,107 +1,68 @@
 ---
-import AppShell from '@/shared/layouts/AppShell.astro';
-import Card from '@/shared/components/UI/Card.astro';
-import Fab from '@/shared/components/UI/Fab.astro';
+import AppShell from "@/shared/layouts/AppShell.astro";
+import Fab from "@/shared/components/UI/Fab.astro";
+import HeatStatusCard from "@/modules/heat/components/HeatStatusCard.astro";
+import ConsumptionChart from "@/modules/heat/components/ConsumptionChart.astro";
+import RefillHistoryList from "@/modules/heat/components/RefillHistoryList.astro";
+import { heatService } from "@/modules/heat/services/heatService";
 
-// MOCK DATA
-const status = {
-  daysSinceRefill: 14,
-  bagsRemaining: 4,
-  estimatedDaysLeft: 3,
-  warning: true
-};
+// Fetch Data
+const daysSinceRefill = heatService.getDaysSinceLastRefill();
+const currentYear = new Date().getFullYear();
+const currentYearConsumption = heatService.getMonthlyConsumption(currentYear);
+// TODO - Not used 
+const lastYearConsumption = heatService.getMonthlyConsumption(currentYear - 1);
 
-const history = [
-  { id: 1, date: 'Oct 28', amount: '15kg', bags: 1, temp: '12°C' },
-  { id: 2, date: 'Oct 25', amount: '15kg', bags: 1, temp: '10°C' },
-  { id: 3, date: 'Oct 21', amount: '30kg', bags: 2, temp: '8°C' },
-  { id: 4, date: 'Oct 15', amount: '15kg', bags: 1, temp: '14°C' },
-];
-
-const usage = [60, 45, 80, 50, 70, 90, 65]; // Last 7 days relative height
+const historyPage = heatService.getHistory(1, 20);
 ---
 
 <AppShell title="Heating" currentDomain="heat">
-  
   <div class="flex flex-col gap-5 pb-24">
-
-    <!-- Status Card -->
-    <section>
-      <Card class="bg-gradient-to-br from-surface to-[#23262d] relative overflow-hidden">
-        
-        {status.warning && (
-          <div class="absolute top-0 right-0 p-3">
-            <span class="flex h-3 w-3 relative">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
-            </span>
-          </div>
-        )}
-
-        <div class="flex flex-col items-center justify-center py-4">
-          <span class="text-xs text-text-muted uppercase tracking-widest mb-1">Days Since Refill</span>
-          <span class="text-6xl font-bold text-text-main tracking-tighter">{status.daysSinceRefill}</span>
-          
-          
-        </div>
-      </Card>
-    </section>
-
-    <!-- Usage Graph (Mock) -->
-    <section>
-  <h3 class="text-sm font-bold text-text-muted mb-2 px-1">Yearly Consumption</h3>
-  <div class="h-32 flex items-end justify-between gap-2 px-2 pt-8 pb-2">
-    {/* This creates an array of 12 slots regardless of how much data you have */}
-    {Array.from({ length: 12 }).map((_, i) => {
-      const value = usage[i] || 0; // Fallback to 0 if data for this month is missing
-      
-      return (
-        <div key={i} class="h-full w-full bg-surface rounded-t-sm relative group">
-          <div 
-            class="bg-orange-500/40 group-hover:bg-orange-500/60 transition-colors rounded-t-sm w-full absolute bottom-0"
-            style={`height: ${value}%`}
-          ></div>
-          <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-text-muted">
-            {i + 1}
-          </div>
-        </div>
-      );
-    })}
-  </div>
-</section>
-
-    <!-- History List -->
-    <section class="mt-4">
-      <h3 class="text-sm font-bold text-text-muted mb-2 px-1">Refill History</h3>
-      <div class="bg-surface border border-border rounded-xl divide-y divide-white/5">
-        {history.map(item => (
-          <div class="p-3 flex justify-between items-center group">
-            <div>
-              <div class="font-medium text-sm text-text-main">{item.date}</div>
-              <div class="text-[10px] text-text-muted">Avg Temp: {item.temp}</div>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="text-right">
-                <div class="font-mono text-sm text-text-main">{item.bags} Bag{item.bags > 1 ? 's' : ''}</div>
-                <div class="text-[10px] text-text-muted">{item.amount}</div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-
+    <HeatStatusCard daysSinceRefill={daysSinceRefill} />
+    <ConsumptionChart data={currentYearConsumption} year={currentYear} />
+    <RefillHistoryList history={historyPage.data} />
   </div>
 
   <div slot="actions" class="flex gap-2 w-full max-w-sm mx-auto">
-    <Fab variant="secondary" href="/heat/settings" class="flex-1 justify-center"> 
-      <svg slot="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
-      Config
-    </Fab>
-    <Fab variant="primary" href="/heat/new" class="flex-[2] justify-center"> 
-      <svg slot="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-      Log Refill 
-    </Fab>
+    <div class="flex-1 justify-center">
+      <Fab variant="secondary" href="/heat/settings">
+        <svg
+          slot="icon"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="size-5"
+          ><path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"
+          ></path><path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path></svg
+        >
+        Config
+      </Fab>
+    </div>
+    <div class="flex-[2] justify-center">
+      <Fab variant="primary" href="/heat/new">
+        <svg
+          slot="icon"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="size-5"
+          ><path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 4.5v15m7.5-7.5h-15"></path></svg
+        >
+        Log Refill
+      </Fab>
+    </div>
   </div>
-
 </AppShell>

@@ -1,0 +1,41 @@
+---
+import type { Refill } from '../types';
+
+interface Props {
+  history: Refill[];
+}
+
+const { history } = Astro.props;
+
+const formatDate = (date: Date) => {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+---
+
+<section class="mt-4">
+  <h3 class="text-sm font-bold text-text-muted mb-2 px-1">Refill History</h3>
+  <div class="bg-surface border border-border rounded-xl divide-y divide-white/5">
+    {history.map(item => (
+      <div class="p-3 flex justify-between items-center group">
+        <div>
+          <div class="font-medium text-sm text-text-main">{formatDate(item.date)}</div>
+          {item.temperature !== undefined && (
+            <div class="text-[10px] text-text-muted">Avg Temp: {item.temperature}°C</div>
+          )}
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <div class="font-mono text-sm text-text-main">{item.bags} Bag{item.bags !== 1 ? 's' : ''}</div>
+            <div class="text-[10px] text-text-muted">{item.weightKg}kg</div>
+          </div>
+        </div>
+      </div>
+    ))}
+    
+    {history.length === 0 && (
+      <div class="p-4 text-center text-text-muted text-xs italic">
+        No refill history found.
+      </div>
+    )}
+  </div>
+</section>
