@@ -43,7 +43,7 @@ development_status:
   epic-1: in-progress
   1-1-project-initialization-monolith-skeleton: done
   1-2-persistent-user-session-sqlite-foundation: done
-  1-3-instant-glance-dashboard-passive-check: backlog
+  1-3-instant-glance-dashboard-passive-check: ready-for-dev
   1-4-manual-numeric-quick-log: backlog
   1-5-muscle-memory-recents-carousel: backlog
   epic-1-retrospective: optional
