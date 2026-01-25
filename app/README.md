@@ -60,11 +60,16 @@ go run ./cmd/monolith/main.go
 # Server starts on http://localhost:8080
 ```
 
-### Health Check
+### API Endpoints
 
 ```bash
+# Health check
 curl http://localhost:8080/health
 # Returns: {"status":"ok"}
+
+# Session info (user context)
+curl http://localhost:8080/api/session
+# Returns: {"id":"...", "created_at":..., "last_seen_at":...}
 ```
 
 ## Development
@@ -88,9 +93,37 @@ go test ./...
 3. **No Cross-Module Imports:** `internal/calories` cannot import `internal/ingest`
 4. **Co-located Tests:** Test files live next to the code they test
 
+## Database
+
+TrackStack uses SQLite 3 with CGO for optimal performance:
+- **Location:** `./data/trackstack.db`
+- **Mode:** WAL (Write-Ahead Logging) for better concurrency
+- **Schema:** Auto-initialized on first run
+
+### Database Schema
+
+```sql
+-- Users table
+CREATE TABLE users (
+    id TEXT PRIMARY KEY,
+    created_at INTEGER NOT NULL,
+    last_seen_at INTEGER NOT NULL
+);
+
+-- Sessions table (30-day expiry)
+CREATE TABLE sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+```
+
 ## Status
 
-✅ **Story 1.1 Complete:** Project skeleton initialized with basic health check endpoint
+✅ **Story 1.1 Complete:** Project skeleton initialized with basic health check endpoint  
+✅ **Story 1.2 Complete:** SQLite database + persistent user sessions via cookies
 
 ## License
 

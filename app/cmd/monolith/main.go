@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/23St/trackstack/internal/common/db"
 	"github.com/23St/trackstack/internal/common/server"
 )
 
@@ -19,6 +20,32 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
+	// Initialize database
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "./data/trackstack.db"
+	}
+
+	database, err := db.New(dbPath)
+	if err != nil {
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
+	}
+	defer func(database *db.DB) {
+		err := database.Close()
+		if err != nil {
+			slog.Error("failed to close database connection", "error", err)
+			os.Exit(1)
+		}
+	}(database)
+
+	if err := database.InitSchema(); err != nil {
+		slog.Error("failed to initialize schema", "error", err)
+		os.Exit(1)
+	}
+
+	slog.Info("database initialized", "path", dbPath)
+
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -26,7 +53,7 @@ func main() {
 	}
 
 	// Create server
-	srv := server.NewServer(port)
+	srv := server.NewServer(port, database)
 
 	// Start server in goroutine
 	go func() {
