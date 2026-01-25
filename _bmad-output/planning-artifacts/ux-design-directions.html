@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackStack - Design Direction Mockups</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+        
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(375px, 1fr));
+            gap: 32px;
+            margin-bottom: 60px;
+        }
+        
+        .mockup {
+            background: #0a0a0a;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #1f2937;
+        }
+        
+        .mockup-header {
+            padding: 16px;
+            background: #1f2937;
+            border-bottom: 1px solid #374151;
+        }
+        
+        .mockup-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .mockup-desc {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        
+        .phone-frame {
+            width: 375px;
+            height: 667px;
+            margin: 0 auto;
+            position: relative;
+            background: #0a0a0a;
+        }
+        
+        /* Direction 1: Classic Minimal */
+        .direction-1 .dashboard {
+            padding: 48px 16px;
+            text-align: center;
+        }
+        
+        .direction-1 .metric {
+            margin-bottom: 32px;
+        }
+        
+        .direction-1 .number {
+            font-size: 80px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        
+        .direction-1 .label {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+        
+        .direction-1 .safe { color: #10b981; }
+        .direction-1 .warn { color: #f59e0b; }
+        
+        .direction-1 .recents {
+            padding: 16px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            border-top: 1px solid #1f2937;
+        }
+        
+        .direction-1 .chip {
+            background: #1f2937;
+            padding: 12px 20px;
+            border-radius: 24px;
+            font-size: 16px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background 150ms;
+        }
+        
+        .direction-1 .chip:hover {
+            background: #374151;
+        }
+        
+        .direction-1 .chat-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: #0a0a0a;
+            border-top: 1px solid #1f2937;
+        }
+        
+        .direction-1 input {
+            width: 100%;
+            background: #1f2937;
+            border: none;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 8px;
+        }
+        
+        /* Direction 2: Progress-First */
+        .direction-2 .dashboard {
+            padding: 32px 16px;
+        }
+        
+        .direction-2 .metric {
+            margin-bottom: 24px;
+        }
+        
+        .direction-2 .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 8px;
+        }
+        
+        .direction-2 .number {
+            font-size: 64px;
+            font-weight: 700;
+        }
+        
+        .direction-2 .label {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        
+        .direction-2 .progress {
+            height: 8px;
+            background: #1f2937;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+        
+        .direction-2 .progress-fill {
+            height: 100%;
+            transition: width 300ms;
+        }
+        
+        .direction-2 .safe { color: #10b981; }
+        .direction-2 .fill-safe { background: #10b981; }
+        .direction-2 .warn { color: #f59e0b; }
+        .direction-2 .fill-warn { background: #f59e0b; }
+        
+        .direction-2 .recents {
+            padding: 16px;
+            background: #0f0f0f;
+            border-top: 1px solid #1f2937;
+        }
+        
+        .direction-2 .recents-title {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        
+        .direction-2 .chip-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .direction-2 .chip {
+            background: #1f2937;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .direction-2 .chip:active {
+            background: #374151;
+        }
+        
+        .direction-2 .chat-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 16px;
+            background: #0a0a0a;
+            border-top: 1px solid #1f2937;
+        }
+        
+        .direction-2 input {
+            width: 100%;
+            background: #1f2937;
+            border: 1px solid #374151;
+            padding: 14px 16px;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 12px;
+        }
+        
+        /* Direction 3: Card-Based */
+        .direction-3 .dashboard {
+            padding: 24px 16px;
+        }
+        
+        .direction-3 .cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .direction-3 .card {
+            background: #1f2937;
+            padding: 24px 16px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        
+        .direction-3 .number {
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        
+        .direction-3 .label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .direction-3 .safe { color: #10b981; }
+        .direction-3 .warn { color: #f59e0b; }
+        
+        .direction-3 .recents {
+            background: #0f0f0f;
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 80px;
+        }
+        
+        .direction-3 .recents-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .direction-3 .chip-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .direction-3 .chip {
+            background: #1f2937;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .direction-3 .chip:active {
+            background: #374151;
+        }
+        
+        .direction-3 .chip-cal {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+        
+        .direction-3 .chat-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: #0a0a0a;
+            border-top: 1px solid #1f2937;
+        }
+        
+        .direction-3 input {
+            width: 100%;
+            background: #1f2937;
+            border: none;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 24px;
+        }
+        
+        /* Direction 4: Ultra Minimal (Numbers Only) */
+        .direction-4 .dashboard {
+            padding: 80px 24px;
+            text-align: center;
+        }
+        
+        .direction-4 .metric {
+            margin-bottom: 48px;
+        }
+        
+        .direction-4 .number {
+            font-size: 96px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+        
+        .direction-4 .label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .direction-4 .safe { color: #10b981; }
+        .direction-4 .warn { color: #f59e0b; }
+        
+        .direction-4 .action-hint {
+            font-size: 14px;
+            color: #6b7280;
+            text-align: center;
+            margin-top: 60px;
+        }
+        
+        .direction-4 .recents {
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
+        
+        .direction-4 .chip {
+            background: #1f2937;
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-size: 14px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        
+        .direction-4 .chip:active {
+            background: #10b981;
+            color: #0a0a0a;
+        }
+        
+        .direction-4 .chat-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: #0a0a0a;
+        }
+        
+        .direction-4 input {
+            width: 100%;
+            background: transparent;
+            border: 1px solid #1f2937;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 8px;
+        }
+        
+        .direction-4 input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .notes {
+            background: #1f2937;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 40px;
+        }
+        
+        .notes h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+        
+        .notes ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .notes li {
+            margin-bottom: 12px;
+            padding-left: 24px;
+            position: relative;
+        }
+        
+        .notes li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+        }
+        
+        .direction-label {
+            display: inline-block;
+            background: #10b981;
+            color: #0a0a0a;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 TrackStack - Design Direction Mockups</h1>
+        <p class="subtitle">Explore different visual approaches for the "Instant Glance" experience. All variations use the Trade Republic minimalist aesthetic with dark mode, bold numbers, and traffic-light status colors.</p>
+        
+        <div class="mockup-grid">
+            <!-- Direction 1: Classic Minimal -->
+            <div class="mockup">
+                <div class="mockup-header">
+                    <div class="mockup-title">Direction 1: Classic Minimal</div>
+                    <div class="mockup-desc">Centered layout, maximum focus on numbers</div>
+                </div>
+                <div class="phone-frame direction-1">
+                    <div class="dashboard">
+                        <div class="metric">
+                            <div class="number safe">400</div>
+                            <div class="label">kcal remaining</div>
+                        </div>
+                        <div class="metric">
+                            <div class="number safe">30g</div>
+                            <div class="label">protein remaining</div>
+                        </div>
+                    </div>
+                    <div class="recents">
+                        <div class="chip">🥪 Chicken Sandwich</div>
+                        <div class="chip">🍕 Pizza</div>
+                        <div class="chip">🥗 Salad</div>
+                    </div>
+                    <div class="chat-bar">
+                        <input type="text" placeholder="Add meal...">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Direction 2: Progress-First -->
+            <div class="mockup">
+                <div class="mockup-header">
+                    <div class="mockup-title">Direction 2: Progress-First</div>
+                    <div class="mockup-desc">Progress bars for visual "fill" feedback</div>
+                </div>
+                <div class="phone-frame direction-2">
+                    <div class="dashboard">
+                        <div class="metric">
+                            <div class="metric-header">
+                                <div class="number safe">400</div>
+                                <div class="label">kcal left</div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-fill fill-safe" style="width: 40%;"></div>
+                            </div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-header">
+                                <div class="number warn">15g</div>
+                                <div class="label">protein left</div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-fill fill-warn" style="width: 85%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recents">
+                        <div class="recents-title">Recent Meals</div>
+                        <div class="chip-grid">
+                            <div class="chip">Chicken Sandwich</div>
+                            <div class="chip">Pizza Slice</div>
+                            <div class="chip">Greek Salad</div>
+                            <div class="chip">Protein Shake</div>
+                        </div>
+                    </div>
+                    <div class="chat-bar">
+                        <input type="text" placeholder="Add meal...">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Direction 3: Card-Based -->
+            <div class="mockup">
+                <div class="mockup-header">
+                    <div class="mockup-title">Direction 3: Card-Based</div>
+                    <div class="mockup-desc">Side-by-side cards, compact view</div>
+                </div>
+                <div class="phone-frame direction-3">
+                    <div class="dashboard">
+                        <div class="cards">
+                            <div class="card">
+                                <div class="number safe">400</div>
+                                <div class="label">kcal left</div>
+                            </div>
+                            <div class="card">
+                                <div class="number safe">30g</div>
+                                <div class="label">protein left</div>
+                            </div>
+                        </div>
+                        <div class="recents">
+                            <div class="recents-title">Recent Meals</div>
+                            <div class="chip-list">
+                                <div class="chip">
+                                    <span>Chicken Sandwich</span>
+                                    <span class="chip-cal">450 kcal</span>
+                                </div>
+                                <div class="chip">
+                                    <span>Pizza Slice</span>
+                                    <span class="chip-cal">320 kcal</span>
+                                </div>
+                                <div class="chip">
+                                    <span>Greek Salad</span>
+                                    <span class="chip-cal">280 kcal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-bar">
+                        <input type="text" placeholder="Add meal...">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Direction 4: Ultra Minimal -->
+            <div class="mockup">
+                <div class="mockup-header">
+                    <div class="mockup-title">Direction 4: Ultra Minimal</div>
+                    <div class="mockup-desc">Maximum size numbers, minimal chrome</div>
+                </div>
+                <div class="phone-frame direction-4">
+                    <div class="dashboard">
+                        <div class="metric">
+                            <div class="number safe">400</div>
+                            <div class="label">kcal</div>
+                        </div>
+                        <div class="metric">
+                            <div class="number warn">15g</div>
+                            <div class="label">protein</div>
+                        </div>
+                        <div class="action-hint">↓ Swipe to log meal</div>
+                    </div>
+                    <div class="recents">
+                        <div class="chip">Chicken Sandwich</div>
+                        <div class="chip">Pizza</div>
+                        <div class="chip">Salad</div>
+                        <div class="chip">Shake</div>
+                    </div>
+                    <div class="chat-bar">
+                        <input type="text" placeholder="Add meal...">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="notes">
+            <h2>🎯 Evaluation Guide</h2>
+            <p style="margin-bottom: 16px; color: #94a3b8;">As you explore these directions, consider:</p>
+            <ul>
+                <li><strong>The "1-Second Glance":</strong> Which direction lets you comprehend your status fastest?</li>
+                <li><strong>The "Recents Access":</strong> Which layout makes logging a repeat meal most effortless?</li>
+                <li><strong>The "Chat Persistence":</strong> Which approach keeps the chat bar accessible without being intrusive?</li>
+                <li><strong>The "Visual Hierarchy":</strong> Which size/spacing feels most "Trade Republic" to you?</li>
+                <li><strong>The "Brunch Flow":</strong> Which direction supports rapid successive logging best?</li>
+            </ul>
+        </div>
+        
+        <div class="notes" style="margin-top: 24px;">
+            <h2>📝 Design Direction Notes</h2>
+            <ul>
+                <li><strong>Direction 1 (Classic):</strong> Pure vertical stack. Maximum number size. Recents as horizontal scroll. Best for "Glance + Scroll to Log" flow.</li>
+                <li><strong>Direction 2 (Progress):</strong> Adds progress bars for visual "budget consumption" feedback. Grid-based Recents. Best for users who like visual progress indicators.</li>
+                <li><strong>Direction 3 (Cards):</strong> Compact side-by-side cards. More space for Recents list. Shows calorie values in Recents. Best for users who want more context before tapping.</li>
+                <li><strong>Direction 4 (Ultra):</strong> Absolutely minimal. Largest numbers (96px). Fewest elements. Best for pure "Glance" users who rarely scroll.</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
