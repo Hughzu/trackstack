@@ -1,3 +1,3 @@
-module github.com/unkemptantlin/trackstack
+module github.com/23St/trackstack
 
-go 1.22.12
+go 1.25.6

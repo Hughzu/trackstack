@@ -24,7 +24,7 @@ linters-settings:
   gofmt:
     simplify: true
   goimports:
-    local-prefixes: github.com/unkemptantlin/trackstack
+    local-prefixes: github.com/23St/trackstack
   revive:
     severity: warning
     rules:

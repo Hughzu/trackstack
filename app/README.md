@@ -9,7 +9,7 @@ TrackStack implements the **"Schrödinger's Binary"** pattern - a single Go bina
 ### Project Structure
 
 ```
-trackstack/
+app/
 ├── cmd/
 │   └── monolith/          # Main entry point for monolithic deployment
 │       └── main.go
@@ -48,11 +48,14 @@ trackstack/
 # Install Go 1.22 via mise
 mise use golang@1.22
 
-# Build the project
+# Build the project (from app/)
 go build -o bin/trackstack ./cmd/monolith
 
 # Run the server
-./bin/trackstack
+./app/bin/trackstack
+or
+# Run from the project root (app/)
+go run ./cmd/monolith/main.go
 
 # Server starts on http://localhost:8080
 ```

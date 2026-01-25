@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/unkemptantlin/trackstack/internal/common/server"
+	"github.com/23St/trackstack/internal/common/server"
 )
 
 func main() {

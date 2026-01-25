@@ -37,7 +37,7 @@ This architecture document is your complete guide for implementing TrackStack. F
 **First Implementation Priority:**
 Initialize the Skeleton Repo:
 ```bash
-git clone https://github.com/unkemptantlin/go-htmx-template.git trackstack
+git clone https://github.com/23St/go-htmx-template.git trackstack
 # Then refactor into the defined Modular Monolith structure
 ```
 
