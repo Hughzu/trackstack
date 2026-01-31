@@ -1,0 +1,68 @@
+package components
+
+import (
+	"fmt"
+	"github.com/23St/trackstack/internal/calories"
+	commonComponents "github.com/23St/trackstack/internal/common/components"
+)
+
+templ MetricCard(metric calories.MetricStatus, label string, isHero bool) {
+	<div class="flex flex-col gap-2">
+		<!-- Number -->
+		<div class={ getNumberClass(metric.Status, isHero) }>
+			{ fmt.Sprintf("%d", metric.Remaining) }
+		</div>
+		<!-- Label -->
+		<div class="text-sm text-text-muted">
+			{ label }
+		</div>
+		<!-- Progress Bar -->
+		@commonComponents.ProgressBar(commonComponents.ProgressBarData{
+			Percentage: metric.Percentage,
+			Status:     metric.Status,
+		})
+	</div>
+}
+
+func getNumberClass(status string, isHero bool) string {
+	size := "text-dashboard-secondary"
+	if isHero {
+		size = "text-dashboard-hero"
+	}
+	
+	color := getStatusColorClass(status)
+	return fmt.Sprintf("%s font-bold %s", size, color)
+}
+
+func getStatusColorClass(status string) string {
+	switch status {
+	case "safe":
+		return "text-status-safe"
+	case "warn":
+		return "text-status-warn"
+	case "danger":
+		return "text-status-danger"
+	default:
+		return "text-text-primary"
+	}
+}
+
+func getFontSize(isHero bool) string {
+	if isHero {
+		return "80px"
+	}
+	return "60px"
+}
+
+func getStatusColorHex(status string) string {
+	switch status {
+	case "safe":
+		return "#10b981"
+	case "warn":
+		return "#f59e0b"
+	case "danger":
+		return "#ef4444"
+	default:
+		return "#ffffff"
+	}
+}

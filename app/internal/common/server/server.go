@@ -10,15 +10,29 @@ import (
 	"github.com/23St/trackstack/internal/common/db"
 )
 
+// ViewHandler defines the interface for view rendering
+type ViewHandler interface {
+	RenderView(w http.ResponseWriter, r *http.Request)
+}
+
+// Handlers groups all HTTP handlers for dependency injection.
+// TODO meh, when split to microservices it will break
+type Handlers struct {
+	Calories ViewHandler
+	//Expenses ViewHandler
+	//Metrics ViewHandler
+}
+
 // Server represents the HTTP server
 type Server struct {
 	httpServer *http.Server
 	mux        *http.ServeMux
 	db         *db.DB
+	handlers   Handlers
 }
 
 // NewServer creates a new HTTP server
-func NewServer(port string, database *db.DB) *Server {
+func NewServer(port string, database *db.DB, handlers Handlers) *Server {
 	mux := http.NewServeMux()
 
 	s := &Server{
@@ -29,8 +43,9 @@ func NewServer(port string, database *db.DB) *Server {
 			WriteTimeout: 15 * time.Second,
 			IdleTimeout:  60 * time.Second,
 		},
-		mux: mux,
-		db:  database,
+		mux:      mux,
+		db:       database,
+		handlers: handlers,
 	}
 
 	// Register routes
@@ -41,8 +56,17 @@ func NewServer(port string, database *db.DB) *Server {
 
 // registerRoutes sets up all HTTP routes
 func (s *Server) registerRoutes() {
+	// Calories (root route)
+	// TODO routes inside modules ?
+	s.mux.HandleFunc("/", s.handlers.Calories.RenderView)
+
+	// API routes
 	s.mux.HandleFunc("/health", s.handleHealth)
 	s.mux.HandleFunc("/api/session", s.handleSessionInfo)
+
+	// Static files
+	s.mux.Handle("/static/", http.StripPrefix("/static/",
+		http.FileServer(http.Dir("./static"))))
 }
 
 // handleHealth returns a simple health check response

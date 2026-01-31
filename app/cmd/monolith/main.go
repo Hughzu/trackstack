@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/23St/trackstack/internal/calories"
+	"github.com/23St/trackstack/internal/calories/handlers"
 	"github.com/23St/trackstack/internal/common/db"
 	"github.com/23St/trackstack/internal/common/server"
 )
@@ -46,14 +48,22 @@ func main() {
 
 	slog.Info("database initialized", "path", dbPath)
 
+	// Initialize modules
+	caloriesMod := calories.NewModule(database)
+
+	// Initialize moduleHandlers
+	moduleHandlers := server.Handlers{
+		Calories: handlers.NewCaloriesHandler(caloriesMod.Service),
+	}
+
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	// Create server
-	srv := server.NewServer(port, database)
+	// Create server with composed moduleHandlers
+	srv := server.NewServer(port, database, moduleHandlers)
 
 	// Start server in goroutine
 	go func() {

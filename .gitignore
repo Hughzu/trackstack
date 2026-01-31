@@ -46,3 +46,7 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Generated files
+*_templ.go
+app/static/css/output.css

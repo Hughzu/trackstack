@@ -1,0 +1,43 @@
+package components
+
+import "fmt"
+
+type ProgressBarData struct {
+	Percentage int    // 0-100
+	Status     string // "safe" | "warn" | "danger"
+}
+
+templ ProgressBar(data ProgressBarData) {
+	<div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+		<div
+			class={ fmt.Sprintf("h-full transition-all duration-300 bg-%s", statusColor(data.Status)) }
+			style={ fmt.Sprintf("width: %d%%", data.Percentage) }
+		></div>
+	</div>
+}
+
+func statusColor(status string) string {
+	switch status {
+	case "safe":
+		return "status-safe"
+	case "warn":
+		return "status-warn"
+	case "danger":
+		return "status-danger"
+	default:
+		return "gray-500"
+	}
+}
+
+func statusColorHex(status string) string {
+	switch status {
+	case "safe":
+		return "#10b981"
+	case "warn":
+		return "#f59e0b"
+	case "danger":
+		return "#ef4444"
+	default:
+		return "#6b7280"
+	}
+}

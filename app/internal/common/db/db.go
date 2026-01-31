@@ -65,6 +65,28 @@ func (db *DB) InitSchema() error {
 
 	CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 	CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+
+	CREATE TABLE IF NOT EXISTS meals (
+		id TEXT PRIMARY KEY,
+		user_id TEXT NOT NULL,
+		name TEXT NOT NULL,
+		calories INTEGER NOT NULL,
+		protein INTEGER NOT NULL,
+		carbs INTEGER,
+		fat INTEGER,
+		logged_at INTEGER NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users(id)
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_meals_user_date ON meals(user_id, logged_at);
+
+	CREATE TABLE IF NOT EXISTS user_targets (
+		user_id TEXT PRIMARY KEY,
+		calorie_target INTEGER NOT NULL DEFAULT 2300,
+		protein_target INTEGER NOT NULL DEFAULT 120,
+		updated_at INTEGER NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users(id)
+	);
 	`
 
 	if _, err := db.Exec(schema); err != nil {
