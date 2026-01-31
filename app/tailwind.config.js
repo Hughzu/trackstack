@@ -8,8 +8,6 @@ module.exports = {
     'text-status-safe',
     'text-status-warn',
     'text-status-danger',
-    'text-dashboard-hero',
-    'text-dashboard-secondary',
     'text-text-muted',
   ],
   theme: {
@@ -30,11 +28,11 @@ module.exports = {
         'interactive-hover': '#e5e7eb',
       },
       fontSize: {
-        'dashboard-hero': ['80px', { lineHeight: '1.0', fontWeight: '700' }],
-        'dashboard-secondary': ['60px', { lineHeight: '1.0', fontWeight: '700' }],
+        // Removed custom dashboard sizes in favor of standard utility classes
       },
       spacing: {
         'dashboard-gap': '32px',
+        'safe': 'env(safe-area-inset-bottom)',
       }
     },
   },

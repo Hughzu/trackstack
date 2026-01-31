@@ -7,11 +7,13 @@ import (
 
 templ Dashboard(summary *calories.DailySummary) {
 	@commonComponents.Layout("TrackStack - Dashboard") {
-		<div class="container mx-auto px-4 py-8">
-			<div class="max-w-md mx-auto">
+		<div class="container mx-auto px-4 py-8 pb-40">
+			<div class="max-w-md mx-auto flex flex-col gap-6">
 				@DashboardMetrics(summary)
 				@RecentMealsList(summary.RecentMeals, false)
 			</div>
 		</div>
+		<!-- Fixed log form sits outside the container flow but inside layout -->
+		@QuickLogForm()
 	}
 }

@@ -8,21 +8,21 @@ import (
 templ RecentMealsList(meals []calories.Meal, oob bool) {
 	<div 
 		id="recent-meals-list" 
-		class="flex flex-col gap-4 mt-8"
+		class="flex flex-col mt-8"
 		if oob {
 			hx-swap-oob="true"
 		}
 	>
-		<h3 class="text-sm font-medium text-text-muted uppercase tracking-wider">Today</h3>
+		<h3 class="text-xs font-bold text-text-muted uppercase tracking-wider mb-2 px-1">Today's Log</h3>
 		
 		if len(meals) == 0 {
-			<div class="py-8 text-center border border-dashed border-border-subtle rounded-xl text-text-muted">
+			<div class="py-8 text-center border-t border-b border-white/5 text-text-muted italic">
 				<p>No meals logged today</p>
 			</div>
 		} else {
-			<div class="flex flex-col bg-bg-secondary rounded-xl overflow-hidden border border-border-subtle divide-y divide-border-subtle">
+			<div class="flex flex-col divide-y divide-white/5 border-t border-b border-white/5">
 				for _, meal := range meals {
-					<div class="p-4 hover:bg-bg-tertiary transition-colors flex justify-between items-center group">
+					<div class="py-3 px-1 hover:bg-white/5 transition-colors flex justify-between items-center group">
 						<!-- Left: Name & Time -->
 						<div class="flex flex-col gap-0.5">
 							<span class="text-text-primary font-medium">{ meal.Name }</span>
@@ -36,7 +36,7 @@ templ RecentMealsList(meals []calories.Meal, oob bool) {
 							</span>
 							if meal.Protein > 0 {
 								<span class="text-xs text-text-muted tabular-nums">
-									{ fmt.Sprintf("%dg", meal.Protein) } protein
+									{ fmt.Sprintf("%dg", meal.Protein) } p
 								</span>
 							}
 						</div>

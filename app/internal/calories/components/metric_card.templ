@@ -7,14 +7,15 @@ import (
 )
 
 templ MetricCard(metric calories.MetricStatus, label string, isHero bool) {
-	<div class="flex flex-col gap-2">
-		<!-- Number -->
-		<div class={ getNumberClass(metric.Status, isHero) }>
-			{ fmt.Sprintf("%d", metric.Remaining) }
-		</div>
-		<!-- Label -->
-		<div class="text-sm text-text-muted">
-			{ label }
+	<div class="flex flex-col gap-1 py-1">
+		<!-- Number and Label Row -->
+		<div class="flex items-baseline gap-3">
+			<div class={ getNumberClass(metric.Status, isHero) }>
+				{ fmt.Sprintf("%d", metric.Remaining) }
+			</div>
+			<div class="text-sm text-text-muted font-medium uppercase tracking-wider pb-1">
+				{ label }
+			</div>
 		</div>
 		<!-- Progress Bar -->
 		@commonComponents.ProgressBar(commonComponents.ProgressBarData{
@@ -25,13 +26,13 @@ templ MetricCard(metric calories.MetricStatus, label string, isHero bool) {
 }
 
 func getNumberClass(status string, isHero bool) string {
-	size := "text-dashboard-secondary"
+	size := "text-4xl" // Default for secondary metrics
 	if isHero {
-		size = "text-dashboard-hero"
+		size = "text-6xl" // Smaller than 80px, but still big
 	}
 	
 	color := getStatusColorClass(status)
-	return fmt.Sprintf("%s font-bold %s", size, color)
+	return fmt.Sprintf("%s font-bold %s leading-none", size, color)
 }
 
 func getStatusColorClass(status string) string {
@@ -45,13 +46,6 @@ func getStatusColorClass(status string) string {
 	default:
 		return "text-text-primary"
 	}
-}
-
-func getFontSize(isHero bool) string {
-	if isHero {
-		return "80px"
-	}
-	return "60px"
 }
 
 func getStatusColorHex(status string) string {
