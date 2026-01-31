@@ -1,8 +1,15 @@
 package calories
 
 import (
+	"net/http"
+
 	"github.com/23St/trackstack/internal/common/db"
 )
+
+// RouteRegistrar is the interface for registering routes
+type RouteRegistrar interface {
+	RegisterRoutes(mux *http.ServeMux)
+}
 
 type Module struct {
 	// External
@@ -22,4 +29,7 @@ func NewModule(database *db.DB) *Module {
 	}
 }
 
-type NewHandlerFunc func(service Service) interface{}
+// RegisterWithHandler registers routes using the provided handler
+func (m *Module) RegisterWithHandler(mux *http.ServeMux, handler RouteRegistrar) {
+	handler.RegisterRoutes(mux)
+}

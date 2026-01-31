@@ -10,18 +10,23 @@ import (
 	"github.com/23St/trackstack/internal/common/server"
 )
 
-// CaloriesHandler handles HTTP requests for the calories dashboard view
-type CaloriesHandler struct {
+// Handler handles HTTP requests for the calories module
+type Handler struct {
 	service calories.Service
 }
 
-// NewCaloriesHandler creates a new dashboard handler
-func NewCaloriesHandler(service calories.Service) *CaloriesHandler {
-	return &CaloriesHandler{service: service}
+// NewHandler creates a new handler
+func NewHandler(service calories.Service) *Handler {
+	return &Handler{service: service}
 }
 
-// RenderDashboard renders the main dashboard view
-func (h *CaloriesHandler) RenderView(w http.ResponseWriter, r *http.Request) {
+// RegisterRoutes registers all routes for the calories module
+func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/calories/", h.Dashboard)
+}
+
+// Dashboard renders the main calories dashboard view
+func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	// Get user from context (set by session middleware)
 	user, ok := server.GetUserFromContext(r.Context())
 	if !ok {

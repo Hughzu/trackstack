@@ -12,7 +12,8 @@
 ## Technology Stack
 
 - **Language:** Go 1.22+
-- **Web Framework:** Standard Library (`net/http`) + Chi router
+- **Web Framework:** Standard Library (`net/http`) with `http.ServeMux`
+- **Router:** Native Go stdlib router (sufficient for modular monolith, allows clean module route registration)
 - **Templating:** Templ (Type-safe HTML templates)
 - **Interactivity:** HTMX (server-side rendered, dynamic updates)
 - **Styling:** Tailwind CSS (dark mode first)

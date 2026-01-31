@@ -51,19 +51,29 @@ func main() {
 	// Initialize modules
 	caloriesMod := calories.NewModule(database)
 
-	// Initialize moduleHandlers
-	moduleHandlers := server.Handlers{
-		Calories: handlers.NewCaloriesHandler(caloriesMod.Service),
-	}
-
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	// Create server with composed moduleHandlers
-	srv := server.NewServer(port, database, moduleHandlers)
+	// Create server
+	srv := server.NewServer(port, database)
+
+	// Create handler and register routes
+	caloriesHandler := handlers.NewHandler(caloriesMod.Service)
+	srv.RegisterRoutes(caloriesHandler.RegisterRoutes)
+
+	// Redirect root to calories module
+	srv.RegisterRoutes(func(mux *http.ServeMux) {
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/" {
+				http.Redirect(w, r, "/calories/", http.StatusMovedPermanently)
+				return
+			}
+			http.NotFound(w, r)
+		})
+	})
 
 	// Start server in goroutine
 	go func() {
