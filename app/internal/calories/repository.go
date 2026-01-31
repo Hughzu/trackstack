@@ -13,6 +13,7 @@ import (
 // Repository handles database operations for the calories domain
 type Repository interface {
 	GetDailyTotals(ctx context.Context, userID string, start, end time.Time) (calories, protein int, err error)
+	GetDailyMeals(ctx context.Context, userID string, start, end time.Time) ([]Meal, error)
 	GetUserTargets(ctx context.Context, userID string) (*UserTargets, error)
 	CreateMeal(ctx context.Context, meal *Meal) error
 }
@@ -48,6 +49,55 @@ func (r *SQLRepository) GetDailyTotals(ctx context.Context, userID string, start
 	}
 
 	return calories, protein, nil
+}
+
+// GetDailyMeals returns the list of meals for a given date range
+func (r *SQLRepository) GetDailyMeals(ctx context.Context, userID string, start, end time.Time) ([]Meal, error) {
+	query := `
+		SELECT id, user_id, name, calories, protein, carbs, fat, logged_at
+		FROM meals
+		WHERE user_id = ?
+		  AND logged_at >= ?
+		  AND logged_at < ?
+		ORDER BY logged_at DESC
+	`
+
+	startUnix := start.Unix()
+	endUnix := end.Unix()
+
+	rows, err := r.db.QueryContext(ctx, query, userID, startUnix, endUnix)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query meals: %w", err)
+	}
+	defer func(rows *sql.Rows) {
+		_ = rows.Close()
+	}(rows)
+
+	var meals []Meal
+	for rows.Next() {
+		var m Meal
+		var loggedAtUnix int64
+		if err := rows.Scan(
+			&m.ID,
+			&m.UserID,
+			&m.Name,
+			&m.Calories,
+			&m.Protein,
+			&m.Carbs,
+			&m.Fat,
+			&loggedAtUnix,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan meal: %w", err)
+		}
+		m.LoggedAt = time.Unix(loggedAtUnix, 0)
+		meals = append(meals, m)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	return meals, nil
 }
 
 // GetUserTargets retrieves user's daily targets, returning defaults if not found

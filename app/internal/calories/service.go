@@ -41,10 +41,17 @@ func (s *service) CalculateDailySummary(ctx context.Context, userID string, date
 		return nil, fmt.Errorf("failed to get user targets: %w", err)
 	}
 
+	// Fetch recent meals
+	meals, err := s.repo.GetDailyMeals(ctx, userID, start, end)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get daily meals: %w", err)
+	}
+
 	// Calculate metric statuses
 	return &DailySummary{
-		Calories: CalculateMetricStatus(totalCalories, targets.CalorieTarget),
-		Protein:  CalculateMetricStatus(totalProtein, targets.ProteinTarget),
+		Calories:    CalculateMetricStatus(totalCalories, targets.CalorieTarget),
+		Protein:     CalculateMetricStatus(totalProtein, targets.ProteinTarget),
+		RecentMeals: meals,
 	}, nil
 }
 

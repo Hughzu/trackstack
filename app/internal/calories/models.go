@@ -24,8 +24,9 @@ type UserTargets struct {
 
 // DailySummary represents the dashboard view model
 type DailySummary struct {
-	Calories MetricStatus
-	Protein  MetricStatus
+	Calories    MetricStatus
+	Protein     MetricStatus
+	RecentMeals []Meal
 }
 
 // MetricStatus contains calculated status for a single metric

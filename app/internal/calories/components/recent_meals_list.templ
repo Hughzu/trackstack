@@ -1,0 +1,48 @@
+package components
+
+import (
+	"fmt"
+	"github.com/23St/trackstack/internal/calories"
+)
+
+templ RecentMealsList(meals []calories.Meal, oob bool) {
+	<div 
+		id="recent-meals-list" 
+		class="flex flex-col gap-4 mt-8"
+		if oob {
+			hx-swap-oob="true"
+		}
+	>
+		<h3 class="text-sm font-medium text-text-muted uppercase tracking-wider">Today</h3>
+		
+		if len(meals) == 0 {
+			<div class="py-8 text-center border border-dashed border-border-subtle rounded-xl text-text-muted">
+				<p>No meals logged today</p>
+			</div>
+		} else {
+			<div class="flex flex-col bg-bg-secondary rounded-xl overflow-hidden border border-border-subtle divide-y divide-border-subtle">
+				for _, meal := range meals {
+					<div class="p-4 hover:bg-bg-tertiary transition-colors flex justify-between items-center group">
+						<!-- Left: Name & Time -->
+						<div class="flex flex-col gap-0.5">
+							<span class="text-text-primary font-medium">{ meal.Name }</span>
+							<span class="text-xs text-text-muted">{ meal.LoggedAt.Format("15:04") }</span>
+						</div>
+						
+						<!-- Right: Macros -->
+						<div class="flex flex-col items-end gap-0.5 text-right">
+							<span class="text-text-primary font-bold tabular-nums">
+								{ fmt.Sprintf("%d", meal.Calories) } <span class="text-xs font-normal text-text-muted">kcal</span>
+							</span>
+							if meal.Protein > 0 {
+								<span class="text-xs text-text-muted tabular-nums">
+									{ fmt.Sprintf("%dg", meal.Protein) } protein
+								</span>
+							}
+						</div>
+					</div>
+				}
+			</div>
+		}
+	</div>
+}

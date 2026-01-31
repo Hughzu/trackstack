@@ -96,4 +96,10 @@ func (h *Handler) LogMeal(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to render", http.StatusInternalServerError)
 		return
 	}
+
+	// Render the recent meals list as an OOB swap
+	if err := components.RecentMealsList(summary.RecentMeals, true).Render(r.Context(), w); err != nil {
+		slog.Error("failed to render recent meals list", "error", err)
+		// Don't fail the request if just the OOB update fails
+	}
 }
