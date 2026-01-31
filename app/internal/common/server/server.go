@@ -21,10 +21,15 @@ type Server struct {
 func NewServer(port string, database *db.DB) *Server {
 	mux := http.NewServeMux()
 
+	// Middleware chain: IP Whitelist -> Session
+	// IP whitelist validates device and injects user into context
+	// Session middleware validates/renews session cookies
+	handler := IPWhitelistMiddleware(database)(SessionMiddleware(database)(mux))
+
 	s := &Server{
 		httpServer: &http.Server{
 			Addr:         fmt.Sprintf(":%s", port),
-			Handler:      SessionMiddleware(database)(mux),
+			Handler:      handler,
 			ReadTimeout:  15 * time.Second,
 			WriteTimeout: 15 * time.Second,
 			IdleTimeout:  60 * time.Second,

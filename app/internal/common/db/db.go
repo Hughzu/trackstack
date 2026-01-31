@@ -87,6 +87,16 @@ func (db *DB) InitSchema() error {
 		updated_at INTEGER NOT NULL,
 		FOREIGN KEY (user_id) REFERENCES users(id)
 	);
+
+	CREATE TABLE IF NOT EXISTS ip_mappings (
+		ip_address TEXT PRIMARY KEY,
+		user_id TEXT NOT NULL,
+		description TEXT,
+		created_at INTEGER NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users(id)
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_ip_mappings_user_id ON ip_mappings(user_id);
 	`
 
 	if _, err := db.Exec(schema); err != nil {
