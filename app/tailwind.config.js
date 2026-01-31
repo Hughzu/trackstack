@@ -22,9 +22,12 @@ module.exports = {
         
         // Base Colors (Dark Mode)
         'bg-primary': '#0a0a0a',       // Near-black background
+        'bg-secondary': '#1a1a1a',     // Slightly lighter background for cards
         'text-primary': '#ffffff',     // White text
         'text-muted': '#94a3b8',       // Slate-400 for labels
         'border-subtle': '#1f2937',    // Gray-800 for borders
+        'interactive': '#ffffff',
+        'interactive-hover': '#e5e7eb',
       },
       fontSize: {
         'dashboard-hero': ['80px', { lineHeight: '1.0', fontWeight: '700' }],

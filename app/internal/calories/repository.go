@@ -14,6 +14,7 @@ import (
 type Repository interface {
 	GetDailyTotals(ctx context.Context, userID string, start, end time.Time) (calories, protein int, err error)
 	GetUserTargets(ctx context.Context, userID string) (*UserTargets, error)
+	CreateMeal(ctx context.Context, meal *Meal) error
 }
 
 // SQLRepository implements Repository using SQL database
@@ -83,4 +84,28 @@ func (r *SQLRepository) GetUserTargets(ctx context.Context, userID string) (*Use
 
 	targets.UpdatedAt = time.Unix(updatedAtUnix, 0)
 	return &targets, nil
+}
+
+// CreateMeal inserts a new meal record into the database
+func (r *SQLRepository) CreateMeal(ctx context.Context, meal *Meal) error {
+	query := `
+		INSERT INTO meals (id, user_id, name, calories, protein, carbs, fat, logged_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`
+
+	_, err := r.db.ExecContext(ctx, query,
+		meal.ID,
+		meal.UserID,
+		meal.Name,
+		meal.Calories,
+		meal.Protein,
+		meal.Carbs,
+		meal.Fat,
+		meal.LoggedAt.Unix(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create meal: %w", err)
+	}
+
+	return nil
 }

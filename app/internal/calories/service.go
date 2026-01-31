@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Service defines the interface for calorie business logic
 type Service interface {
 	CalculateDailySummary(ctx context.Context, userID string, date time.Time) (*DailySummary, error)
+	LogMeal(ctx context.Context, userID string, name string, calories, protein, carbs, fat int) (*DailySummary, error)
 }
 
 // service implements Service interface
@@ -43,6 +46,42 @@ func (s *service) CalculateDailySummary(ctx context.Context, userID string, date
 		Calories: CalculateMetricStatus(totalCalories, targets.CalorieTarget),
 		Protein:  CalculateMetricStatus(totalProtein, targets.ProteinTarget),
 	}, nil
+}
+
+// LogMeal creates a meal entry and returns the updated daily summary
+func (s *service) LogMeal(ctx context.Context, userID string, name string, calories, protein, carbs, fat int) (*DailySummary, error) {
+	// Validate inputs
+	if calories <= 0 {
+		return nil, fmt.Errorf("calories must be greater than 0")
+	}
+	if protein < 0 {
+		return nil, fmt.Errorf("protein cannot be negative")
+	}
+	if carbs < 0 {
+		return nil, fmt.Errorf("carbs cannot be negative")
+	}
+	if fat < 0 {
+		return nil, fmt.Errorf("fat cannot be negative")
+	}
+
+	// Create meal
+	meal := &Meal{
+		ID:       uuid.New().String(),
+		UserID:   userID,
+		Name:     name,
+		Calories: calories,
+		Protein:  protein,
+		Carbs:    carbs,
+		Fat:      fat,
+		LoggedAt: time.Now(),
+	}
+
+	if err := s.repo.CreateMeal(ctx, meal); err != nil {
+		return nil, fmt.Errorf("failed to log meal: %w", err)
+	}
+
+	// Return updated summary
+	return s.CalculateDailySummary(ctx, userID, time.Now())
 }
 
 // CalculateMetricStatus determines the status for a single metric
