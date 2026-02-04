@@ -1,0 +1,147 @@
+---
+import Layout from '@/shared/layouts/Layout.astro';
+import '@/shared/styles/global.css';
+import { caloriesService } from '@/modules/calories/services/caloriesService';
+import { getCurrentUserId } from '@/shared/auth/currentUser';
+
+const currentUserId = getCurrentUserId();
+const target = caloriesService.getTarget(currentUserId);
+---
+
+<Layout>
+  <form id="calorie-target-form" class="min-h-screen bg-background text-text-main font-sans pb-20 animate-fade-in flex flex-col relative max-w-lg mx-auto">
+    <header class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
+      <a href="/calories" class="text-text-muted hover:text-text-main text-sm transition-colors">Cancel</a>
+      <h1 class="text-base font-bold text-text-main">Target</h1>
+      <button type="submit" class="text-primary font-bold text-sm hover:text-primary/80 transition-colors">
+        Save
+      </button>
+    </header>
+
+    <main class="p-6 flex flex-col gap-8 flex-1">
+      <section class="flex flex-col gap-3">
+        <h2 class="text-xs text-text-muted uppercase tracking-widest font-bold px-1">Daily Energy</h2>
+        <div class="bg-surface border border-border rounded-2xl p-4 flex items-center justify-between shadow-sm">
+          <div class="flex flex-col">
+            <span class="text-sm font-medium">Calories</span>
+            <span class="text-[10px] text-text-muted">Sets your daily intake target</span>
+          </div>
+          <div class="relative w-28">
+            <label>
+              <input
+                type="number"
+                name="targetKcal"
+                value={target.targetKcal}
+                min="0"
+                required
+                class="w-full bg-transparent text-right font-bold text-xl focus:outline-none border-b border-transparent focus:border-primary transition-colors text-text-main placeholder:text-text-muted/30"
+              />
+            </label>
+            <span class="absolute right-0 top-1/2 -translate-y-1/2 text-xs text-text-muted">kcal</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <div class="flex justify-between items-end px-1">
+          <h2 class="text-xs text-text-muted uppercase tracking-widest font-bold">Macros</h2>
+          <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
+            Protein required
+          </span>
+        </div>
+
+        <div class="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-6 shadow-sm">
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm items-center">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="font-medium">Protein</span>
+              </span>
+              <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border">{target.targetProteinG}g</span>
+            </div>
+            <label>
+              <input
+                type="number"
+                name="targetProtein"
+                value={target.targetProteinG}
+                min="0"
+                required
+                class="w-full bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-2 text-text-main placeholder:text-text-muted/30 transition-colors"
+              />
+            </label>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm items-center">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                <span class="font-medium">Carbs</span>
+              </span>
+              <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border">{target.targetCarbsG ?? 0}g</span>
+            </div>
+            <label>
+              <input
+                type="number"
+                name="targetCarbs"
+                value={target.targetCarbsG ?? ''}
+                min="0"
+                placeholder="Optional"
+                class="w-full bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-2 text-text-main placeholder:text-text-muted/30 transition-colors"
+              />
+            </label>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm items-center">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                <span class="font-medium">Fat</span>
+              </span>
+              <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border">{target.targetFatG ?? 0}g</span>
+            </div>
+            <label>
+              <input
+                type="number"
+                name="targetFat"
+                value={target.targetFatG ?? ''}
+                min="0"
+                placeholder="Optional"
+                class="w-full bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-2 text-text-main placeholder:text-text-muted/30 transition-colors"
+              />
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+  </form>
+</Layout>
+
+<script>
+  const form = document.getElementById('calorie-target-form');
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData);
+
+    try {
+      const response = await fetch('/api/calories/target', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        window.location.href = '/calories';
+        return;
+      }
+    } catch {
+      // noop
+    }
+
+    window.alert('Failed to save target.');
+  });
+</script>

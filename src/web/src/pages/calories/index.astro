@@ -2,29 +2,40 @@
 import AppShell from '@/shared/layouts/AppShell.astro';
 import Card from '@/shared/components/UI/Card.astro';
 import Fab from '@/shared/components/UI/Fab.astro';
+import { caloriesService } from '@/modules/calories/services/caloriesService';
+import { getCurrentUserId } from '@/shared/auth/currentUser';
 
-// MOCK DATA
-const today = {
-  consumed: 1850,
-  target: 2500,
-  protein: 145,
-  targetProtein: 180
-};
+const currentUserId = getCurrentUserId();
+const summary = caloriesService.getTodaySummary(currentUserId);
+const logs = caloriesService.getTodayLogs(currentUserId);
+const percent = summary.target.targetKcal
+  ? Math.min((summary.consumed / summary.target.targetKcal) * 100, 100)
+  : 0;
 
+const macroTotal = summary.carbs + summary.fat + summary.protein;
 const macros = [
-  { label: 'Carbs', amount: '220g', percent: 50, color: 'bg-orange-400' },
-  { label: 'Fat', amount: '65g', percent: 30, color: 'bg-yellow-400' },
-  { label: 'Protein', amount: '145g', percent: 20, color: 'bg-emerald-400' },
+  {
+    label: 'Carbs',
+    amount: `${summary.carbs}g`,
+    percent: macroTotal ? Math.round((summary.carbs / macroTotal) * 100) : 0,
+    color: 'bg-orange-400'
+  },
+  {
+    label: 'Fat',
+    amount: `${summary.fat}g`,
+    percent: macroTotal ? Math.round((summary.fat / macroTotal) * 100) : 0,
+    color: 'bg-yellow-400'
+  },
+  {
+    label: 'Protein',
+    amount: `${summary.protein}g`,
+    percent: macroTotal ? Math.round((summary.protein / macroTotal) * 100) : 0,
+    color: 'bg-emerald-400'
+  },
 ];
 
-const logs = [
-  { id: 1, title: 'Oatmeal & Whey', calories: 450, time: '08:30', protein: '35g' },
-  { id: 2, title: 'Chicken Salad', calories: 650, time: '13:00', protein: '45g' },
-  { id: 3, title: 'Greek Yogurt', calories: 200, time: '16:00', protein: '20g' },
-  { id: 4, title: 'Pasta Bolognese', calories: 550, time: '19:30', protein: '45g' },
-];
-
-const percent = Math.min((today.consumed / today.target) * 100, 100);
+const formatTime = (date: Date) =>
+  date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 ---
 
 <AppShell title="Health" currentDomain="calories">
@@ -33,18 +44,18 @@ const percent = Math.min((today.consumed / today.target) * 100, 100);
 
     <!-- Summary Card -->
     <section>
-      <Card class="bg-gradient-to-br from-surface to-[#23262d]">
+      <Card class="bg-linear-to-br from-surface to-[#23262d]">
         <div class="flex justify-between items-start mb-6">
           <div>
             <span class="text-xs text-text-muted uppercase tracking-widest">Daily Intake</span>
             <div class="flex items-baseline gap-2">
-              <span class="text-3xl font-bold text-text-main">{today.consumed}</span>
-              <span class="text-sm font-mono text-text-muted">/ {today.target} kcal</span>
+              <span class="text-3xl font-bold text-text-main">{summary.consumed}</span>
+              <span class="text-sm font-mono text-text-muted">/ {summary.target.targetKcal} kcal</span>
             </div>
           </div>
           <div class="text-right">
              <span class="text-xs text-text-muted uppercase tracking-widest">Protein</span>
-             <div class="text-sm font-bold text-emerald-400">{today.protein}g <span class="text-text-muted font-normal">/ {today.targetProtein}g</span></div>
+             <div class="text-sm font-bold text-emerald-400">{summary.protein}g <span class="text-text-muted font-normal">/ {summary.target.targetProteinG}g</span></div>
           </div>
         </div>
 
@@ -69,19 +80,25 @@ const percent = Math.min((today.consumed / today.target) * 100, 100);
     <!-- Recent Logs -->
     <section>
       <h3 class="text-sm font-bold text-text-muted mb-2 px-1">Today's Logs</h3>
-      <div class="bg-surface border border-border rounded-xl divide-y divide-white/5">
+      <div class="bg-surface border border-border rounded-xl divide-y divide-white/5" data-calorie-history>
         {logs.map(log => (
           <div class="p-3 flex justify-between items-center group">
             <div>
-              <div class="font-medium text-sm text-text-main">{log.title}</div>
+              <div class="font-medium text-sm text-text-main">{log.title ?? 'Untitled'}</div>
               <div class="text-[10px] text-text-muted flex gap-2">
-                <span>{log.time}</span>
-                <span class="text-emerald-400/80">{log.protein} prot</span>
+                <span>{formatTime(log.dateTime)}</span>
+                <span class="text-emerald-400/80">{log.proteinG}g prot</span>
               </div>
             </div>
             <div class="flex items-center gap-3">
               <span class="font-mono text-sm text-text-main">{log.calories}</span>
-              <button class="text-gray-600 hover:text-red-500 transition-colors p-1" aria-label="Delete">
+              <button
+                class="text-gray-600 hover:text-red-500 transition-colors p-1"
+                aria-label="Delete"
+                data-calorie-delete
+                data-calorie-id={log.id}
+                type="button"
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                 </svg>
@@ -89,6 +106,11 @@ const percent = Math.min((today.consumed / today.target) * 100, 100);
             </div>
           </div>
         ))}
+        {logs.length === 0 && (
+          <div class="p-4 text-center text-text-muted text-xs italic">
+            No logs yet for today.
+          </div>
+        )}
       </div>
     </section>
 
@@ -99,10 +121,113 @@ const percent = Math.min((today.consumed / today.target) * 100, 100);
       <svg slot="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149 1.081c.07.47.023.955-.133 1.41-.138.402-.38.746-.689.997a2.535 2.535 0 0 1-1.086.438l-1.46.257a1.125 1.125 0 0 1-1.285-1.07l.149-1.081c.06-.434.333-.806.721-.994Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
       Target
     </Fab>
-    <Fab variant="primary" href="/calories/new" class="flex-[2] justify-center"> 
+    <Fab variant="primary" href="/calories/new" class="flex-2 justify-center">
       <svg slot="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
       Add Log 
     </Fab>
   </div>
 
 </AppShell>
+
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm" data-calorie-modal>
+  <div class="w-[90%] max-w-xs rounded-2xl border border-border bg-surface p-4 shadow-lg">
+    <h4 class="text-sm font-bold text-text-main">Delete log?</h4>
+    <p class="mt-1 text-xs text-text-muted">
+      This removes the entry from today’s list.
+    </p>
+    <div class="mt-4 flex gap-2">
+      <button
+        class="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted hover:text-text-main hover:border-primary/50 transition-colors"
+        data-calorie-cancel
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="flex-1 rounded-lg bg-red-500/20 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/30 transition-colors"
+        data-calorie-confirm
+        type="button"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const historyRoot = document.querySelector('[data-calorie-history]');
+  const modal = document.querySelector('[data-calorie-modal]');
+  const cancelButton = modal?.querySelector('[data-calorie-cancel]');
+  const confirmButton = modal?.querySelector('[data-calorie-confirm]');
+  let pendingId = null;
+
+  const openModal = (id) => {
+    pendingId = id;
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  };
+
+  const closeModal = () => {
+    pendingId = null;
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  };
+
+  if (modal) {
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+  }
+
+  if (cancelButton) {
+    cancelButton.addEventListener('click', () => closeModal());
+  }
+
+  if (confirmButton) {
+    confirmButton.addEventListener('click', async () => {
+      if (!pendingId) return;
+
+      confirmButton.setAttribute('disabled', 'true');
+      const originalText = confirmButton.textContent;
+      confirmButton.textContent = 'Deleting...';
+
+      try {
+        const response = await fetch('/api/calories/log', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id: pendingId })
+        });
+
+        if (response.ok) {
+          window.location.reload();
+          return;
+        }
+      } catch {
+        // noop
+      }
+
+      confirmButton.removeAttribute('disabled');
+      confirmButton.textContent = originalText || 'Delete';
+      window.alert('Unable to delete log. Please try again.');
+    });
+  }
+
+  if (historyRoot) {
+    historyRoot.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const button = target.closest('[data-calorie-delete]');
+      if (!button) return;
+
+      const logId = button.getAttribute('data-calorie-id');
+      if (!logId) return;
+
+      openModal(logId);
+    });
+  }
+</script>
