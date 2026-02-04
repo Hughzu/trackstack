@@ -5,15 +5,17 @@ import HeatStatusCard from "@/modules/heat/components/HeatStatusCard.astro";
 import ConsumptionChart from "@/modules/heat/components/ConsumptionChart.astro";
 import RefillHistoryList from "@/modules/heat/components/RefillHistoryList.astro";
 import { heatService } from "@/modules/heat/services/heatService";
+import { getCurrentUserId } from "@/shared/auth/currentUser";
 
 // Fetch Data
-const daysSinceRefill = heatService.getDaysSinceLastRefill();
+const currentUserId = getCurrentUserId();
+const daysSinceRefill = heatService.getDaysSinceLastRefill(currentUserId);
 const currentYear = new Date().getFullYear();
-const currentYearConsumption = heatService.getMonthlyConsumption(currentYear);
+const currentYearConsumption = heatService.getMonthlyConsumption(currentYear, currentUserId);
 // TODO - Not used 
-const lastYearConsumption = heatService.getMonthlyConsumption(currentYear - 1);
+const lastYearConsumption = heatService.getMonthlyConsumption(currentYear - 1, currentUserId);
 
-const historyPage = heatService.getHistory(1, 20);
+const historyPage = heatService.getHistory(1, 20, currentUserId);
 ---
 
 <AppShell title="Heating" currentDomain="heat">
