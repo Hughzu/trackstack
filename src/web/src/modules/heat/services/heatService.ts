@@ -9,6 +9,15 @@ type RefillRow = {
   weight_kg: number;
   bags: number;
   temperature: number | null;
+  season: string | null;
+};
+
+type SeasonSnapshot = {
+  seasonLabel: string;
+  seasonToDate: number;
+  lastSeasonToDate: number;
+  delta: number;
+  deltaPct: number | null;
 };
 
 const mapRowToRefill = (row: RefillRow): Refill => ({
@@ -18,7 +27,31 @@ const mapRowToRefill = (row: RefillRow): Refill => ({
   weightKg: row.weight_kg,
   bags: row.bags,
   temperature: row.temperature ?? undefined,
+  season: row.season ?? undefined,
 });
+
+const getSeasonStartYear = (date: Date) => (date.getMonth() >= 8 ? date.getFullYear() : date.getFullYear() - 1);
+
+const getSeasonRange = (startYear: number) => {
+  const start = new Date(Date.UTC(startYear, 8, 1));
+  const end = new Date(Date.UTC(startYear + 1, 8, 1));
+  return {
+    start,
+    end,
+    label: `${startYear}-${startYear + 1}`
+  };
+};
+
+const getSeasonSum = (userId: string, start: Date, end: Date) => {
+  const db = getHeatDb();
+  const row = db
+    .prepare(
+      "SELECT COALESCE(SUM(bags), 0) as total FROM refills WHERE user_id = ? AND date >= ? AND date < ?"
+    )
+    .get(userId, start.toISOString(), end.toISOString()) as { total: number } | undefined;
+
+  return row?.total ?? 0;
+};
 
 export const heatService = {
   /**
@@ -74,7 +107,7 @@ export const heatService = {
     const offset = (page - 1) * limit;
     const rows = db
       .prepare(
-        "SELECT id, user_id, date, weight_kg, bags, temperature FROM refills WHERE user_id = ? ORDER BY date DESC LIMIT ? OFFSET ?"
+        "SELECT id, user_id, date, weight_kg, bags, temperature, season FROM refills WHERE user_id = ? ORDER BY date DESC LIMIT ? OFFSET ?"
       )
       .all(userId, limit, offset) as RefillRow[];
 
@@ -93,6 +126,40 @@ export const heatService = {
     };
   },
 
+  getSeasonSnapshot: (userId: string, referenceDate: Date = new Date()): SeasonSnapshot => {
+    const todayUtcStart = new Date(
+      Date.UTC(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate())
+    );
+    const todayUtcEndExclusive = new Date(todayUtcStart.getTime() + 24 * 60 * 60 * 1000);
+    const seasonStartYear = getSeasonStartYear(referenceDate);
+    const currentSeason = getSeasonRange(seasonStartYear);
+    const currentEnd =
+      todayUtcEndExclusive.getTime() < currentSeason.end.getTime()
+        ? todayUtcEndExclusive
+        : currentSeason.end;
+
+    const lastSeason = getSeasonRange(seasonStartYear - 1);
+    const offsetMs = currentEnd.getTime() - currentSeason.start.getTime();
+    const lastSeasonEndSamePeriod = new Date(lastSeason.start.getTime() + offsetMs);
+    const lastEnd =
+      lastSeasonEndSamePeriod.getTime() < lastSeason.end.getTime()
+        ? lastSeasonEndSamePeriod
+        : lastSeason.end;
+
+    const seasonToDate = getSeasonSum(userId, currentSeason.start, currentEnd);
+    const lastSeasonToDate = getSeasonSum(userId, lastSeason.start, lastEnd);
+    const delta = seasonToDate - lastSeasonToDate;
+    const deltaPct = lastSeasonToDate === 0 ? null : Math.round((delta / lastSeasonToDate) * 100);
+
+    return {
+      seasonLabel: currentSeason.label,
+      seasonToDate,
+      lastSeasonToDate,
+      delta,
+      deltaPct
+    };
+  },
+
   /**
    * Adds a new refill entry.
    */
@@ -100,16 +167,19 @@ export const heatService = {
     const db = getHeatDb();
     const id = randomUUID();
     const dateIso = data.date.toISOString();
+    const seasonStartYear = getSeasonStartYear(data.date);
+    const seasonLabel = `${seasonStartYear}-${seasonStartYear + 1}`;
 
     db.prepare(
-      "INSERT INTO refills (id, user_id, date, weight_kg, bags, temperature) VALUES (?, ?, ?, ?, ?, ?)"
+      "INSERT INTO refills (id, user_id, date, weight_kg, bags, temperature, season) VALUES (?, ?, ?, ?, ?, ?, ?)"
     ).run(
       id,
       data.userId,
       dateIso,
       data.weightKg,
       data.bags,
-      data.temperature ?? null
+      data.temperature ?? null,
+      seasonLabel
     );
 
     return {

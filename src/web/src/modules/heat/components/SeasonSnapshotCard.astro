@@ -1,0 +1,34 @@
+---
+import Card from "@/shared/components/UI/Card.astro";
+
+interface Props {
+  seasonLabel: string;
+  seasonToDate: number;
+  lastSeasonToDate: number;
+}
+
+const { seasonLabel, seasonToDate, lastSeasonToDate } = Astro.props;
+
+const formatNumber = (value: number) => new Intl.NumberFormat("en-US").format(value);
+---
+
+<section>
+  <div class="flex items-center justify-between px-1 mb-2">
+    <span class="text-xs font-bold text-text-muted uppercase tracking-widest">Season Snapshot</span>
+    <span class="text-[11px] text-text-muted">{seasonLabel}</span>
+  </div>
+  <div class="grid grid-cols-2 gap-3">
+    <Card class="bg-linear-to-br from-surface to-[#1f2229] border-border">
+      <div class="flex flex-col items-center justify-center py-2">
+        <span class="text-[10px] text-text-muted uppercase tracking-widest mb-1">This season</span>
+        <span class="text-3xl font-semibold text-text-main tracking-tight">{formatNumber(seasonToDate)}</span>
+      </div>
+    </Card>
+    <Card class="bg-linear-to-br from-surface to-[#1f2229] border-border">
+      <div class="flex flex-col items-center justify-center py-2">
+        <span class="text-[10px] text-text-muted uppercase tracking-widest mb-1">Last season</span>
+        <span class="text-3xl font-semibold text-text-main tracking-tight">{formatNumber(lastSeasonToDate)}</span>
+      </div>
+    </Card>
+  </div>
+</section>

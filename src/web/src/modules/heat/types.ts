@@ -7,4 +7,5 @@ export interface Refill {
   weightKg: number;
   bags: number;
   temperature?: number;
+  season?: string;
 }

@@ -19,6 +19,9 @@ const formatDate = (date: Date) => {
       <div class="p-3 flex justify-between items-center group">
         <div>
           <div class="font-medium text-sm text-text-main">{formatDate(item.date)}</div>
+          {item.season && (
+            <div class="text-[10px] text-text-muted">Season {item.season}</div>
+          )}
           {item.temperature !== undefined && (
             <div class="text-[10px] text-text-muted">Avg Temp: {item.temperature}°C</div>
           )}
