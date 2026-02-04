@@ -47,15 +47,18 @@ development_status:
   1-4-manual-numeric-quick-log: done
   1-5-muscle-memory-recents-carousel: backlog
   epic-2: backlog
-  2-1-gemini-api-integration-structured-output: backlog
-  2-2-fixed-ai-chat-interface-frontend: backlog
-  2-3-refinement-loop-confirm-log-action: backlog
+  2-1-daily-target-configuration: backlog
+  2-2-log-management-edit-delete: backlog
+  2-3-automated-daily-reset: backlog
   epic-3: backlog
-  3-1-daily-target-configuration: backlog
-  3-2-log-management-edit-delete: backlog
-  3-3-automated-daily-reset: backlog
-  3-4-budget-limit-alerts: backlog
+  3-1-gemini-api-integration-structured-output: backlog
+  3-2-fixed-ai-chat-interface-frontend: backlog
+  3-3-refinement-loop-confirm-log-action: backlog
   epic-4: backlog
-  4-1-schroedingers-binary-runtime-injection: backlog
-  4-2-opentelemetry-distributed-tracing: backlog
-  4-3-terraform-driven-topology-refactor: backlog
+  4-1-deploy-the-modular-monolith: backlog
+  4-2-implement-auth: backlog
+  4-3-ensure-monolith-splitting-is-possible: backlog
+  epic-5: backlog
+  5-1-schroedingers-binary-runtime-injection: backlog
+  epic-6: backlog
+  6-1-heat-module-by-hand: backlog
