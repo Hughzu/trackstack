@@ -35,7 +35,7 @@ const history = [
   <div class="flex flex-col gap-5 pb-24">
 
     <section>
-      <Card class="bg-linear-to-br from-surface to-[#23262d]">
+      <Card variant="highlight">
         <div class="flex justify-between items-start mb-4">
           <div>
             <span class="text-xs text-text-muted uppercase tracking-widest">Remaining</span>
@@ -77,9 +77,9 @@ const history = [
             </svg>
          </summary>
          
-         <div class="flex flex-col gap-2 animate-fade-in">
+          <div class="flex flex-col gap-2 animate-fade-in">
            {pendingObligations.map(item => (
-             <div class="flex justify-between items-center p-3 rounded-xl border bg-surface border-border hover:border-primary/50 transition-colors">
+             <div class="flex justify-between items-center p-3 rounded-xl border bg-[#1e2128] border-primary/20 shadow-md hover:border-primary/50 transition-colors">
                 <div class="flex items-center gap-3">
                   <button class="w-5 h-5 rounded-md border border-gray-600 hover:border-emerald-500 hover:bg-emerald-500/20 flex items-center justify-center transition-all group/btn">
                     <svg class="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover/btn:opacity-100" viewBox="0 0 20 20" fill="currentColor"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
@@ -101,7 +101,7 @@ const history = [
 
     <section>
       <h3 class="text-sm font-bold text-text-muted mb-2 px-1">History</h3>
-      <div class="bg-surface border border-border rounded-xl divide-y divide-white/5">
+      <div class="bg-[#1e2128] border border-primary/20 rounded-2xl shadow-lg shadow-black/40 divide-y divide-white/5 overflow-hidden">
         {history.map(tx => (
           <div class="p-3 flex justify-between items-center group">
             <div>

@@ -44,7 +44,7 @@ const formatTime = (date: Date) =>
 
     <!-- Summary Card -->
     <section>
-      <Card class="bg-linear-to-br from-surface to-[#23262d]">
+      <Card variant="highlight">
         <div class="flex justify-between items-start mb-6">
           <div>
             <span class="text-xs text-text-muted uppercase tracking-widest">Daily Intake</span>
@@ -80,7 +80,7 @@ const formatTime = (date: Date) =>
     <!-- Recent Logs -->
     <section>
       <h3 class="text-sm font-bold text-text-muted mb-2 px-1">Today's Logs</h3>
-      <div class="bg-surface border border-border rounded-xl divide-y divide-white/5" data-calorie-history>
+      <div class="bg-[#1e2128] border border-primary/20 rounded-2xl shadow-lg shadow-black/40 divide-y divide-white/5 overflow-hidden" data-calorie-history>
         {logs.map(log => (
           <div class="p-3 flex justify-between items-center group">
             <div>

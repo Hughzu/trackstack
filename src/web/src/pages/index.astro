@@ -26,7 +26,7 @@ const healthData = { current: 1850, target: 2500, protein: 145 };
 
     <section class="grid grid-cols-2 gap-3">
       
-      <Card title="Wealth" href="/expenses" class="col-span-1">
+      <Card variant="highlight" title="Wealth" href="/expenses" class="col-span-1">
         <div class="flex flex-col justify-center h-full">
            <PercentageBar segments={expenseData} />
            <p class="text-[10px] text-text-muted mt-2 text-center">
@@ -35,11 +35,11 @@ const healthData = { current: 1850, target: 2500, protein: 145 };
         </div>
       </Card>
 
-      <Card title="Health" href="/calories" class="col-span-1">
+      <Card variant="highlight" title="Health" href="/calories" class="col-span-1">
         <div class="flex flex-col h-full justify-between">
           <div>
             <div class="flex items-baseline gap-1">
-              <span class="text-2xl font-bold">{healthData.current}</span>
+              <span class="text-2xl font-bold text-text-main">{healthData.current}</span>
               <span class="text-xs text-text-muted">kcal</span>
             </div>
             <div class="w-full bg-gray-800 h-1.5 rounded-full mt-2">
@@ -54,7 +54,7 @@ const healthData = { current: 1850, target: 2500, protein: 145 };
         </div>
       </Card>
 
-      <Card title="Heating" href="/heat" class="col-span-1">
+      <Card variant="highlight" title="Heating" href="/heat" class="col-span-1">
         <div class="flex flex-col items-center justify-center h-full py-2">
           <span class="text-4xl font-bold text-text-main">{heatData.daysSince}</span>
           <span class="text-[10px] uppercase tracking-widest text-text-muted mt-1">Days since refill</span>
