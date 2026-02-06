@@ -30,25 +30,31 @@ const totalSpent = spent.fund + spent.fun + spent.future;
 
 const ratios = [
   {
-    percent: totalSpent ? Math.round((spent.fund / totalSpent) * 100) : 0,
+    percent: balance.income ? Math.round((spent.fund / balance.income) * 100) : 0,
     color: 'bg-red-500',
     label: 'Fund.',
     value: spent.fund,
-    budget: budget.fund
+    budget: budget.fund,
+    target: dashboard.settings.ratioFund,
+    over: spent.fund > budget.fund
   },
   {
-    percent: totalSpent ? Math.round((spent.fun / totalSpent) * 100) : 0,
+    percent: balance.income ? Math.round((spent.fun / balance.income) * 100) : 0,
     color: 'bg-orange-500',
     label: 'Fun',
     value: spent.fun,
-    budget: budget.fun
+    budget: budget.fun,
+    target: dashboard.settings.ratioFun,
+    over: spent.fun > budget.fun
   },
   {
-    percent: totalSpent ? Math.round((spent.future / totalSpent) * 100) : 0,
+    percent: balance.income ? Math.round((spent.future / balance.income) * 100) : 0,
     color: 'bg-emerald-500',
     label: 'Future',
     value: spent.future,
-    budget: budget.future
+    budget: budget.future,
+    target: dashboard.settings.ratioFuture,
+    over: spent.future > budget.future
   }
 ];
 
@@ -59,6 +65,12 @@ const formatCategory = (category: string) => {
   if (category === 'fun') return 'Fun';
   if (category === 'future') return 'Future';
   return 'Fund.';
+};
+
+const categoryClass = (category: string) => {
+  if (category === 'fun') return 'text-orange-400';
+  if (category === 'future') return 'text-emerald-400';
+  return 'text-red-400';
 };
 
 const formatDateLabel = (dateValue: string) => {
@@ -107,16 +119,16 @@ const formatDateLabel = (dateValue: string) => {
           <PercentageBar segments={ratios} />
         </div>
 
-         <div class="flex justify-between text-center divide-x divide-white/10">
-           {ratios.map(r => (
-              <div class="flex-1 px-1">
-                <div class={`w-1.5 h-1.5 rounded-full ${r.color} mx-auto mb-1`}></div>
-                <div class="text-[10px] text-text-muted uppercase">{r.label}</div>
-                <div class="text-xs font-bold">€{r.value}</div>
-                <div class="text-[10px] text-text-muted">/ €{r.budget}</div>
-              </div>
-           ))}
-         </div>
+        <div class="flex justify-between text-center divide-x divide-white/10">
+          {ratios.map(r => (
+            <div class="flex-1 px-1">
+              <div class={`w-1.5 h-1.5 rounded-full ${r.color} mx-auto mb-1`}></div>
+              <div class="text-[10px] text-text-muted uppercase">{r.label}</div>
+              <div class="text-xs font-bold">€{r.value}</div>
+              <div class="text-[10px] text-text-muted">/ €{r.budget}</div>
+            </div>
+          ))}
+        </div>
       </Card>
     </section>
 
@@ -171,7 +183,9 @@ const formatDateLabel = (dateValue: string) => {
                 {tx.type === 'recurring' && <span class="text-[8px] border border-white/10 px-1 rounded text-text-muted">AUTO</span>}
                 {tx.type === 'checklist' && <span class="text-[8px] border border-white/10 px-1 rounded text-text-muted">CHECK</span>}
               </div>
-              <div class="text-[10px] text-text-muted">{formatDateLabel(tx.date)} • {formatCategory(tx.category)}</div>
+              <div class="text-[10px] text-text-muted">
+                {formatDateLabel(tx.date)} • <span class={categoryClass(tx.category)}>{formatCategory(tx.category)}</span>
+              </div>
             </div>
             <div class="flex items-center gap-3">
               <span class="font-mono text-sm text-red-400">-€{tx.amount}</span>
