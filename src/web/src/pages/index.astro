@@ -2,75 +2,144 @@
 import AppShell from '@/shared/layouts/AppShell.astro';
 import Card from '@/shared/components/UI/Card.astro';
 import PercentageBar from '@/shared/components/UI/PercentageBar.astro';
+import { expensesService } from '@/modules/expenses/services/expensesService';
+import { caloriesService } from '@/modules/calories/services/caloriesService';
+import { heatService } from '@/modules/heat/services/heatService';
+import { getCurrentUserId } from '@/shared/auth/currentUser';
 
-import NbaRecap from '@/modules/nba/components/NightlyRecap.astro';
+const currentUserId = getCurrentUserId();
 
-// Updated Color Palette: Red (Fundamentals), Orange (Fun), Green (Future)
-const expenseData = [
-  { percent: 60, color: 'bg-red-500', label: 'Fund.' },
-  { percent: 20, color: 'bg-orange-500', label: 'Fun' },
-  { percent: 20, color: 'bg-emerald-500', label: 'Future' },
+const expenseDashboard = expensesService.getDashboard(currentUserId);
+const balance = {
+  remaining: Math.round((expenseDashboard.settings.income - expenseDashboard.totalSpent) * 100) / 100,
+  income: expenseDashboard.settings.income
+};
+
+const spent = {
+  fund: Math.round(expenseDashboard.spentByCategory.fund * 100) / 100,
+  fun: Math.round(expenseDashboard.spentByCategory.fun * 100) / 100,
+  future: Math.round(expenseDashboard.spentByCategory.future * 100) / 100
+};
+
+const budget = {
+  fund: Math.round((balance.income * expenseDashboard.settings.ratioFund) / 100),
+  fun: Math.round((balance.income * expenseDashboard.settings.ratioFun) / 100),
+  future: Math.round((balance.income * expenseDashboard.settings.ratioFuture) / 100)
+};
+
+const expenseRatios = [
+  {
+    percent: balance.income ? Math.round((spent.fund / balance.income) * 100) : 0,
+    color: 'bg-red-500',
+    label: 'Fund.',
+    over: spent.fund > budget.fund
+  },
+  {
+    percent: balance.income ? Math.round((spent.fun / balance.income) * 100) : 0,
+    color: 'bg-orange-500',
+    label: 'Fun',
+    over: spent.fun > budget.fun
+  },
+  {
+    percent: balance.income ? Math.round((spent.future / balance.income) * 100) : 0,
+    color: 'bg-emerald-500',
+    label: 'Future',
+    over: spent.future > budget.future
+  }
 ];
 
-const heatData = { daysSince: 14, status: "Refill Soon" };
-const healthData = { current: 1850, target: 2500, protein: 145 };
+const healthSummary = caloriesService.getTodaySummary(currentUserId);
+const calorieTarget = healthSummary.target.targetKcal;
+const caloriePercent = calorieTarget
+  ? Math.min(Math.round((healthSummary.consumed / calorieTarget) * 100), 100)
+  : 0;
+
+const daysSinceRefill = heatService.getDaysSinceLastRefill(currentUserId);
+const seasonSnapshot = heatService.getSeasonSnapshot(currentUserId);
 ---
 
 <AppShell title="Overview" currentDomain="home">
-  
-  <div class="flex flex-col gap-4 pb-24">
-    
+  <div class="flex flex-col gap-5 pb-24">
     <section>
-      <NbaRecap />
+      <Card variant="highlight" title="Expenses" href="/expenses">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <span class="text-xs text-text-muted uppercase tracking-widest">Remaining</span>
+            <div class="text-3xl font-bold text-text-main">€{balance.remaining}</div>
+          </div>
+          <div class="text-right">
+            <span class="text-xs text-text-muted uppercase tracking-widest">Income</span>
+            <div class="text-sm font-mono text-text-muted">€{balance.income}</div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <PercentageBar segments={expenseRatios} />
+        </div>
+
+        <div class="flex justify-between text-center divide-x divide-white/10">
+          <div class="flex-1 px-1">
+            <div class="text-[10px] text-text-muted uppercase">Fund.</div>
+            <div class="text-xs font-bold">€{spent.fund}</div>
+            <div class="text-[10px] text-text-muted">/ €{budget.fund}</div>
+          </div>
+          <div class="flex-1 px-1">
+            <div class="text-[10px] text-text-muted uppercase">Fun</div>
+            <div class="text-xs font-bold">€{spent.fun}</div>
+            <div class="text-[10px] text-text-muted">/ €{budget.fun}</div>
+          </div>
+          <div class="flex-1 px-1">
+            <div class="text-[10px] text-text-muted uppercase">Future</div>
+            <div class="text-xs font-bold">€{spent.future}</div>
+            <div class="text-[10px] text-text-muted">/ €{budget.future}</div>
+          </div>
+        </div>
+      </Card>
     </section>
 
-    <section class="grid grid-cols-2 gap-3">
-      
-      <Card variant="highlight" title="Wealth" href="/expenses" class="col-span-1">
-        <div class="flex flex-col justify-center h-full">
-           <PercentageBar segments={expenseData} />
-           <p class="text-[10px] text-text-muted mt-2 text-center">
-             Monthly Allocation
-           </p>
-        </div>
-      </Card>
-
-      <Card variant="highlight" title="Health" href="/calories" class="col-span-1">
-        <div class="flex flex-col h-full justify-between">
+    <section>
+      <Card variant="highlight" title="Daily Intake" href="/calories">
+        <div class="flex justify-between items-start mb-4">
           <div>
-            <div class="flex items-baseline gap-1">
-              <span class="text-2xl font-bold text-text-main">{healthData.current}</span>
-              <span class="text-xs text-text-muted">kcal</span>
-            </div>
-            <div class="w-full bg-gray-800 h-1.5 rounded-full mt-2">
-              <div class="bg-orange-400 h-1.5 rounded-full" style="width: 74%"></div>
+            <span class="text-xs text-text-muted uppercase tracking-widest">Consumed</span>
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-bold text-text-main">{healthSummary.consumed}</span>
+              <span class="text-sm font-mono text-text-muted">/ {calorieTarget} kcal</span>
             </div>
           </div>
-          
-          <div class="flex justify-between items-center mt-2 p-2 bg-white/5 rounded-lg">
-            <span class="text-xs text-text-muted">Prot.</span>
-            <span class="text-sm font-bold text-orange-200">{healthData.protein}g</span>
+          <div class="text-right">
+            <span class="text-xs text-text-muted uppercase tracking-widest">Protein</span>
+            <div class="text-sm font-bold text-primary">{healthSummary.protein}g</div>
           </div>
         </div>
-      </Card>
 
-      <Card variant="highlight" title="Heating" href="/heat" class="col-span-1">
-        <div class="flex flex-col items-center justify-center h-full py-2">
-          <span class="text-4xl font-bold text-text-main">{heatData.daysSince}</span>
-          <span class="text-[10px] uppercase tracking-widest text-text-muted mt-1">Days since refill</span>
+        <div class="relative w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+          <div
+            class="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500"
+            style={`width: ${caloriePercent}%`}
+          ></div>
         </div>
       </Card>
+    </section>
 
-      <!-- <Card title="Recipes" href="/recipes" class="col-span-1 group">
-        <div class="flex flex-col items-center justify-center h-full text-text-muted group-hover:text-primary transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 mb-2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-          </svg>
-          <span class="text-xs font-medium">Browse</span>
+    <section>
+      <Card variant="highlight" title="Heating" href="/heat">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-xs text-text-muted uppercase tracking-widest">Days Since Refill</span>
+            <div class="text-3xl font-bold text-text-main">{daysSinceRefill}</div>
+          </div>
+          <div class="text-right">
+            <span class="text-xs text-text-muted uppercase tracking-widest">Season</span>
+            <div class="text-sm font-mono text-text-muted">{seasonSnapshot.seasonLabel}</div>
+          </div>
         </div>
-      </Card> -->
 
+        <div class="mt-4 flex justify-between text-xs text-text-muted">
+          <span>This Season: <span class="text-text-main font-semibold">{seasonSnapshot.seasonToDate}</span></span>
+          <span>Last Season: <span class="text-text-main font-semibold">{seasonSnapshot.lastSeasonToDate}</span></span>
+        </div>
+      </Card>
     </section>
   </div>
-  
-  </AppShell>
+</AppShell>
