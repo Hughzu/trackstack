@@ -3,31 +3,57 @@ import AppShell from '@/shared/layouts/AppShell.astro';
 import Card from '@/shared/components/UI/Card.astro';
 import PercentageBar from '@/shared/components/UI/PercentageBar.astro';
 import Fab from '@/shared/components/UI/Fab.astro';
+import { expensesService } from '@/modules/expenses/services/expensesService';
+import { getCurrentUserId } from '@/shared/auth/currentUser';
 
-// MOCK DATA
-const balance = { remaining: 855, income: 2215 };
+const currentUserId = getCurrentUserId();
+const dashboard = expensesService.getDashboard(currentUserId);
+
+const balance = {
+  remaining: Math.round((dashboard.settings.income - dashboard.totalSpent) * 100) / 100,
+  income: dashboard.settings.income
+};
 
 const ratios = [
-  { percent: 60, color: 'bg-red-500', label: 'Fund.', value: 1329 },
-  { percent: 20, color: 'bg-orange-500', label: 'Fun', value: 443 },
-  { percent: 20, color: 'bg-emerald-500', label: 'Future', value: 443 },
+  {
+    percent: dashboard.settings.ratioFund,
+    color: 'bg-red-500',
+    label: 'Fund.',
+    value: Math.round((balance.income * dashboard.settings.ratioFund) / 100)
+  },
+  {
+    percent: dashboard.settings.ratioFun,
+    color: 'bg-orange-500',
+    label: 'Fun',
+    value: Math.round((balance.income * dashboard.settings.ratioFun) / 100)
+  },
+  {
+    percent: dashboard.settings.ratioFuture,
+    color: 'bg-emerald-500',
+    label: 'Future',
+    value: Math.round((balance.income * dashboard.settings.ratioFuture) / 100)
+  }
 ];
 
-// OBLIGATIONS: Only showing what is NOT yet paid
-// "Mortgage" is missing here because it is paid (see History)
-const pendingObligations = [
-  { label: "Luminus", amount: 35 },
-  { label: "Investments", amount: 50 },
-  { label: "Spotify", amount: 15 },
-  { label: "Internet", amount: 45 },
-];
+const pendingObligations = dashboard.pendingChecklist;
+const history = dashboard.history;
 
-// HISTORY: Includes the "Paid" obligations + manual expenses
-const history = [
-  { id: 1, title: 'Mortgage', amount: 650, cat: 'Fund.', date: 'Today', type: 'obligation' }, // Was an obligation
-  { id: 2, title: 'Groceries', amount: 65.50, cat: 'Fund.', date: 'Today', type: 'manual' },
-  { id: 3, title: 'Cinema', amount: 14.20, cat: 'Fun', date: 'Yesterday', type: 'manual' },
-];
+const formatCategory = (category: string) => {
+  if (category === 'fun') return 'Fun';
+  if (category === 'future') return 'Future';
+  return 'Fund.';
+};
+
+const formatDateLabel = (dateValue: string) => {
+  const date = new Date(`${dateValue}T00:00:00`);
+  const today = new Date();
+  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.round((startToday.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+};
 ---
 
 <AppShell title="Wealth" currentDomain="expenses">
@@ -35,6 +61,19 @@ const history = [
   <div class="flex flex-col gap-5 pb-24">
 
     <section>
+      <div class="flex items-center justify-between px-1 mb-2">
+        <div>
+          <div class="text-xs text-text-muted uppercase tracking-widest">Period</div>
+          <div class="text-sm font-semibold text-text-main">{dashboard.sheet.periodKey}</div>
+        </div>
+        <button
+          type="button"
+          class="px-3 py-1.5 rounded-full border border-primary/30 text-[10px] uppercase tracking-widest text-primary hover:border-primary/60 hover:bg-primary/10 transition-colors"
+          data-expense-close
+        >
+          Close month
+        </button>
+      </div>
       <Card variant="highlight">
         <div class="flex justify-between items-start mb-4">
           <div>
@@ -77,22 +116,26 @@ const history = [
             </svg>
          </summary>
          
-          <div class="flex flex-col gap-2 animate-fade-in">
-           {pendingObligations.map(item => (
-             <div class="flex justify-between items-center p-3 rounded-xl border bg-[#1e2128] border-primary/20 shadow-md hover:border-primary/50 transition-colors">
-                <div class="flex items-center gap-3">
-                  <button class="w-5 h-5 rounded-md border border-gray-600 hover:border-emerald-500 hover:bg-emerald-500/20 flex items-center justify-center transition-all group/btn">
-                    <svg class="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover/btn:opacity-100" viewBox="0 0 20 20" fill="currentColor"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
-                  </button>
-                  <span>{item.label}</span>
-                </div>
-                <span class="font-mono text-sm">€{item.amount}</span>
-             </div>
-           ))}
-           
-           {pendingObligations.length === 0 && (
-             <div class="text-center py-4 text-xs text-text-muted italic">
-               🎉 All obligations paid for this month!
+           <div class="flex flex-col gap-2 animate-fade-in" data-expense-checklist>
+            {pendingObligations.map(item => (
+              <div class="flex justify-between items-center p-3 rounded-xl border bg-[#1e2128] border-primary/20 shadow-md hover:border-primary/50 transition-colors">
+                 <div class="flex items-center gap-3">
+                   <button
+                     class="w-5 h-5 rounded-md border border-gray-600 hover:border-emerald-500 hover:bg-emerald-500/20 flex items-center justify-center transition-all group/btn"
+                     data-checklist-complete
+                     data-checklist-id={item.id}
+                   >
+                     <svg class="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover/btn:opacity-100" viewBox="0 0 20 20" fill="currentColor"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                   </button>
+                   <span>{item.title}</span>
+                 </div>
+                 <span class="font-mono text-sm">€{item.amount}</span>
+              </div>
+            ))}
+            
+            {pendingObligations.length === 0 && (
+              <div class="text-center py-4 text-xs text-text-muted italic">
+                🎉 All obligations paid for this month!
              </div>
            )}
          </div>
@@ -101,20 +144,26 @@ const history = [
 
     <section>
       <h3 class="text-sm font-bold text-text-muted mb-2 px-1">History</h3>
-      <div class="bg-[#1e2128] border border-primary/20 rounded-2xl shadow-lg shadow-black/40 divide-y divide-white/5 overflow-hidden">
+      <div class="bg-[#1e2128] border border-primary/20 rounded-2xl shadow-lg shadow-black/40 divide-y divide-white/5 overflow-hidden" data-expense-history>
         {history.map(tx => (
           <div class="p-3 flex justify-between items-center group">
             <div>
               <div class="font-medium text-sm flex items-center gap-2">
                 {tx.title}
-                {/* Visual indicator for auto-generated obligation expenses */}
-                {tx.type === 'obligation' && <span class="text-[8px] border border-white/10 px-1 rounded text-text-muted">AUTO</span>}
+                {tx.type === 'recurring' && <span class="text-[8px] border border-white/10 px-1 rounded text-text-muted">AUTO</span>}
+                {tx.type === 'checklist' && <span class="text-[8px] border border-white/10 px-1 rounded text-text-muted">CHECK</span>}
               </div>
-              <div class="text-[10px] text-text-muted">{tx.date} • {tx.cat}</div>
+              <div class="text-[10px] text-text-muted">{formatDateLabel(tx.date)} • {formatCategory(tx.category)}</div>
             </div>
             <div class="flex items-center gap-3">
               <span class="font-mono text-sm text-red-400">-€{tx.amount}</span>
-              <button class="text-gray-600 hover:text-red-500 transition-colors p-1" aria-label="Delete">
+              <button
+                class="text-gray-600 hover:text-red-500 transition-colors p-1"
+                aria-label="Delete"
+                type="button"
+                data-expense-delete
+                data-expense-id={tx.id}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                 </svg>
@@ -122,6 +171,11 @@ const history = [
             </div>
           </div>
         ))}
+        {history.length === 0 && (
+          <div class="p-4 text-center text-text-muted text-xs italic">
+            No expenses yet for this sheet.
+          </div>
+        )}
       </div>
     </section>
 
@@ -154,3 +208,165 @@ const history = [
   </div>
 
 </AppShell>
+
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm" data-expense-modal>
+  <div class="w-[90%] max-w-xs rounded-2xl border border-border bg-surface p-4 shadow-lg">
+    <h4 class="text-sm font-bold text-text-main">Delete expense?</h4>
+    <p class="mt-1 text-xs text-text-muted">
+      This removes the entry from your history.
+    </p>
+    <div class="mt-4 flex gap-2">
+      <button
+        class="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted hover:text-text-main hover:border-primary/50 transition-colors"
+        data-expense-cancel
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="flex-1 rounded-lg bg-red-500/20 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/30 transition-colors"
+        data-expense-confirm
+        type="button"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const checklistRoot = document.querySelector('[data-expense-checklist]');
+  const historyRoot = document.querySelector('[data-expense-history]');
+  const closeButton = document.querySelector('[data-expense-close]');
+  const modal = document.querySelector('[data-expense-modal]');
+  const cancelButton = modal?.querySelector('[data-expense-cancel]');
+  const confirmButton = modal?.querySelector('[data-expense-confirm]');
+  let pendingId = null;
+
+  const openModal = (id) => {
+    pendingId = id;
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  };
+
+  const closeModal = () => {
+    pendingId = null;
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  };
+
+  if (modal) {
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+  }
+
+  if (cancelButton) {
+    cancelButton.addEventListener('click', () => closeModal());
+  }
+
+  if (checklistRoot) {
+    checklistRoot.addEventListener('click', async (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const button = target.closest('[data-checklist-complete]');
+      if (!button) return;
+
+      const itemId = button.getAttribute('data-checklist-id');
+      if (!itemId) return;
+
+      button.setAttribute('disabled', 'true');
+      try {
+        const response = await fetch('/api/expenses/checklist/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id: itemId })
+        });
+
+        if (response.ok) {
+          window.location.reload();
+          return;
+        }
+      } catch {
+        // noop
+      }
+
+      button.removeAttribute('disabled');
+      window.alert('Unable to complete checklist item.');
+    });
+  }
+
+  if (confirmButton) {
+    confirmButton.addEventListener('click', async () => {
+      if (!pendingId) return;
+
+      confirmButton.setAttribute('disabled', 'true');
+      const originalText = confirmButton.textContent;
+      confirmButton.textContent = 'Deleting...';
+
+      try {
+        const response = await fetch('/api/expenses/expense', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id: pendingId })
+        });
+
+        if (response.ok) {
+          window.location.reload();
+          return;
+        }
+      } catch {
+        // noop
+      }
+
+      confirmButton.removeAttribute('disabled');
+      confirmButton.textContent = originalText || 'Delete';
+      window.alert('Unable to delete expense.');
+    });
+  }
+
+  if (historyRoot) {
+    historyRoot.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const button = target.closest('[data-expense-delete]');
+      if (!button) return;
+
+      const expenseId = button.getAttribute('data-expense-id');
+      if (!expenseId) return;
+
+      openModal(expenseId);
+    });
+  }
+
+  if (closeButton) {
+    closeButton.addEventListener('click', async () => {
+      if (!window.confirm('Close this month and start a new sheet?')) return;
+
+      closeButton.setAttribute('disabled', 'true');
+      try {
+        const response = await fetch('/api/expenses/close', {
+          method: 'POST'
+        });
+
+        if (response.ok) {
+          window.location.reload();
+          return;
+        }
+      } catch {
+        // noop
+      }
+
+      closeButton.removeAttribute('disabled');
+      window.alert('Unable to close month.');
+    });
+  }
+</script>

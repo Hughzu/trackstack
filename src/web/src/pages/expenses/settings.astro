@@ -1,32 +1,29 @@
 ---
 import Layout from '@/shared/layouts/Layout.astro';
 import '@/shared/styles/global.css';
+import { expensesService } from '@/modules/expenses/services/expensesService';
+import { getCurrentUserId } from '@/shared/auth/currentUser';
 
-// MOCK DATA
-const config = {
-  income: 2215,
-  ratios: {
-    fund: 60,
-    fun: 20,
-    future: 20
-  }
+const currentUserId = getCurrentUserId();
+const config = expensesService.getSettings(currentUserId);
+const obligations = expensesService.getChecklistTemplates(currentUserId);
+const recurring = expensesService.getRecurringTemplates(currentUserId);
+const ratioTotal = config.ratioFund + config.ratioFun + config.ratioFuture;
+
+const formatCategory = (category: string) => {
+  if (category === 'fun') return 'Fun';
+  if (category === 'future') return 'Future';
+  return 'Fund.';
 };
-
-const obligations = [
-  { id: 1, name: "Mortgage", amount: 650 },
-  { id: 2, name: "Investments", amount: 50 },
-  { id: 3, name: "Luminus", amount: 35 },
-  { id: 4, name: "Spotify", amount: 15 },
-];
 ---
 
 <Layout>
-  <form class="min-h-screen bg-background text-text-main font-sans pb-20 animate-fade-in flex flex-col relative max-w-lg mx-auto">
+  <form id="expenses-settings-form" class="min-h-screen bg-background text-text-main font-sans pb-20 animate-fade-in flex flex-col relative max-w-lg mx-auto">
     
     <header class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
       <a href="/expenses" class="text-text-muted hover:text-text-main text-sm transition-colors">Cancel</a>
       <h1 class="text-base font-bold text-text-main">Settings</h1>
-      <button type="button" onclick="window.location.href='/expenses'" class="text-primary font-bold text-sm hover:text-primary/80 transition-colors">
+      <button type="submit" class="text-primary font-bold text-sm hover:text-primary/80 transition-colors">
         Save
       </button>
     </header>
@@ -44,6 +41,7 @@ const obligations = [
             <span class="absolute left-0 top-1/2 -translate-y-1/2 text-text-muted">€</span>
             <input 
               type="number" 
+              name="income"
               value={config.income}
               class="w-full bg-transparent text-right font-bold text-xl focus:outline-none border-b border-transparent focus:border-primary transition-colors text-text-main placeholder:text-text-muted/30"
             />
@@ -54,25 +52,25 @@ const obligations = [
       <section class="flex flex-col gap-4">
         <div class="flex justify-between items-end px-1">
           <h2 class="text-xs text-text-muted uppercase tracking-widest font-bold">Ratios</h2>
-          <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
-            Total: 100%
+          <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono" data-ratio-total>
+            Total: {ratioTotal}%
           </span>
         </div>
 
         <div class="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-6 shadow-sm">
-          
           <div class="space-y-3">
             <div class="flex justify-between text-sm items-center">
               <span class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-red-500"></span>
                 <span class="font-medium">Fundamentals</span>
               </span>
-              <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border">{config.ratios.fund}%</span>
+              <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border" data-ratio-label="fund">{config.ratioFund}%</span>
             </div>
             <input 
               type="range" 
               min="0" max="100" 
-              value={config.ratios.fund}
+              name="ratioFund"
+              value={config.ratioFund}
               class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-500 hover:accent-red-400 transition-colors"
             />
           </div>
@@ -83,12 +81,13 @@ const obligations = [
                 <span class="w-2 h-2 rounded-full bg-orange-500"></span>
                 <span class="font-medium">Fun</span>
               </span>
-              <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border">{config.ratios.fun}%</span>
+              <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border" data-ratio-label="fun">{config.ratioFun}%</span>
             </div>
             <input 
               type="range" 
               min="0" max="100" 
-              value={config.ratios.fun}
+              name="ratioFun"
+              value={config.ratioFun}
               class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500 hover:accent-orange-400 transition-colors"
             />
           </div>
@@ -99,12 +98,13 @@ const obligations = [
                 <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                 <span class="font-medium">Future</span>
               </span>
-              <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border">{config.ratios.future}%</span>
+              <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border" data-ratio-label="future">{config.ratioFuture}%</span>
             </div>
             <input 
               type="range" 
               min="0" max="100" 
-              value={config.ratios.future}
+              name="ratioFuture"
+              value={config.ratioFuture}
               class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400 transition-colors"
             />
           </div>
@@ -118,13 +118,19 @@ const obligations = [
           <p class="text-[10px] text-text-muted mt-0.5">Recurring payments to check off every month.</p>
         </div>
         
-        <div class="bg-surface border border-border rounded-2xl overflow-hidden divide-y divide-white/5 shadow-sm">
+        <div class="bg-surface border border-border rounded-2xl overflow-hidden divide-y divide-white/5 shadow-sm" data-checklist-list>
           {obligations.map(item => (
             <div class="p-3 pl-4 flex justify-between items-center group hover:bg-white/5 transition-colors">
-              <div class="font-medium text-sm">{item.name}</div>
-              <div class="flex items-center gap-4">
+              <div class="font-medium text-sm">{item.title}</div>
+              <div class="flex items-center gap-3">
+                <span class="text-[10px] uppercase text-text-muted">{formatCategory(item.category)}</span>
                 <span class="font-mono text-sm text-text-muted">€{item.amount}</span>
-                <button type="button" class="text-gray-600 hover:text-red-500 transition-colors p-1">
+                <button
+                  type="button"
+                  class="text-gray-600 hover:text-red-500 transition-colors p-1"
+                  data-checklist-delete
+                  data-checklist-id={item.id}
+                >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                   </svg>
@@ -133,18 +139,76 @@ const obligations = [
             </div>
           ))}
 
-          <div class="p-3 bg-black/20 flex gap-3 items-center">
+          <div class="p-3 bg-black/20 grid grid-cols-[1.6fr_0.8fr_0.7fr_auto] gap-3 items-center" data-checklist-add>
             <input 
               type="text" 
               placeholder="Name (e.g. Netflix)" 
-              class="flex-[2] bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 transition-colors text-text-main"
+              class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 transition-colors text-text-main"
+              data-checklist-title
             />
             <input 
               type="number" 
               placeholder="€" 
-              class="flex-1 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 text-right transition-colors text-text-main"
+              class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 text-right transition-colors text-text-main"
+              data-checklist-amount
             />
-            <button type="button" class="text-primary hover:text-primary/80 font-bold text-xs bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 transition-all">
+            <select class="min-w-0 bg-surface border border-border rounded-lg px-2 py-1 text-xs text-text-main appearance-none focus:outline-none focus:border-primary" data-checklist-category>
+              <option value="fund">Fund.</option>
+              <option value="fun">Fun</option>
+              <option value="future">Future</option>
+            </select>
+            <button type="button" class="text-primary hover:text-primary/80 font-bold text-xs bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 transition-all" data-checklist-submit>
+              Add
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <div class="px-1">
+          <h2 class="text-xs text-text-muted uppercase tracking-widest font-bold">Recurring Expenses</h2>
+          <p class="text-[10px] text-text-muted mt-0.5">Auto-added to every new sheet.</p>
+        </div>
+        <div class="bg-surface border border-border rounded-2xl overflow-hidden divide-y divide-white/5 shadow-sm" data-recurring-list>
+          {recurring.map(item => (
+            <div class="p-3 pl-4 flex justify-between items-center group hover:bg-white/5 transition-colors">
+              <div class="font-medium text-sm">{item.title}</div>
+              <div class="flex items-center gap-3">
+                <span class="text-[10px] uppercase text-text-muted">{formatCategory(item.category)}</span>
+                <span class="font-mono text-sm text-text-muted">€{item.amount}</span>
+                <button
+                  type="button"
+                  class="text-gray-600 hover:text-red-500 transition-colors p-1"
+                  data-recurring-delete
+                  data-recurring-id={item.id}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <div class="p-3 bg-black/20 grid grid-cols-[1.6fr_0.8fr_0.7fr_auto] gap-3 items-center" data-recurring-add>
+            <input
+              type="text"
+              placeholder="Name (e.g. Rent)"
+              class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 transition-colors text-text-main"
+              data-recurring-title
+            />
+            <input
+              type="number"
+              placeholder="€"
+              class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 text-right transition-colors text-text-main"
+              data-recurring-amount
+            />
+            <select class="min-w-0 bg-surface border border-border rounded-lg px-2 py-1 text-xs text-text-main appearance-none focus:outline-none focus:border-primary" data-recurring-category>
+              <option value="fund">Fund.</option>
+              <option value="fun">Fun</option>
+              <option value="future">Future</option>
+            </select>
+            <button type="button" class="text-primary hover:text-primary/80 font-bold text-xs bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 transition-all" data-recurring-submit>
               Add
             </button>
           </div>
@@ -154,3 +218,310 @@ const obligations = [
     </main>
   </form>
 </Layout>
+
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm" data-expense-modal>
+  <div class="w-[90%] max-w-xs rounded-2xl border border-border bg-surface p-4 shadow-lg">
+    <h4 class="text-sm font-bold text-text-main" data-expense-modal-title>Delete item?</h4>
+    <p class="mt-1 text-xs text-text-muted" data-expense-modal-body>
+      This removes the item from your list.
+    </p>
+    <div class="mt-4 flex gap-2">
+      <button
+        class="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted hover:text-text-main hover:border-primary/50 transition-colors"
+        data-expense-cancel
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="flex-1 rounded-lg bg-red-500/20 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/30 transition-colors"
+        data-expense-confirm
+        type="button"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('expenses-settings-form');
+  const checklistRoot = document.querySelector('[data-checklist-list]');
+  const checklistAdd = document.querySelector('[data-checklist-add]');
+  const recurringRoot = document.querySelector('[data-recurring-list]');
+  const recurringAdd = document.querySelector('[data-recurring-add]');
+  const ratioTotalEl = document.querySelector('[data-ratio-total]');
+  const ratioLabels = {
+    fund: document.querySelector('[data-ratio-label="fund"]'),
+    fun: document.querySelector('[data-ratio-label="fun"]'),
+    future: document.querySelector('[data-ratio-label="future"]')
+  };
+  const modal = document.querySelector('[data-expense-modal]');
+  const modalTitle = modal?.querySelector('[data-expense-modal-title]');
+  const modalBody = modal?.querySelector('[data-expense-modal-body]');
+  const cancelButton = modal?.querySelector('[data-expense-cancel]');
+  const confirmButton = modal?.querySelector('[data-expense-confirm]');
+  let pendingDelete = null;
+
+  const parseAmount = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
+
+  const updateRatios = () => {
+    if (!form) return;
+    const fundValue = Number(form.querySelector('[name="ratioFund"]')?.value || 0);
+    const funValue = Number(form.querySelector('[name="ratioFun"]')?.value || 0);
+    const futureValue = Number(form.querySelector('[name="ratioFuture"]')?.value || 0);
+    const total = fundValue + funValue + futureValue;
+
+    if (ratioTotalEl) {
+      ratioTotalEl.textContent = `Total: ${total}%`;
+    }
+
+    if (ratioLabels.fund) ratioLabels.fund.textContent = `${fundValue}%`;
+    if (ratioLabels.fun) ratioLabels.fun.textContent = `${funValue}%`;
+    if (ratioLabels.future) ratioLabels.future.textContent = `${futureValue}%`;
+  };
+
+  const bindRatioUpdates = () => {
+    if (!form) return;
+    const inputs = form.querySelectorAll('input[type="range"][name^="ratio"]');
+    inputs.forEach((input) => {
+      input.addEventListener('input', updateRatios);
+      input.addEventListener('change', updateRatios);
+    });
+  };
+
+  const openModal = (options) => {
+    pendingDelete = options;
+    if (modalTitle) modalTitle.textContent = options.title;
+    if (modalBody) modalBody.textContent = options.body;
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  };
+
+  const closeModal = () => {
+    pendingDelete = null;
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+  };
+
+  if (modal) {
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+  }
+
+  if (cancelButton) {
+    cancelButton.addEventListener('click', () => closeModal());
+  }
+
+  if (confirmButton) {
+    confirmButton.addEventListener('click', async () => {
+      if (!pendingDelete) return;
+
+      confirmButton.setAttribute('disabled', 'true');
+      const originalText = confirmButton.textContent;
+      confirmButton.textContent = 'Deleting...';
+
+      try {
+        const response = await fetch(pendingDelete.endpoint, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id: pendingDelete.id })
+        });
+
+        if (response.ok) {
+          window.location.reload();
+          return;
+        }
+      } catch {
+        // noop
+      }
+
+      confirmButton.removeAttribute('disabled');
+      confirmButton.textContent = originalText || 'Delete';
+      window.alert('Unable to delete item.');
+    });
+  }
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const payload = Object.fromEntries(new FormData(form));
+
+    try {
+      const response = await fetch('/api/expenses/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        window.location.href = '/expenses';
+        return;
+      }
+    } catch {
+      // noop
+    }
+
+    window.alert('Failed to save settings.');
+  });
+
+  updateRatios();
+  bindRatioUpdates();
+
+  const handleChecklistAdd = async () => {
+    if (!checklistAdd) return;
+    const titleInput = checklistAdd.querySelector('[data-checklist-title]');
+    const amountInput = checklistAdd.querySelector('[data-checklist-amount]');
+    const categoryInput = checklistAdd.querySelector('[data-checklist-category]');
+    const button = checklistAdd.querySelector('[data-checklist-submit]');
+    if (!(titleInput instanceof HTMLInputElement)) return;
+    if (!(amountInput instanceof HTMLInputElement)) return;
+    if (!(categoryInput instanceof HTMLSelectElement)) return;
+    if (!(button instanceof HTMLButtonElement)) return;
+
+    const title = titleInput.value.trim();
+    const amount = parseAmount(amountInput.value);
+    if (!title || amount === undefined) return;
+
+    button.setAttribute('disabled', 'true');
+    try {
+      const response = await fetch('/api/expenses/checklist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title,
+          amount,
+          category: categoryInput.value
+        })
+      });
+
+      if (response.ok) {
+        window.location.reload();
+        return;
+      }
+    } catch {
+      // noop
+    }
+
+    button.removeAttribute('disabled');
+    window.alert('Unable to add checklist item.');
+  };
+
+  if (checklistAdd) {
+    checklistAdd.addEventListener('click', async (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest('[data-checklist-submit]');
+      if (!button) return;
+      await handleChecklistAdd();
+    });
+
+    checklistAdd.addEventListener('keydown', async (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      await handleChecklistAdd();
+    });
+  }
+
+  if (checklistRoot) {
+    checklistRoot.addEventListener('click', async (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const deleteButton = target.closest('[data-checklist-delete]');
+      if (!deleteButton) return;
+
+      const id = deleteButton.getAttribute('data-checklist-id');
+      if (!id) return;
+      openModal({
+        id,
+        endpoint: '/api/expenses/checklist',
+        title: 'Delete checklist item?',
+        body: 'This removes the item from your monthly checklist.'
+      });
+    });
+  }
+
+  if (recurringAdd) {
+    recurringAdd.addEventListener('click', async (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest('[data-recurring-submit]');
+      if (!button) return;
+      const titleInput = recurringAdd.querySelector('[data-recurring-title]');
+      const amountInput = recurringAdd.querySelector('[data-recurring-amount]');
+      const categoryInput = recurringAdd.querySelector('[data-recurring-category]');
+      if (!(titleInput instanceof HTMLInputElement)) return;
+      if (!(amountInput instanceof HTMLInputElement)) return;
+      if (!(categoryInput instanceof HTMLSelectElement)) return;
+
+      const title = titleInput.value.trim();
+      const amount = parseAmount(amountInput.value);
+      if (!title || amount === undefined) return;
+
+      button.setAttribute('disabled', 'true');
+      try {
+        const response = await fetch('/api/expenses/recurring', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title,
+            amount,
+            category: categoryInput.value
+          })
+        });
+
+        if (response.ok) {
+          window.location.reload();
+          return;
+        }
+      } catch {
+        // noop
+      }
+
+      button.removeAttribute('disabled');
+      window.alert('Unable to add recurring expense.');
+    });
+
+    recurringAdd.addEventListener('keydown', async (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      const button = recurringAdd.querySelector('[data-recurring-submit]');
+      if (!(button instanceof HTMLButtonElement)) return;
+      button.click();
+    });
+  }
+
+  if (recurringRoot) {
+    recurringRoot.addEventListener('click', async (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const deleteButton = target.closest('[data-recurring-delete]');
+      if (!deleteButton) return;
+
+      const id = deleteButton.getAttribute('data-recurring-id');
+      if (!id) return;
+      openModal({
+        id,
+        endpoint: '/api/expenses/recurring',
+        title: 'Delete recurring expense?',
+        body: 'This removes the item from future sheets.'
+      });
+    });
+  }
+</script>

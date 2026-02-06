@@ -3,21 +3,21 @@ import Layout from '@/shared/layouts/Layout.astro';
 import '@/shared/styles/global.css'; 
 
 const categories = [
-  { id: 'fund', label: 'Fundamentals', color: 'peer-checked:bg-red-500 peer-checked:border-red-500', icon: '🏠' },
-  { id: 'fun', label: 'Fun', color: 'peer-checked:bg-orange-500 peer-checked:border-orange-500', icon: '🎉' },
-  { id: 'future', label: 'Future', color: 'peer-checked:bg-emerald-500 peer-checked:border-emerald-500', icon: '🚀' },
+  { id: 'fund', label: 'Fundamentals', color: 'peer-checked:border-red-500 peer-checked:ring-2 peer-checked:ring-red-500/30', icon: '🏠' },
+  { id: 'fun', label: 'Fun', color: 'peer-checked:border-orange-500 peer-checked:ring-2 peer-checked:ring-orange-500/30', icon: '🎉' },
+  { id: 'future', label: 'Future', color: 'peer-checked:border-emerald-500 peer-checked:ring-2 peer-checked:ring-emerald-500/30', icon: '🚀' },
 ];
 
 const today = new Date().toISOString().split('T')[0];
 ---
 
 <Layout>
-  <form class="min-h-screen bg-background flex flex-col animate-fade-in relative max-w-lg mx-auto text-text-main font-sans">
+  <form id="expense-form" class="min-h-screen bg-background flex flex-col animate-fade-in relative max-w-lg mx-auto text-text-main font-sans">
     
     <header class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
       <a href="/expenses" class="text-text-muted hover:text-text-main text-sm transition-colors">Cancel</a>
       <h1 class="text-base font-bold">New Expense</h1>
-      <button type="button" onclick="window.location.href='/expenses'" class="text-primary font-bold text-sm hover:text-primary/80 transition-colors">
+      <button type="submit" class="text-primary font-bold text-sm hover:text-primary/80 transition-colors">
         Save
       </button>
     </header>
@@ -34,6 +34,7 @@ const today = new Date().toISOString().split('T')[0];
             name="amount" 
             placeholder="0.00" 
             step="0.01"
+            required
             autofocus
             class="w-full bg-transparent border-b-2 border-border text-center text-5xl font-bold text-text-main focus:outline-none focus:border-primary pb-2 placeholder:text-text-muted/20"
           />
@@ -45,20 +46,19 @@ const today = new Date().toISOString().split('T')[0];
         <div class="grid grid-cols-3 gap-3">
           {categories.map(cat => (
             <label class="cursor-pointer group relative">
-              <input type="radio" name="category" value={cat.id} class="peer sr-only" />
+              <input type="radio" name="category" value={cat.id} class="peer sr-only" required />
               <div class={`
                 h-24 rounded-2xl border border-border bg-surface 
                 flex flex-col items-center justify-center gap-2
                 transition-all duration-200
-                peer-checked:text-white peer-checked:shadow-lg
                 ${cat.color}
               `}>
                 <span class="text-2xl group-active:scale-90 transition-transform">{cat.icon}</span>
-                <span class="text-xs font-medium text-text-muted peer-checked:text-white">{cat.label}</span>
+                <span class="text-xs font-medium text-text-muted">{cat.label}</span>
               </div>
               
               <div class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-primary">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
                 </svg>
               </div>
@@ -94,3 +94,32 @@ const today = new Date().toISOString().split('T')[0];
     </main>
   </form>
 </Layout>
+
+<script>
+  const form = document.getElementById('expense-form');
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData);
+
+    try {
+      const response = await fetch('/api/expenses/expense', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        window.location.href = '/expenses';
+        return;
+      }
+    } catch {
+      // noop
+    }
+
+    window.alert('Failed to save expense.');
+  });
+</script>

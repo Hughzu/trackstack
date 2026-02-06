@@ -1,0 +1,9 @@
+- finish expenses features
+- finish dashboard features
+- add authentication
+- implement turso
+- implement schema migrations ? has to be compliant with go in the future
+-hetzner provisioning
+- deploy the app (dockerize front?)
+- clean web app
+- clean and make sure you understand the cicd, the provisioning and the k3s config
