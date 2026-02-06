@@ -222,6 +222,17 @@ export const caloriesService = {
     return rows.map(mapLogRow);
   },
 
+  getRecentLogs: (userId: string, limit = 8) => {
+    const db = getCaloriesDb();
+    const rows = db
+      .prepare(
+        "SELECT id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title FROM calorie_logs WHERE user_id = ? AND title IS NOT NULL AND TRIM(title) != '' ORDER BY date_time DESC LIMIT ?"
+      )
+      .all(userId, limit) as CalorieLogRow[];
+
+    return rows.map(mapLogRow);
+  },
+
   addLog: (data: Omit<CalorieLog, "id" | "dateTime"> & { date: string; time?: string }) => {
     const db = getCaloriesDb();
     const id = randomUUID();
