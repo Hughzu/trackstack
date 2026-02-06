@@ -56,25 +56,24 @@ const formatTime = (date: Date) =>
           </div>
           <div class="text-right">
              <span class="text-xs text-text-muted uppercase tracking-widest">Protein</span>
-             <div class="text-sm font-bold text-emerald-400">{summary.protein}g <span class="text-text-muted font-normal">/ {summary.target.targetProteinG}g</span></div>
+             <div class="text-sm font-bold text-primary">{summary.protein}g <span class="text-text-muted font-normal">/ {summary.target.targetProteinG}g</span></div>
           </div>
         </div>
 
         <!-- Progress Bar -->
         <div class="relative w-full h-3 bg-gray-800 rounded-full overflow-hidden mb-6">
-          <div class="absolute top-0 left-0 h-full bg-orange-400 rounded-full transition-all duration-500" style={`width: ${percent}%`}></div>
+          <div class="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500" style={`width: ${percent}%`}></div>
         </div>
 
         <!-- Macros Grid -->
-        <div class="grid grid-cols-3 gap-2 text-center divide-x divide-white/10">
-          {macros.map(m => (
-             <div class="px-1">
-               <div class={`w-1.5 h-1.5 rounded-full ${m.color} mx-auto mb-1`}></div>
-               <div class="text-[10px] text-text-muted uppercase">{m.label}</div>
-               <div class="text-xs font-bold">{m.amount}</div>
-             </div>
-          ))}
-        </div>
+         <div class="grid grid-cols-3 gap-2 text-center divide-x divide-white/10">
+           {macros.map(m => (
+              <div class="px-1">
+                <div class="text-[10px] text-text-muted uppercase">{m.label}</div>
+                <div class="text-xs font-bold">{m.amount}</div>
+              </div>
+           ))}
+         </div>
       </Card>
     </section>
 
@@ -120,10 +119,10 @@ const formatTime = (date: Date) =>
           <div class="p-3 flex justify-between items-center group">
             <div>
               <div class="font-medium text-sm text-text-main">{log.title ?? 'Untitled'}</div>
-              <div class="text-[10px] text-text-muted flex gap-2">
-                <span>{formatTime(log.dateTime)}</span>
-                <span class="text-emerald-400/80">{log.proteinG}g prot</span>
-              </div>
+               <div class="text-[10px] text-text-muted flex gap-2">
+                 <span>{formatTime(log.dateTime)}</span>
+                 <span class="text-primary">{log.proteinG}g prot</span>
+               </div>
             </div>
             <div class="flex items-center gap-3">
               <span class="font-mono text-sm text-text-main">{log.calories}</span>

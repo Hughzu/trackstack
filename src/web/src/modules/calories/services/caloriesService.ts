@@ -226,7 +226,7 @@ export const caloriesService = {
     const db = getCaloriesDb();
     const rows = db
       .prepare(
-        "SELECT id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title FROM calorie_logs WHERE user_id = ? AND title IS NOT NULL AND TRIM(title) != '' ORDER BY date_time DESC LIMIT ?"
+        "WITH ranked AS (SELECT id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title, ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(title)) ORDER BY date_time DESC) AS rn FROM calorie_logs WHERE user_id = ? AND title IS NOT NULL AND TRIM(title) != '') SELECT id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title FROM ranked WHERE rn = 1 ORDER BY date_time DESC LIMIT ?"
       )
       .all(userId, limit) as CalorieLogRow[];
 
