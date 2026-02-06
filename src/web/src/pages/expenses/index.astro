@@ -173,10 +173,18 @@ const formatDateLabel = (dateValue: string) => {
     </section>
 
     <section>
-      <h3 class="text-sm font-bold text-text-muted mb-2 px-1">History</h3>
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-2 px-1">
+        <h3 class="text-sm font-bold text-text-muted">History</h3>
+        <div class="flex items-center gap-2" data-expense-filters>
+          <button class="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-widest border border-white/10 text-text-muted bg-white/10" data-expense-filter="all" type="button">All</button>
+          <button class="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-widest border border-red-500/40 text-red-300 hover:bg-red-500/10 opacity-50" data-expense-filter="fund" type="button">Fund.</button>
+          <button class="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-widest border border-orange-500/40 text-orange-300 hover:bg-orange-500/10 opacity-50" data-expense-filter="fun" type="button">Fun</button>
+          <button class="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-widest border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 opacity-50" data-expense-filter="future" type="button">Future</button>
+        </div>
+      </div>
       <div class="bg-[#1e2128] border border-primary/20 rounded-2xl shadow-lg shadow-black/40 divide-y divide-white/5 overflow-hidden" data-expense-history>
         {history.map(tx => (
-          <div class="p-3 flex justify-between items-center group">
+          <div class="p-3 flex justify-between items-center group" data-expense-item data-expense-category={tx.category}>
             <div>
               <div class="font-medium text-sm flex items-center gap-2">
                 {tx.title}
@@ -270,6 +278,7 @@ const formatDateLabel = (dateValue: string) => {
   const checklistRoot = document.querySelector('[data-expense-checklist]');
   const historyRoot = document.querySelector('[data-expense-history]');
   const closeButton = document.querySelector('[data-expense-close]');
+  const filterRoot = document.querySelector('[data-expense-filters]');
   const modal = document.querySelector('[data-expense-modal]');
   const modalTitle = modal?.querySelector('[data-expense-modal-title]');
   const modalBody = modal?.querySelector('[data-expense-modal-body]');
@@ -405,6 +414,41 @@ const formatDateLabel = (dateValue: string) => {
         confirmText: 'Close month',
         confirmLabel: 'Closing...',
         errorMessage: 'Unable to close month.'
+      });
+    });
+  }
+
+  if (filterRoot && historyRoot) {
+    filterRoot.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const button = target.closest('[data-expense-filter]');
+      if (!button) return;
+
+      const value = button.getAttribute('data-expense-filter') || 'all';
+      const buttons = filterRoot.querySelectorAll('[data-expense-filter]');
+      buttons.forEach((btn) => {
+        if (!(btn instanceof HTMLElement)) return;
+        const isActive = btn.getAttribute('data-expense-filter') === value;
+        if (isActive) {
+          btn.classList.add('bg-white/10');
+          btn.classList.remove('opacity-50');
+        } else {
+          btn.classList.remove('bg-white/10');
+          btn.classList.add('opacity-50');
+        }
+      });
+
+      const rows = historyRoot.querySelectorAll('[data-expense-item]');
+      rows.forEach((row) => {
+        if (!(row instanceof HTMLElement)) return;
+        const category = row.getAttribute('data-expense-category');
+        if (value === 'all' || category === value) {
+          row.classList.remove('hidden');
+        } else {
+          row.classList.add('hidden');
+        }
       });
     });
   }
