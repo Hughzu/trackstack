@@ -14,24 +14,41 @@ const balance = {
   income: dashboard.settings.income
 };
 
+const spent = {
+  fund: Math.round(dashboard.spentByCategory.fund * 100) / 100,
+  fun: Math.round(dashboard.spentByCategory.fun * 100) / 100,
+  future: Math.round(dashboard.spentByCategory.future * 100) / 100
+};
+
+const budget = {
+  fund: Math.round((balance.income * dashboard.settings.ratioFund) / 100),
+  fun: Math.round((balance.income * dashboard.settings.ratioFun) / 100),
+  future: Math.round((balance.income * dashboard.settings.ratioFuture) / 100)
+};
+
+const totalSpent = spent.fund + spent.fun + spent.future;
+
 const ratios = [
   {
-    percent: dashboard.settings.ratioFund,
+    percent: totalSpent ? Math.round((spent.fund / totalSpent) * 100) : 0,
     color: 'bg-red-500',
     label: 'Fund.',
-    value: Math.round((balance.income * dashboard.settings.ratioFund) / 100)
+    value: spent.fund,
+    budget: budget.fund
   },
   {
-    percent: dashboard.settings.ratioFun,
+    percent: totalSpent ? Math.round((spent.fun / totalSpent) * 100) : 0,
     color: 'bg-orange-500',
     label: 'Fun',
-    value: Math.round((balance.income * dashboard.settings.ratioFun) / 100)
+    value: spent.fun,
+    budget: budget.fun
   },
   {
-    percent: dashboard.settings.ratioFuture,
+    percent: totalSpent ? Math.round((spent.future / totalSpent) * 100) : 0,
     color: 'bg-emerald-500',
     label: 'Future',
-    value: Math.round((balance.income * dashboard.settings.ratioFuture) / 100)
+    value: spent.future,
+    budget: budget.future
   }
 ];
 
@@ -90,15 +107,16 @@ const formatDateLabel = (dateValue: string) => {
           <PercentageBar segments={ratios} />
         </div>
 
-        <div class="flex justify-between text-center divide-x divide-white/10">
-          {ratios.map(r => (
-             <div class="flex-1 px-1">
-               <div class={`w-1.5 h-1.5 rounded-full ${r.color} mx-auto mb-1`}></div>
-               <div class="text-[10px] text-text-muted uppercase">{r.label}</div>
-               <div class="text-xs font-bold">€{r.value}</div>
-             </div>
-          ))}
-        </div>
+         <div class="flex justify-between text-center divide-x divide-white/10">
+           {ratios.map(r => (
+              <div class="flex-1 px-1">
+                <div class={`w-1.5 h-1.5 rounded-full ${r.color} mx-auto mb-1`}></div>
+                <div class="text-[10px] text-text-muted uppercase">{r.label}</div>
+                <div class="text-xs font-bold">€{r.value}</div>
+                <div class="text-[10px] text-text-muted">/ €{r.budget}</div>
+              </div>
+           ))}
+         </div>
       </Card>
     </section>
 

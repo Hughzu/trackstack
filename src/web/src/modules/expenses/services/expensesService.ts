@@ -597,6 +597,20 @@ export const expensesService = {
       .prepare("SELECT COALESCE(SUM(amount), 0) as total FROM expense_entries WHERE sheet_id = ?")
       .get(sheet.id) as { total: number };
 
+    const spentRows = db
+      .prepare(
+        "SELECT category, COALESCE(SUM(amount), 0) as total FROM expense_entries WHERE sheet_id = ? GROUP BY category"
+      )
+      .all(sheet.id) as Array<{ category: ExpenseCategory; total: number }>;
+
+    const spentByCategory = spentRows.reduce(
+      (acc, row) => {
+        acc[row.category] = row.total;
+        return acc;
+      },
+      { fund: 0, fun: 0, future: 0 } as Record<ExpenseCategory, number>
+    );
+
     const pendingRows = db
       .prepare(
         "SELECT id, sheet_id, template_id, title, amount, category, created_at, completed_at, expense_id FROM expense_checklist_items WHERE sheet_id = ? AND completed_at IS NULL ORDER BY created_at ASC"
@@ -613,6 +627,7 @@ export const expensesService = {
       settings,
       sheet,
       totalSpent: totalRow?.total ?? 0,
+      spentByCategory,
       pendingChecklist: pendingRows.map(mapChecklistRow),
       history: historyRows.map(mapEntryRow)
     };
