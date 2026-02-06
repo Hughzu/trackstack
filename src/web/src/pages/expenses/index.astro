@@ -211,8 +211,8 @@ const formatDateLabel = (dateValue: string) => {
 
 <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm" data-expense-modal>
   <div class="w-[90%] max-w-xs rounded-2xl border border-border bg-surface p-4 shadow-lg">
-    <h4 class="text-sm font-bold text-text-main">Delete expense?</h4>
-    <p class="mt-1 text-xs text-text-muted">
+    <h4 class="text-sm font-bold text-text-main" data-expense-modal-title>Delete expense?</h4>
+    <p class="mt-1 text-xs text-text-muted" data-expense-modal-body>
       This removes the entry from your history.
     </p>
     <div class="mt-4 flex gap-2">
@@ -239,18 +239,24 @@ const formatDateLabel = (dateValue: string) => {
   const historyRoot = document.querySelector('[data-expense-history]');
   const closeButton = document.querySelector('[data-expense-close]');
   const modal = document.querySelector('[data-expense-modal]');
+  const modalTitle = modal?.querySelector('[data-expense-modal-title]');
+  const modalBody = modal?.querySelector('[data-expense-modal-body]');
   const cancelButton = modal?.querySelector('[data-expense-cancel]');
   const confirmButton = modal?.querySelector('[data-expense-confirm]');
-  let pendingId = null;
+  let pendingAction = null;
 
-  const openModal = (id) => {
-    pendingId = id;
+  const openModal = (action) => {
+    pendingAction = action;
+    if (modalTitle) modalTitle.textContent = action.title;
+    if (modalBody) modalBody.textContent = action.body;
+    if (confirmButton && action.confirmText) confirmButton.textContent = action.confirmText;
     modal?.classList.remove('hidden');
     modal?.classList.add('flex');
   };
 
   const closeModal = () => {
-    pendingId = null;
+    pendingAction = null;
+    if (confirmButton) confirmButton.textContent = 'Delete';
     modal?.classList.add('hidden');
     modal?.classList.remove('flex');
   };
@@ -303,20 +309,14 @@ const formatDateLabel = (dateValue: string) => {
 
   if (confirmButton) {
     confirmButton.addEventListener('click', async () => {
-      if (!pendingId) return;
+      if (!pendingAction) return;
 
       confirmButton.setAttribute('disabled', 'true');
       const originalText = confirmButton.textContent;
-      confirmButton.textContent = 'Deleting...';
+      confirmButton.textContent = pendingAction.confirmLabel ?? 'Working...';
 
       try {
-        const response = await fetch('/api/expenses/expense', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ id: pendingId })
-        });
+        const response = await fetch(pendingAction.endpoint, pendingAction.options ?? {});
 
         if (response.ok) {
           window.location.reload();
@@ -328,7 +328,7 @@ const formatDateLabel = (dateValue: string) => {
 
       confirmButton.removeAttribute('disabled');
       confirmButton.textContent = originalText || 'Delete';
-      window.alert('Unable to delete expense.');
+      window.alert(pendingAction.errorMessage ?? 'Unable to complete action.');
     });
   }
 
@@ -343,30 +343,37 @@ const formatDateLabel = (dateValue: string) => {
       const expenseId = button.getAttribute('data-expense-id');
       if (!expenseId) return;
 
-      openModal(expenseId);
+      openModal({
+        title: 'Delete expense?',
+        body: 'This removes the entry from your history.',
+        endpoint: '/api/expenses/expense',
+        options: {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id: expenseId })
+        },
+        confirmText: 'Delete',
+        confirmLabel: 'Deleting...',
+        errorMessage: 'Unable to delete expense.'
+      });
     });
   }
 
   if (closeButton) {
     closeButton.addEventListener('click', async () => {
-      if (!window.confirm('Close this month and start a new sheet?')) return;
-
-      closeButton.setAttribute('disabled', 'true');
-      try {
-        const response = await fetch('/api/expenses/close', {
+      openModal({
+        title: 'Close month?',
+        body: 'This closes the current sheet and starts a new one.',
+        endpoint: '/api/expenses/close',
+        options: {
           method: 'POST'
-        });
-
-        if (response.ok) {
-          window.location.reload();
-          return;
-        }
-      } catch {
-        // noop
-      }
-
-      closeButton.removeAttribute('disabled');
-      window.alert('Unable to close month.');
+        },
+        confirmText: 'Close month',
+        confirmLabel: 'Closing...',
+        errorMessage: 'Unable to close month.'
+      });
     });
   }
 </script>
