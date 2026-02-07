@@ -32,6 +32,8 @@ Thumbs.db
 # Environment files
 .env
 .env.local
+src/web/.env
+src/web/.env.*
 
 # SQLite databases
 *.db
