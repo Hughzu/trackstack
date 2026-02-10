@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Atlas
-        uses: arigaio/setup-atlas@v0
+        uses: ariga/setup-atlas@v0
 
       - name: Apply migrations (calories)
         run: atlas migrate apply --env calories
