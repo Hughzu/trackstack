@@ -1,5 +1,3 @@
-- implement turso
-- implement schema migrations ? has to be compliant with go in the future
 - clean web app (apply patterns, clean the vibe coded code)
 - add authentication
 - hetzner provisioning
