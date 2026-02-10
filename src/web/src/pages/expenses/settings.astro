@@ -5,9 +5,9 @@ import { expensesService } from '@/modules/expenses/services/expensesService';
 import { getCurrentUserId } from '@/shared/auth/currentUser';
 
 const currentUserId = getCurrentUserId();
-const config = expensesService.getSettings(currentUserId);
-const obligations = expensesService.getChecklistTemplates(currentUserId);
-const recurring = expensesService.getRecurringTemplates(currentUserId);
+const config = await expensesService.getSettings(currentUserId);
+const obligations = await expensesService.getChecklistTemplates(currentUserId);
+const recurring = await expensesService.getRecurringTemplates(currentUserId);
 const ratioTotal = config.ratioFund + config.ratioFun + config.ratioFuture;
 
 const formatCategory = (category: string) => {

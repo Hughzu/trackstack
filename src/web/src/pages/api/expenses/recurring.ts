@@ -33,7 +33,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  const template = expensesService.upsertRecurringTemplate({
+  const template = await expensesService.upsertRecurringTemplate({
     id: data.id,
     userId: getCurrentUserId(),
     title: data.title.trim(),
@@ -71,7 +71,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     });
   }
 
-  const deleted = expensesService.deleteRecurringTemplate(data.id, getCurrentUserId());
+  const deleted = await expensesService.deleteRecurringTemplate(data.id, getCurrentUserId());
   if (!deleted) {
     return new Response(JSON.stringify({ error: "Template not found" }), {
       status: 404,

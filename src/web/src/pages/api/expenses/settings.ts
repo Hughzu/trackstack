@@ -6,9 +6,9 @@ export const prerender = false;
 
 export const GET: APIRoute = async () => {
   const userId = getCurrentUserId();
-  const settings = expensesService.getSettings(userId);
-  const checklist = expensesService.getChecklistTemplates(userId);
-  const recurring = expensesService.getRecurringTemplates(userId);
+  const settings = await expensesService.getSettings(userId);
+  const checklist = await expensesService.getChecklistTemplates(userId);
+  const recurring = await expensesService.getRecurringTemplates(userId);
 
   return new Response(JSON.stringify({ settings, checklist, recurring }), {
     status: 200,
@@ -58,7 +58,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  const settings = expensesService.updateSettings({
+  const settings = await expensesService.updateSettings({
     userId: getCurrentUserId(),
     income,
     ratioFund,

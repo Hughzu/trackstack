@@ -9,7 +9,7 @@ import { getCurrentUserId } from '@/shared/auth/currentUser';
 
 const currentUserId = getCurrentUserId();
 
-const expenseDashboard = expensesService.getDashboard(currentUserId);
+const expenseDashboard = await expensesService.getDashboard(currentUserId);
 const balance = {
   remaining: Math.round((expenseDashboard.settings.income - expenseDashboard.totalSpent) * 100) / 100,
   income: expenseDashboard.settings.income
@@ -48,14 +48,14 @@ const expenseRatios = [
   }
 ];
 
-const healthSummary = caloriesService.getTodaySummary(currentUserId);
+const healthSummary = await caloriesService.getTodaySummary(currentUserId);
 const calorieTarget = healthSummary.target.targetKcal;
 const caloriePercent = calorieTarget
   ? Math.min(Math.round((healthSummary.consumed / calorieTarget) * 100), 100)
   : 0;
 
-const daysSinceRefill = heatService.getDaysSinceLastRefill(currentUserId);
-const seasonSnapshot = heatService.getSeasonSnapshot(currentUserId);
+const daysSinceRefill = await heatService.getDaysSinceLastRefill(currentUserId);
+const seasonSnapshot = await heatService.getSeasonSnapshot(currentUserId);
 ---
 
 <AppShell title="Overview" currentDomain="home">

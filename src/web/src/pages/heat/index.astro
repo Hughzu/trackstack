@@ -9,10 +9,10 @@ import { getCurrentUserId } from "@/shared/auth/currentUser";
 
 // Fetch Data
 const currentUserId = getCurrentUserId();
-const daysSinceRefill = heatService.getDaysSinceLastRefill(currentUserId);
-const seasonSnapshot = heatService.getSeasonSnapshot(currentUserId);
+const daysSinceRefill = await heatService.getDaysSinceLastRefill(currentUserId);
+const seasonSnapshot = await heatService.getSeasonSnapshot(currentUserId);
 
-const historyPage = heatService.getHistory(1, 20, currentUserId);
+const historyPage = await heatService.getHistory(1, 20, currentUserId);
 ---
 
 <AppShell title="Heating" currentDomain="heat">

@@ -6,9 +6,9 @@ import { caloriesService } from '@/modules/calories/services/caloriesService';
 import { getCurrentUserId } from '@/shared/auth/currentUser';
 
 const currentUserId = getCurrentUserId();
-const summary = caloriesService.getTodaySummary(currentUserId);
-const logs = caloriesService.getTodayLogs(currentUserId);
-const recentMeals = caloriesService.getRecentLogs(currentUserId, 8);
+const summary = await caloriesService.getTodaySummary(currentUserId);
+const logs = await caloriesService.getTodayLogs(currentUserId);
+const recentMeals = await caloriesService.getRecentLogs(currentUserId, 8);
 const percent = summary.target.targetKcal
   ? Math.min((summary.consumed / summary.target.targetKcal) * 100, 100)
   : 0;

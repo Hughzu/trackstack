@@ -5,7 +5,7 @@ import { caloriesService } from '@/modules/calories/services/caloriesService';
 import { getCurrentUserId } from '@/shared/auth/currentUser';
 
 const currentUserId = getCurrentUserId();
-const target = caloriesService.getTarget(currentUserId);
+const target = await caloriesService.getTarget(currentUserId);
 ---
 
 <Layout>

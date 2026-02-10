@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const newRefill = heatService.addRefill({
+    const newRefill = await heatService.addRefill({
       userId: getCurrentUserId(),
       date: new Date(data.date),
       weightKg: Number(data.weightKg),
@@ -67,7 +67,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     });
   }
 
-  const deleted = heatService.deleteRefill(data.id, getCurrentUserId());
+  const deleted = await heatService.deleteRefill(data.id, getCurrentUserId());
   if (!deleted) {
     return new Response(JSON.stringify({ error: 'Refill not found' }), {
       status: 404,

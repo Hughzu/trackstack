@@ -42,13 +42,12 @@ const getSeasonRange = (startYear: number) => {
   };
 };
 
-const getSeasonSum = (userId: string, start: Date, end: Date) => {
+const getSeasonSum = async (userId: string, start: Date, end: Date) => {
   const db = getHeatDb();
-  const row = db
-    .prepare(
-      "SELECT COALESCE(SUM(bags), 0) as total FROM refills WHERE user_id = ? AND date >= ? AND date < ?"
-    )
-    .get(userId, start.toISOString(), end.toISOString()) as { total: number } | undefined;
+  const row = await db.get<{ total: number }>(
+    "SELECT COALESCE(SUM(bags), 0) as total FROM refills WHERE user_id = ? AND date >= ? AND date < ?",
+    [userId, start.toISOString(), end.toISOString()]
+  );
 
   return row?.total ?? 0;
 };
@@ -57,11 +56,12 @@ export const heatService = {
   /**
    * Calculates days elapsed since the most recent refill.
    */
-  getDaysSinceLastRefill: (userId: string): number => {
+  getDaysSinceLastRefill: async (userId: string): Promise<number> => {
     const db = getHeatDb();
-    const row = db
-      .prepare("SELECT date FROM refills WHERE user_id = ? ORDER BY date DESC LIMIT 1")
-      .get(userId) as { date?: string } | undefined;
+    const row = await db.get<{ date?: string }>(
+      "SELECT date FROM refills WHERE user_id = ? ORDER BY date DESC LIMIT 1",
+      [userId]
+    );
 
     if (!row?.date) return 0;
 
@@ -81,15 +81,16 @@ export const heatService = {
   /**
    * Returns an array of 12 numbers representing bags used per month (Jan-Dec) for a given year.
    */
-  getMonthlyConsumption: (year: number, userId: string): number[] => {
+  getMonthlyConsumption: async (year: number, userId: string): Promise<number[]> => {
     const monthlyData = new Array(12).fill(0);
     const db = getHeatDb();
     const start = new Date(Date.UTC(year, 0, 1));
     const end = new Date(Date.UTC(year + 1, 0, 1));
 
-    const rows = db
-      .prepare("SELECT date, bags FROM refills WHERE user_id = ? AND date >= ? AND date < ?")
-      .all(userId, start.toISOString(), end.toISOString()) as Array<{ date: string; bags: number }>;
+    const rows = await db.all<{ date: string; bags: number }>(
+      "SELECT date, bags FROM refills WHERE user_id = ? AND date >= ? AND date < ?",
+      [userId, start.toISOString(), end.toISOString()]
+    );
 
     rows.forEach(row => {
       const date = new Date(row.date);
@@ -102,18 +103,18 @@ export const heatService = {
   /**
    * Retrieves paginated history sorted by date descending.
    */
-  getHistory: (page: number = 1, limit: number = 10, userId: string) => {
+  getHistory: async (page: number = 1, limit: number = 10, userId: string) => {
     const db = getHeatDb();
     const offset = (page - 1) * limit;
-    const rows = db
-      .prepare(
-        "SELECT id, user_id, date, weight_kg, bags, temperature, season FROM refills WHERE user_id = ? ORDER BY date DESC LIMIT ? OFFSET ?"
-      )
-      .all(userId, limit, offset) as RefillRow[];
+    const rows = await db.all<RefillRow>(
+      "SELECT id, user_id, date, weight_kg, bags, temperature, season FROM refills WHERE user_id = ? ORDER BY date DESC LIMIT ? OFFSET ?",
+      [userId, limit, offset]
+    );
 
-    const totalRow = db
-      .prepare("SELECT COUNT(*) as count FROM refills WHERE user_id = ?")
-      .get(userId) as { count: number };
+    const totalRow = await db.get<{ count: number }>(
+      "SELECT COUNT(*) as count FROM refills WHERE user_id = ?",
+      [userId]
+    );
 
     const total = totalRow?.count ?? 0;
 
@@ -126,7 +127,10 @@ export const heatService = {
     };
   },
 
-  getSeasonSnapshot: (userId: string, referenceDate: Date = new Date()): SeasonSnapshot => {
+  getSeasonSnapshot: async (
+    userId: string,
+    referenceDate: Date = new Date()
+  ): Promise<SeasonSnapshot> => {
     const todayUtcStart = new Date(
       Date.UTC(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate())
     );
@@ -146,8 +150,8 @@ export const heatService = {
         ? lastSeasonEndSamePeriod
         : lastSeason.end;
 
-    const seasonToDate = getSeasonSum(userId, currentSeason.start, currentEnd);
-    const lastSeasonToDate = getSeasonSum(userId, lastSeason.start, lastEnd);
+    const seasonToDate = await getSeasonSum(userId, currentSeason.start, currentEnd);
+    const lastSeasonToDate = await getSeasonSum(userId, lastSeason.start, lastEnd);
     const delta = seasonToDate - lastSeasonToDate;
     const deltaPct = lastSeasonToDate === 0 ? null : Math.round((delta / lastSeasonToDate) * 100);
 
@@ -163,23 +167,24 @@ export const heatService = {
   /**
    * Adds a new refill entry.
    */
-  addRefill: (data: Omit<Refill, "id">): Refill => {
+  addRefill: async (data: Omit<Refill, "id">): Promise<Refill> => {
     const db = getHeatDb();
     const id = randomUUID();
     const dateIso = data.date.toISOString();
     const seasonStartYear = getSeasonStartYear(data.date);
     const seasonLabel = `${seasonStartYear}-${seasonStartYear + 1}`;
 
-    db.prepare(
-      "INSERT INTO refills (id, user_id, date, weight_kg, bags, temperature, season) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).run(
-      id,
-      data.userId,
-      dateIso,
-      data.weightKg,
-      data.bags,
-      data.temperature ?? null,
-      seasonLabel
+    await db.run(
+      "INSERT INTO refills (id, user_id, date, weight_kg, bags, temperature, season) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [
+        id,
+        data.userId,
+        dateIso,
+        data.weightKg,
+        data.bags,
+        data.temperature ?? null,
+        seasonLabel
+      ]
     );
 
     return {
@@ -188,12 +193,10 @@ export const heatService = {
     };
   },
 
-  deleteRefill: (id: string, userId: string): boolean => {
+  deleteRefill: async (id: string, userId: string): Promise<boolean> => {
     const db = getHeatDb();
-    const result = db
-      .prepare("DELETE FROM refills WHERE id = ? AND user_id = ?")
-      .run(id, userId);
+    const changes = await db.run("DELETE FROM refills WHERE id = ? AND user_id = ?", [id, userId]);
 
-    return result.changes > 0;
+    return changes > 0;
   }
 };

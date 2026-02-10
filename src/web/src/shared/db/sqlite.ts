@@ -1,11 +1,25 @@
 import fs from "node:fs";
 import path from "node:path";
-import Database from "better-sqlite3";
+import { createClient, type Client, type ResultSet } from "@libsql/client";
 
-const dbCache = new Map<string, Database.Database>();
+type StatementArgs = Array<string | number | boolean | null>;
+
+export type DbClient = {
+  get: <T>(sql: string, args?: StatementArgs) => Promise<T | undefined>;
+  all: <T>(sql: string, args?: StatementArgs) => Promise<T[]>;
+  run: (sql: string, args?: StatementArgs) => Promise<number>;
+  execute: (sql: string, args?: StatementArgs) => Promise<ResultSet>;
+};
+
+const dbCache = new Map<string, DbClient>();
+
+const readEnv = (key: string) => {
+  const metaEnv = (import.meta as { env?: Record<string, string | undefined> }).env;
+  return metaEnv?.[key] ?? process.env[key];
+};
 
 const resolveDataDir = () => {
-  const envDir = process.env.DATA_DIR;
+  const envDir = readEnv("DATA_DIR");
   if (envDir && envDir.trim().length > 0) {
     return path.isAbsolute(envDir) ? envDir : path.resolve(process.cwd(), envDir);
   }
@@ -13,17 +27,58 @@ const resolveDataDir = () => {
   return path.resolve(process.cwd(), "..", "data");
 };
 
-export const getDb = (domain: string): Database.Database => {
-  const existing = dbCache.get(domain);
-  if (existing) return existing;
+const resolveDomainUrl = (domain: string) => {
+  const upper = domain.toUpperCase();
+  const tursoUrl = readEnv(`TURSO_${upper}_URL`);
+  if (tursoUrl && tursoUrl.trim().length > 0) return tursoUrl.trim();
 
   const dataDir = resolveDataDir();
   fs.mkdirSync(dataDir, { recursive: true });
-
   const dbPath = path.join(dataDir, `${domain}.sqlite`);
-  const db = new Database(dbPath);
-  db.pragma("journal_mode = WAL");
+  return `file:${dbPath}`;
+};
 
+const resolveDomainToken = (domain: string) => {
+  const upper = domain.toUpperCase();
+  const token = readEnv(`TURSO_${upper}_TOKEN`);
+  return token && token.trim().length > 0 ? token.trim() : undefined;
+};
+
+const createDbClient = (domain: string): DbClient => {
+  const url = resolveDomainUrl(domain);
+  const authToken = url.startsWith("libsql://") ? resolveDomainToken(domain) : undefined;
+
+  if (url.startsWith("libsql://") && !authToken) {
+    throw new Error(`Missing TURSO_${domain.toUpperCase()}_TOKEN for ${domain} database`);
+  }
+
+  console.info(`[db] ${domain} -> ${url}`);
+
+  const client: Client = createClient({ url, authToken });
+
+  return {
+    execute: async (sql: string, args?: StatementArgs) =>
+      client.execute({ sql, args: args ?? [] }),
+    get: async <T>(sql: string, args?: StatementArgs) => {
+      const result = await client.execute({ sql, args: args ?? [] });
+      return (result.rows?.[0] as T | undefined) ?? undefined;
+    },
+    all: async <T>(sql: string, args?: StatementArgs) => {
+      const result = await client.execute({ sql, args: args ?? [] });
+      return (result.rows as T[]) ?? [];
+    },
+    run: async (sql: string, args?: StatementArgs) => {
+      const result = await client.execute({ sql, args: args ?? [] });
+      return result.rowsAffected ?? 0;
+    }
+  };
+};
+
+export const getDb = (domain: string): DbClient => {
+  const existing = dbCache.get(domain);
+  if (existing) return existing;
+
+  const db = createDbClient(domain);
   dbCache.set(domain, db);
   return db;
 };

@@ -5,7 +5,7 @@ import { getCurrentUserId } from "@/shared/auth/currentUser";
 export const prerender = false;
 
 export const GET: APIRoute = async () => {
-  const target = caloriesService.getTarget(getCurrentUserId());
+  const target = await caloriesService.getTarget(getCurrentUserId());
   return new Response(JSON.stringify(target), {
     status: 200,
     headers: {
@@ -54,7 +54,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  const target = caloriesService.updateTarget({
+  const target = await caloriesService.updateTarget({
     userId: getCurrentUserId(),
     targetKcal,
     targetProteinG: targetProtein,

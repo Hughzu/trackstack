@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const title = data.title?.trim() ? data.title.trim() : "Untitled";
 
-  const entry = expensesService.addExpense({
+  const entry = await expensesService.addExpense({
     userId: getCurrentUserId(),
     title,
     amount: Number(amount),
@@ -73,7 +73,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     });
   }
 
-  const deleted = expensesService.deleteExpense(data.id, getCurrentUserId());
+  const deleted = await expensesService.deleteExpense(data.id, getCurrentUserId());
   if (!deleted) {
     return new Response(JSON.stringify({ error: "Expense not found" }), {
       status: 404,

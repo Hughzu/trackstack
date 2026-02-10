@@ -145,59 +145,62 @@ const mapEntryRow = (row: EntryRow): ExpenseEntry => ({
   createdAt: new Date(row.created_at)
 });
 
-const createSheet = (userId: string, periodKey: string): ExpenseSheet => {
+const createSheet = async (userId: string, periodKey: string): Promise<ExpenseSheet> => {
   const db = getExpensesDb();
   const id = randomUUID();
   const now = new Date().toISOString();
 
-  db.prepare(
-    "INSERT INTO expense_sheets (id, user_id, period_key, created_at, closed_at) VALUES (?, ?, ?, ?, NULL)"
-  ).run(id, userId, periodKey, now);
-
-  const templates = db
-    .prepare(
-      "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_checklist_templates WHERE user_id = ? ORDER BY created_at ASC"
-    )
-    .all(userId) as TemplateRow[];
-
-  const recurring = db
-    .prepare(
-      "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_recurring_templates WHERE user_id = ? ORDER BY created_at ASC"
-    )
-    .all(userId) as TemplateRow[];
-
-  const insertChecklist = db.prepare(
-    "INSERT INTO expense_checklist_items (id, sheet_id, template_id, title, amount, category, created_at, completed_at, expense_id) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL)"
+  await db.run(
+    "INSERT INTO expense_sheets (id, user_id, period_key, created_at, closed_at) VALUES (?, ?, ?, ?, NULL)",
+    [id, userId, periodKey, now]
   );
-  templates.forEach(template => {
-    insertChecklist.run(
-      randomUUID(),
-      id,
-      template.id,
-      template.title,
-      template.amount,
-      template.category,
-      now
-    );
-  });
 
-  const insertRecurring = db.prepare(
-    "INSERT INTO expense_entries (id, sheet_id, user_id, title, amount, category, date, type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+  const templates = await db.all<TemplateRow>(
+    "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_checklist_templates WHERE user_id = ? ORDER BY created_at ASC",
+    [userId]
   );
+
+  const recurring = await db.all<TemplateRow>(
+    "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_recurring_templates WHERE user_id = ? ORDER BY created_at ASC",
+    [userId]
+  );
+
+  await Promise.all(
+    templates.map(template =>
+      db.run(
+        "INSERT INTO expense_checklist_items (id, sheet_id, template_id, title, amount, category, created_at, completed_at, expense_id) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL)",
+        [
+          randomUUID(),
+          id,
+          template.id,
+          template.title,
+          template.amount,
+          template.category,
+          now
+        ]
+      )
+    )
+  );
+
   const recurringDate = `${periodKey}-01`;
-  recurring.forEach(template => {
-    insertRecurring.run(
-      randomUUID(),
-      id,
-      userId,
-      template.title,
-      template.amount,
-      template.category,
-      recurringDate,
-      "recurring",
-      now
-    );
-  });
+  await Promise.all(
+    recurring.map(template =>
+      db.run(
+        "INSERT INTO expense_entries (id, sheet_id, user_id, title, amount, category, date, type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          randomUUID(),
+          id,
+          userId,
+          template.title,
+          template.amount,
+          template.category,
+          recurringDate,
+          "recurring",
+          now
+        ]
+      )
+    )
+  );
 
   return {
     id,
@@ -207,52 +210,50 @@ const createSheet = (userId: string, periodKey: string): ExpenseSheet => {
   };
 };
 
-const getOpenSheet = (userId: string) => {
+const getOpenSheet = async (userId: string) => {
   const db = getExpensesDb();
-  const row = db
-    .prepare(
-      "SELECT id, user_id, period_key, created_at, closed_at FROM expense_sheets WHERE user_id = ? AND closed_at IS NULL ORDER BY created_at DESC LIMIT 1"
-    )
-    .get(userId) as SheetRow | undefined;
+  const row = await db.get<SheetRow>(
+    "SELECT id, user_id, period_key, created_at, closed_at FROM expense_sheets WHERE user_id = ? AND closed_at IS NULL ORDER BY created_at DESC LIMIT 1",
+    [userId]
+  );
 
   return row ? mapSheetRow(row) : undefined;
 };
 
-const getLatestSheet = (userId: string) => {
+const getLatestSheet = async (userId: string) => {
   const db = getExpensesDb();
-  const row = db
-    .prepare(
-      "SELECT id, user_id, period_key, created_at, closed_at FROM expense_sheets WHERE user_id = ? ORDER BY created_at DESC LIMIT 1"
-    )
-    .get(userId) as SheetRow | undefined;
+  const row = await db.get<SheetRow>(
+    "SELECT id, user_id, period_key, created_at, closed_at FROM expense_sheets WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
+    [userId]
+  );
 
   return row ? mapSheetRow(row) : undefined;
 };
 
 export const expensesService = {
-  getSettings: (userId: string): ExpenseSettings => {
+  getSettings: async (userId: string): Promise<ExpenseSettings> => {
     const db = getExpensesDb();
-    const row = db
-      .prepare(
-        "SELECT id, user_id, income, ratio_fund, ratio_fun, ratio_future, created_at, updated_at FROM expense_settings WHERE user_id = ?"
-      )
-      .get(userId) as SettingsRow | undefined;
+    const row = await db.get<SettingsRow>(
+      "SELECT id, user_id, income, ratio_fund, ratio_fun, ratio_future, created_at, updated_at FROM expense_settings WHERE user_id = ?",
+      [userId]
+    );
 
     if (row) return mapSettingsRow(row);
 
     const now = new Date().toISOString();
     const id = randomUUID();
-    db.prepare(
-      "INSERT INTO expense_settings (id, user_id, income, ratio_fund, ratio_fun, ratio_future, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(
-      id,
-      userId,
-      DEFAULT_SETTINGS.income,
-      DEFAULT_SETTINGS.ratioFund,
-      DEFAULT_SETTINGS.ratioFun,
-      DEFAULT_SETTINGS.ratioFuture,
-      now,
-      now
+    await db.run(
+      "INSERT INTO expense_settings (id, user_id, income, ratio_fund, ratio_fun, ratio_future, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        id,
+        userId,
+        DEFAULT_SETTINGS.income,
+        DEFAULT_SETTINGS.ratioFund,
+        DEFAULT_SETTINGS.ratioFun,
+        DEFAULT_SETTINGS.ratioFuture,
+        now,
+        now
+      ]
     );
 
     return {
@@ -267,23 +268,27 @@ export const expensesService = {
     };
   },
 
-  updateSettings: (data: Omit<ExpenseSettings, "id" | "createdAt" | "updatedAt">): ExpenseSettings => {
+  updateSettings: async (
+    data: Omit<ExpenseSettings, "id" | "createdAt" | "updatedAt">
+  ): Promise<ExpenseSettings> => {
     const db = getExpensesDb();
-    const existing = db
-      .prepare("SELECT id, created_at FROM expense_settings WHERE user_id = ?")
-      .get(data.userId) as { id: string; created_at: string } | undefined;
+    const existing = await db.get<{ id: string; created_at: string }>(
+      "SELECT id, created_at FROM expense_settings WHERE user_id = ?",
+      [data.userId]
+    );
 
     const now = new Date().toISOString();
     if (existing) {
-      db.prepare(
-        "UPDATE expense_settings SET income = ?, ratio_fund = ?, ratio_fun = ?, ratio_future = ?, updated_at = ? WHERE user_id = ?"
-      ).run(
-        data.income,
-        data.ratioFund,
-        data.ratioFun,
-        data.ratioFuture,
-        now,
-        data.userId
+      await db.run(
+        "UPDATE expense_settings SET income = ?, ratio_fund = ?, ratio_fun = ?, ratio_future = ?, updated_at = ? WHERE user_id = ?",
+        [
+          data.income,
+          data.ratioFund,
+          data.ratioFun,
+          data.ratioFuture,
+          now,
+          data.userId
+        ]
       );
 
       return {
@@ -299,17 +304,18 @@ export const expensesService = {
     }
 
     const id = randomUUID();
-    db.prepare(
-      "INSERT INTO expense_settings (id, user_id, income, ratio_fund, ratio_fun, ratio_future, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(
-      id,
-      data.userId,
-      data.income,
-      data.ratioFund,
-      data.ratioFun,
-      data.ratioFuture,
-      now,
-      now
+    await db.run(
+      "INSERT INTO expense_settings (id, user_id, income, ratio_fund, ratio_fun, ratio_future, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        id,
+        data.userId,
+        data.income,
+        data.ratioFund,
+        data.ratioFun,
+        data.ratioFuture,
+        now,
+        now
+      ]
     );
 
     return {
@@ -324,78 +330,80 @@ export const expensesService = {
     };
   },
 
-  getChecklistTemplates: (userId: string): ExpenseTemplate[] => {
+  getChecklistTemplates: async (userId: string): Promise<ExpenseTemplate[]> => {
     const db = getExpensesDb();
-    const rows = db
-      .prepare(
-        "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_checklist_templates WHERE user_id = ? ORDER BY created_at ASC"
-      )
-      .all(userId) as TemplateRow[];
+    const rows = await db.all<TemplateRow>(
+      "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_checklist_templates WHERE user_id = ? ORDER BY created_at ASC",
+      [userId]
+    );
 
     return rows.map(mapTemplateRow);
   },
 
-  getRecurringTemplates: (userId: string): ExpenseTemplate[] => {
+  getRecurringTemplates: async (userId: string): Promise<ExpenseTemplate[]> => {
     const db = getExpensesDb();
-    const rows = db
-      .prepare(
-        "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_recurring_templates WHERE user_id = ? ORDER BY created_at ASC"
-      )
-      .all(userId) as TemplateRow[];
+    const rows = await db.all<TemplateRow>(
+      "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_recurring_templates WHERE user_id = ? ORDER BY created_at ASC",
+      [userId]
+    );
 
     return rows.map(mapTemplateRow);
   },
 
-  upsertChecklistTemplate: (data: {
+  upsertChecklistTemplate: async (data: {
     id?: string;
     userId: string;
     title: string;
     amount: number;
     category?: string;
-  }): ExpenseTemplate => {
+  }): Promise<ExpenseTemplate> => {
     const db = getExpensesDb();
     const now = new Date().toISOString();
     const category = normalizeCategory(data.category);
 
     if (data.id) {
-      const existing = db
-        .prepare(
-          "SELECT id FROM expense_checklist_templates WHERE id = ? AND user_id = ?"
-        )
-        .get(data.id, data.userId) as { id: string } | undefined;
+      const existing = await db.get<{ id: string }>(
+        "SELECT id FROM expense_checklist_templates WHERE id = ? AND user_id = ?",
+        [data.id, data.userId]
+      );
 
       if (existing) {
-        const updated = db
-          .prepare(
-            "UPDATE expense_checklist_templates SET title = ?, amount = ?, category = ?, updated_at = ? WHERE id = ? AND user_id = ?"
-          )
-          .run(data.title, data.amount, category, now, data.id, data.userId);
+        const updatedChanges = await db.run(
+          "UPDATE expense_checklist_templates SET title = ?, amount = ?, category = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+          [data.title, data.amount, category, now, data.id, data.userId]
+        );
 
-        if (updated.changes > 0) {
-          db.prepare(
-            "UPDATE expense_checklist_items SET title = ?, amount = ?, category = ? WHERE template_id = ? AND completed_at IS NULL"
-          ).run(data.title, data.amount, category, data.id);
+        if (updatedChanges > 0) {
+          await db.run(
+            "UPDATE expense_checklist_items SET title = ?, amount = ?, category = ? WHERE template_id = ? AND completed_at IS NULL",
+            [data.title, data.amount, category, data.id]
+          );
         }
 
-        const row = db
-          .prepare(
-            "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_checklist_templates WHERE id = ?"
-          )
-          .get(data.id) as TemplateRow;
+        const row = await db.get<TemplateRow>(
+          "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_checklist_templates WHERE id = ?",
+          [data.id]
+        );
+
+        if (!row) {
+          throw new Error("Checklist template not found after update");
+        }
 
         return mapTemplateRow(row);
       }
     }
 
     const id = randomUUID();
-    db.prepare(
-      "INSERT INTO expense_checklist_templates (id, user_id, title, amount, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).run(id, data.userId, data.title, data.amount, category, now, now);
+    await db.run(
+      "INSERT INTO expense_checklist_templates (id, user_id, title, amount, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [id, data.userId, data.title, data.amount, category, now, now]
+    );
 
-    const sheet = expensesService.getOrCreateOpenSheet(data.userId);
-    db.prepare(
-      "INSERT INTO expense_checklist_items (id, sheet_id, template_id, title, amount, category, created_at, completed_at, expense_id) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL)"
-    ).run(randomUUID(), sheet.id, id, data.title, data.amount, category, now);
+    const sheet = await expensesService.getOrCreateOpenSheet(data.userId);
+    await db.run(
+      "INSERT INTO expense_checklist_items (id, sheet_id, template_id, title, amount, category, created_at, completed_at, expense_id) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL)",
+      [randomUUID(), sheet.id, id, data.title, data.amount, category, now]
+    );
 
     return {
       id,
@@ -408,62 +416,69 @@ export const expensesService = {
     };
   },
 
-  deleteChecklistTemplate: (id: string, userId: string): boolean => {
+  deleteChecklistTemplate: async (id: string, userId: string): Promise<boolean> => {
     const db = getExpensesDb();
-    db.prepare(
-      "DELETE FROM expense_checklist_items WHERE template_id = ? AND completed_at IS NULL AND sheet_id IN (SELECT id FROM expense_sheets WHERE user_id = ? AND closed_at IS NULL)"
-    ).run(id, userId);
+    await db.run(
+      "DELETE FROM expense_checklist_items WHERE template_id = ? AND completed_at IS NULL AND sheet_id IN (SELECT id FROM expense_sheets WHERE user_id = ? AND closed_at IS NULL)",
+      [id, userId]
+    );
 
-    const result = db
-      .prepare("DELETE FROM expense_checklist_templates WHERE id = ? AND user_id = ?")
-      .run(id, userId);
+    const changes = await db.run(
+      "DELETE FROM expense_checklist_templates WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
 
-    return result.changes > 0;
+    return changes > 0;
   },
 
-  upsertRecurringTemplate: (data: {
+  upsertRecurringTemplate: async (data: {
     id?: string;
     userId: string;
     title: string;
     amount: number;
     category?: string;
-  }): ExpenseTemplate => {
+  }): Promise<ExpenseTemplate> => {
     const db = getExpensesDb();
     const now = new Date().toISOString();
     const category = normalizeCategory(data.category);
 
     if (data.id) {
-      const existing = db
-        .prepare(
-          "SELECT id FROM expense_recurring_templates WHERE id = ? AND user_id = ?"
-        )
-        .get(data.id, data.userId) as { id: string } | undefined;
+      const existing = await db.get<{ id: string }>(
+        "SELECT id FROM expense_recurring_templates WHERE id = ? AND user_id = ?",
+        [data.id, data.userId]
+      );
 
       if (existing) {
-        db.prepare(
-          "UPDATE expense_recurring_templates SET title = ?, amount = ?, category = ?, updated_at = ? WHERE id = ? AND user_id = ?"
-        ).run(data.title, data.amount, category, now, data.id, data.userId);
+        await db.run(
+          "UPDATE expense_recurring_templates SET title = ?, amount = ?, category = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+          [data.title, data.amount, category, now, data.id, data.userId]
+        );
 
-        const row = db
-          .prepare(
-            "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_recurring_templates WHERE id = ?"
-          )
-          .get(data.id) as TemplateRow;
+        const row = await db.get<TemplateRow>(
+          "SELECT id, user_id, title, amount, category, created_at, updated_at FROM expense_recurring_templates WHERE id = ?",
+          [data.id]
+        );
+
+        if (!row) {
+          throw new Error("Recurring template not found after update");
+        }
 
         return mapTemplateRow(row);
       }
     }
 
     const id = randomUUID();
-    db.prepare(
-      "INSERT INTO expense_recurring_templates (id, user_id, title, amount, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).run(id, data.userId, data.title, data.amount, category, now, now);
+    await db.run(
+      "INSERT INTO expense_recurring_templates (id, user_id, title, amount, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [id, data.userId, data.title, data.amount, category, now, now]
+    );
 
-    const sheet = expensesService.getOrCreateOpenSheet(data.userId);
+    const sheet = await expensesService.getOrCreateOpenSheet(data.userId);
     const date = getTodayDate();
-    db.prepare(
-      "INSERT INTO expense_entries (id, sheet_id, user_id, title, amount, category, date, type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(randomUUID(), sheet.id, data.userId, data.title, data.amount, category, date, "recurring", now);
+    await db.run(
+      "INSERT INTO expense_entries (id, sheet_id, user_id, title, amount, category, date, type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [randomUUID(), sheet.id, data.userId, data.title, data.amount, category, date, "recurring", now]
+    );
 
     return {
       id,
@@ -476,36 +491,37 @@ export const expensesService = {
     };
   },
 
-  deleteRecurringTemplate: (id: string, userId: string): boolean => {
+  deleteRecurringTemplate: async (id: string, userId: string): Promise<boolean> => {
     const db = getExpensesDb();
-    const result = db
-      .prepare("DELETE FROM expense_recurring_templates WHERE id = ? AND user_id = ?")
-      .run(id, userId);
+    const changes = await db.run(
+      "DELETE FROM expense_recurring_templates WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
 
-    return result.changes > 0;
+    return changes > 0;
   },
 
-  getOrCreateOpenSheet: (userId: string): ExpenseSheet => {
-    const open = getOpenSheet(userId);
+  getOrCreateOpenSheet: async (userId: string): Promise<ExpenseSheet> => {
+    const open = await getOpenSheet(userId);
     if (open) return open;
 
-    const last = getLatestSheet(userId);
+    const last = await getLatestSheet(userId);
     const periodKey = last ? addPeriodKeyMonth(last.periodKey) : formatPeriodKey(new Date());
     return createSheet(userId, periodKey);
   },
 
-  closeSheet: (userId: string): ExpenseSheet => {
+  closeSheet: async (userId: string): Promise<ExpenseSheet> => {
     const db = getExpensesDb();
     const now = new Date().toISOString();
-    const open = getOpenSheet(userId);
+    const open = await getOpenSheet(userId);
     let basePeriodKey = open?.periodKey;
 
     if (open) {
-      db.prepare("UPDATE expense_sheets SET closed_at = ? WHERE id = ?").run(now, open.id);
+      await db.run("UPDATE expense_sheets SET closed_at = ? WHERE id = ?", [now, open.id]);
     }
 
     if (!basePeriodKey) {
-      const last = getLatestSheet(userId);
+      const last = await getLatestSheet(userId);
       basePeriodKey = last?.periodKey ?? formatPeriodKey(new Date());
     }
 
@@ -513,23 +529,24 @@ export const expensesService = {
     return createSheet(userId, nextPeriodKey);
   },
 
-  addExpense: (data: {
+  addExpense: async (data: {
     userId: string;
     title: string;
     amount: number;
     category?: string;
     date?: string;
-  }): ExpenseEntry => {
+  }): Promise<ExpenseEntry> => {
     const db = getExpensesDb();
-    const sheet = expensesService.getOrCreateOpenSheet(data.userId);
+    const sheet = await expensesService.getOrCreateOpenSheet(data.userId);
     const id = randomUUID();
     const now = new Date().toISOString();
     const date = data.date && data.date.trim().length > 0 ? data.date : getTodayDate();
     const category = normalizeCategory(data.category);
 
-    db.prepare(
-      "INSERT INTO expense_entries (id, sheet_id, user_id, title, amount, category, date, type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(id, sheet.id, data.userId, data.title, data.amount, category, date, "manual", now);
+    await db.run(
+      "INSERT INTO expense_entries (id, sheet_id, user_id, title, amount, category, date, type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, sheet.id, data.userId, data.title, data.amount, category, date, "manual", now]
+    );
 
     return {
       id,
@@ -544,22 +561,28 @@ export const expensesService = {
     };
   },
 
-  deleteExpense: (id: string, userId: string): boolean => {
+  deleteExpense: async (id: string, userId: string): Promise<boolean> => {
     const db = getExpensesDb();
-    const result = db
-      .prepare("DELETE FROM expense_entries WHERE id = ? AND user_id = ?")
-      .run(id, userId);
+    const changes = await db.run(
+      "DELETE FROM expense_entries WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
 
-    return result.changes > 0;
+    return changes > 0;
   },
 
-  completeChecklistItem: (data: { id: string; userId: string; date?: string }) => {
+  completeChecklistItem: async (data: { id: string; userId: string; date?: string }) => {
     const db = getExpensesDb();
-    const row = db
-      .prepare(
-        "SELECT i.id, i.sheet_id, i.title, i.amount, i.category FROM expense_checklist_items i JOIN expense_sheets s ON i.sheet_id = s.id WHERE i.id = ? AND s.user_id = ? AND i.completed_at IS NULL"
-      )
-      .get(data.id, data.userId) as { id: string; sheet_id: string; title: string; amount: number; category: ExpenseCategory } | undefined;
+    const row = await db.get<{
+      id: string;
+      sheet_id: string;
+      title: string;
+      amount: number;
+      category: ExpenseCategory;
+    }>(
+      "SELECT i.id, i.sheet_id, i.title, i.amount, i.category FROM expense_checklist_items i JOIN expense_sheets s ON i.sheet_id = s.id WHERE i.id = ? AND s.user_id = ? AND i.completed_at IS NULL",
+      [data.id, data.userId]
+    );
 
     if (!row) return null;
 
@@ -567,13 +590,15 @@ export const expensesService = {
     const now = new Date().toISOString();
     const date = data.date && data.date.trim().length > 0 ? data.date : getTodayDate();
 
-    db.prepare(
-      "INSERT INTO expense_entries (id, sheet_id, user_id, title, amount, category, date, type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(id, row.sheet_id, data.userId, row.title, row.amount, row.category, date, "checklist", now);
+    await db.run(
+      "INSERT INTO expense_entries (id, sheet_id, user_id, title, amount, category, date, type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, row.sheet_id, data.userId, row.title, row.amount, row.category, date, "checklist", now]
+    );
 
-    db.prepare(
-      "UPDATE expense_checklist_items SET completed_at = ?, expense_id = ? WHERE id = ?"
-    ).run(now, id, data.id);
+    await db.run(
+      "UPDATE expense_checklist_items SET completed_at = ?, expense_id = ? WHERE id = ?",
+      [now, id, data.id]
+    );
 
     return {
       id,
@@ -588,20 +613,20 @@ export const expensesService = {
     } as ExpenseEntry;
   },
 
-  getDashboard: (userId: string) => {
+  getDashboard: async (userId: string) => {
     const db = getExpensesDb();
-    const settings = expensesService.getSettings(userId);
-    const sheet = expensesService.getOrCreateOpenSheet(userId);
+    const settings = await expensesService.getSettings(userId);
+    const sheet = await expensesService.getOrCreateOpenSheet(userId);
 
-    const totalRow = db
-      .prepare("SELECT COALESCE(SUM(amount), 0) as total FROM expense_entries WHERE sheet_id = ?")
-      .get(sheet.id) as { total: number };
+    const totalRow = await db.get<{ total: number }>(
+      "SELECT COALESCE(SUM(amount), 0) as total FROM expense_entries WHERE sheet_id = ?",
+      [sheet.id]
+    );
 
-    const spentRows = db
-      .prepare(
-        "SELECT category, COALESCE(SUM(amount), 0) as total FROM expense_entries WHERE sheet_id = ? GROUP BY category"
-      )
-      .all(sheet.id) as Array<{ category: ExpenseCategory; total: number }>;
+    const spentRows = await db.all<{ category: ExpenseCategory; total: number }>(
+      "SELECT category, COALESCE(SUM(amount), 0) as total FROM expense_entries WHERE sheet_id = ? GROUP BY category",
+      [sheet.id]
+    );
 
     const spentByCategory = spentRows.reduce(
       (acc, row) => {
@@ -611,17 +636,15 @@ export const expensesService = {
       { fund: 0, fun: 0, future: 0 } as Record<ExpenseCategory, number>
     );
 
-    const pendingRows = db
-      .prepare(
-        "SELECT id, sheet_id, template_id, title, amount, category, created_at, completed_at, expense_id FROM expense_checklist_items WHERE sheet_id = ? AND completed_at IS NULL ORDER BY created_at ASC"
-      )
-      .all(sheet.id) as ChecklistRow[];
+    const pendingRows = await db.all<ChecklistRow>(
+      "SELECT id, sheet_id, template_id, title, amount, category, created_at, completed_at, expense_id FROM expense_checklist_items WHERE sheet_id = ? AND completed_at IS NULL ORDER BY created_at ASC",
+      [sheet.id]
+    );
 
-    const historyRows = db
-      .prepare(
-        "SELECT id, sheet_id, user_id, title, amount, category, date, type, created_at FROM expense_entries WHERE sheet_id = ? ORDER BY date DESC, created_at DESC"
-      )
-      .all(sheet.id) as EntryRow[];
+    const historyRows = await db.all<EntryRow>(
+      "SELECT id, sheet_id, user_id, title, amount, category, date, type, created_at FROM expense_entries WHERE sheet_id = ? ORDER BY date DESC, created_at DESC",
+      [sheet.id]
+    );
 
     return {
       settings,

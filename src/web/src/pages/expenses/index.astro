@@ -7,7 +7,7 @@ import { expensesService } from '@/modules/expenses/services/expensesService';
 import { getCurrentUserId } from '@/shared/auth/currentUser';
 
 const currentUserId = getCurrentUserId();
-const dashboard = expensesService.getDashboard(currentUserId);
+const dashboard = await expensesService.getDashboard(currentUserId);
 
 const balance = {
   remaining: Math.round((dashboard.settings.income - dashboard.totalSpent) * 100) / 100,

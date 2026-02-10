@@ -90,29 +90,29 @@ const buildDateTimeIso = (date: string, time?: string) => {
 };
 
 export const caloriesService = {
-  getTarget: (userId: string): CalorieTarget => {
+  getTarget: async (userId: string): Promise<CalorieTarget> => {
     const db = getCaloriesDb();
-    const row = db
-      .prepare(
-        "SELECT id, user_id, target_kcal, target_protein_g, target_carbs_g, target_fat_g, created_at, updated_at FROM calorie_targets WHERE user_id = ?"
-      )
-      .get(userId) as CalorieTargetRow | undefined;
+    const row = await db.get<CalorieTargetRow>(
+      "SELECT id, user_id, target_kcal, target_protein_g, target_carbs_g, target_fat_g, created_at, updated_at FROM calorie_targets WHERE user_id = ?",
+      [userId]
+    );
 
     if (row) return mapTargetRow(row);
 
     const now = new Date().toISOString();
     const id = randomUUID();
-    db.prepare(
-      "INSERT INTO calorie_targets (id, user_id, target_kcal, target_protein_g, target_carbs_g, target_fat_g, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(
-      id,
-      userId,
-      DEFAULT_TARGET.targetKcal,
-      DEFAULT_TARGET.targetProteinG,
-      DEFAULT_TARGET.targetCarbsG ?? null,
-      DEFAULT_TARGET.targetFatG ?? null,
-      now,
-      now
+    await db.run(
+      "INSERT INTO calorie_targets (id, user_id, target_kcal, target_protein_g, target_carbs_g, target_fat_g, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        id,
+        userId,
+        DEFAULT_TARGET.targetKcal,
+        DEFAULT_TARGET.targetProteinG,
+        DEFAULT_TARGET.targetCarbsG ?? null,
+        DEFAULT_TARGET.targetFatG ?? null,
+        now,
+        now
+      ]
     );
 
     return {
@@ -127,25 +127,27 @@ export const caloriesService = {
     };
   },
 
-  updateTarget: (data: Omit<CalorieTarget, "id" | "createdAt" | "updatedAt">): CalorieTarget => {
+  updateTarget: async (
+    data: Omit<CalorieTarget, "id" | "createdAt" | "updatedAt">
+  ): Promise<CalorieTarget> => {
     const db = getCaloriesDb();
-    const existing = db
-      .prepare(
-        "SELECT id, created_at FROM calorie_targets WHERE user_id = ?"
-      )
-      .get(data.userId) as { id: string; created_at: string } | undefined;
+    const existing = await db.get<{ id: string; created_at: string }>(
+      "SELECT id, created_at FROM calorie_targets WHERE user_id = ?",
+      [data.userId]
+    );
 
     const now = new Date().toISOString();
     if (existing) {
-      db.prepare(
-        "UPDATE calorie_targets SET target_kcal = ?, target_protein_g = ?, target_carbs_g = ?, target_fat_g = ?, updated_at = ? WHERE user_id = ?"
-      ).run(
-        data.targetKcal,
-        data.targetProteinG,
-        data.targetCarbsG ?? null,
-        data.targetFatG ?? null,
-        now,
-        data.userId
+      await db.run(
+        "UPDATE calorie_targets SET target_kcal = ?, target_protein_g = ?, target_carbs_g = ?, target_fat_g = ?, updated_at = ? WHERE user_id = ?",
+        [
+          data.targetKcal,
+          data.targetProteinG,
+          data.targetCarbsG ?? null,
+          data.targetFatG ?? null,
+          now,
+          data.userId
+        ]
       );
 
       return {
@@ -161,17 +163,18 @@ export const caloriesService = {
     }
 
     const id = randomUUID();
-    db.prepare(
-      "INSERT INTO calorie_targets (id, user_id, target_kcal, target_protein_g, target_carbs_g, target_fat_g, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(
-      id,
-      data.userId,
-      data.targetKcal,
-      data.targetProteinG,
-      data.targetCarbsG ?? null,
-      data.targetFatG ?? null,
-      now,
-      now
+    await db.run(
+      "INSERT INTO calorie_targets (id, user_id, target_kcal, target_protein_g, target_carbs_g, target_fat_g, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        id,
+        data.userId,
+        data.targetKcal,
+        data.targetProteinG,
+        data.targetCarbsG ?? null,
+        data.targetFatG ?? null,
+        now,
+        now
+      ]
     );
 
     return {
@@ -186,69 +189,67 @@ export const caloriesService = {
     };
   },
 
-  getTodaySummary: (userId: string) => {
+  getTodaySummary: async (userId: string) => {
     const db = getCaloriesDb();
     const { start, end } = getLocalDayRange();
-    const row = db
-      .prepare(
-        "SELECT COALESCE(SUM(calories), 0) as calories, COALESCE(SUM(protein_g), 0) as protein, COALESCE(SUM(carbs_g), 0) as carbs, COALESCE(SUM(fat_g), 0) as fat FROM calorie_logs WHERE user_id = ? AND date_time >= ? AND date_time < ?"
-      )
-      .get(userId, start.toISOString(), end.toISOString()) as {
+    const row = await db.get<{
       calories: number;
       protein: number;
       carbs: number;
       fat: number;
-    };
+    }>(
+      "SELECT COALESCE(SUM(calories), 0) as calories, COALESCE(SUM(protein_g), 0) as protein, COALESCE(SUM(carbs_g), 0) as carbs, COALESCE(SUM(fat_g), 0) as fat FROM calorie_logs WHERE user_id = ? AND date_time >= ? AND date_time < ?",
+      [userId, start.toISOString(), end.toISOString()]
+    );
 
-    const target = caloriesService.getTarget(userId);
+    const target = await caloriesService.getTarget(userId);
     return {
-      consumed: row.calories ?? 0,
-      protein: row.protein ?? 0,
-      carbs: row.carbs ?? 0,
-      fat: row.fat ?? 0,
+      consumed: row?.calories ?? 0,
+      protein: row?.protein ?? 0,
+      carbs: row?.carbs ?? 0,
+      fat: row?.fat ?? 0,
       target
     };
   },
 
-  getTodayLogs: (userId: string) => {
+  getTodayLogs: async (userId: string) => {
     const db = getCaloriesDb();
     const { start, end } = getLocalDayRange();
-    const rows = db
-      .prepare(
-        "SELECT id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title FROM calorie_logs WHERE user_id = ? AND date_time >= ? AND date_time < ? ORDER BY date_time DESC"
-      )
-      .all(userId, start.toISOString(), end.toISOString()) as CalorieLogRow[];
+    const rows = await db.all<CalorieLogRow>(
+      "SELECT id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title FROM calorie_logs WHERE user_id = ? AND date_time >= ? AND date_time < ? ORDER BY date_time DESC",
+      [userId, start.toISOString(), end.toISOString()]
+    );
 
     return rows.map(mapLogRow);
   },
 
-  getRecentLogs: (userId: string, limit = 8) => {
+  getRecentLogs: async (userId: string, limit = 8) => {
     const db = getCaloriesDb();
-    const rows = db
-      .prepare(
-        "WITH ranked AS (SELECT id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title, ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(title)) ORDER BY date_time DESC) AS rn FROM calorie_logs WHERE user_id = ? AND title IS NOT NULL AND TRIM(title) != '') SELECT id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title FROM ranked WHERE rn = 1 ORDER BY date_time DESC LIMIT ?"
-      )
-      .all(userId, limit) as CalorieLogRow[];
+    const rows = await db.all<CalorieLogRow>(
+      "WITH ranked AS (SELECT id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title, ROW_NUMBER() OVER (PARTITION BY LOWER(TRIM(title)) ORDER BY date_time DESC) AS rn FROM calorie_logs WHERE user_id = ? AND title IS NOT NULL AND TRIM(title) != '') SELECT id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title FROM ranked WHERE rn = 1 ORDER BY date_time DESC LIMIT ?",
+      [userId, limit]
+    );
 
     return rows.map(mapLogRow);
   },
 
-  addLog: (data: Omit<CalorieLog, "id" | "dateTime"> & { date: string; time?: string }) => {
+  addLog: async (data: Omit<CalorieLog, "id" | "dateTime"> & { date: string; time?: string }) => {
     const db = getCaloriesDb();
     const id = randomUUID();
     const dateTimeIso = buildDateTimeIso(data.date, data.time);
 
-    db.prepare(
-      "INSERT INTO calorie_logs (id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(
-      id,
-      data.userId,
-      dateTimeIso,
-      data.calories,
-      data.proteinG,
-      data.carbsG ?? null,
-      data.fatG ?? null,
-      data.title ?? null
+    await db.run(
+      "INSERT INTO calorie_logs (id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        id,
+        data.userId,
+        dateTimeIso,
+        data.calories,
+        data.proteinG,
+        data.carbsG ?? null,
+        data.fatG ?? null,
+        data.title ?? null
+      ]
     );
 
     return {
@@ -263,12 +264,13 @@ export const caloriesService = {
     };
   },
 
-  deleteLog: (id: string, userId: string): boolean => {
+  deleteLog: async (id: string, userId: string): Promise<boolean> => {
     const db = getCaloriesDb();
-    const result = db
-      .prepare("DELETE FROM calorie_logs WHERE id = ? AND user_id = ?")
-      .run(id, userId);
+    const changes = await db.run(
+      "DELETE FROM calorie_logs WHERE id = ? AND user_id = ?",
+      [id, userId]
+    );
 
-    return result.changes > 0;
+    return changes > 0;
   }
 };

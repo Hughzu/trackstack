@@ -48,7 +48,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const date = data.date ?? new Date().toISOString().split("T")[0];
 
-  const log = caloriesService.addLog({
+  const log = await caloriesService.addLog({
     userId: getCurrentUserId(),
     date,
     calories,
@@ -88,7 +88,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     });
   }
 
-  const deleted = caloriesService.deleteLog(data.id, getCurrentUserId());
+  const deleted = await caloriesService.deleteLog(data.id, getCurrentUserId());
   if (!deleted) {
     return new Response(JSON.stringify({ error: "Log not found" }), {
       status: 404,

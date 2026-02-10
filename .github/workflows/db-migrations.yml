@@ -1,0 +1,36 @@
+name: Database Migrations
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "migrations/**"
+      - "atlas.hcl"
+  workflow_dispatch: {}
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    env:
+      TURSO_CALORIES_URL: ${{ secrets.TURSO_CALORIES_URL }}
+      TURSO_CALORIES_TOKEN: ${{ secrets.TURSO_CALORIES_TOKEN }}
+      TURSO_EXPENSES_URL: ${{ secrets.TURSO_EXPENSES_URL }}
+      TURSO_EXPENSES_TOKEN: ${{ secrets.TURSO_EXPENSES_TOKEN }}
+      TURSO_HEAT_URL: ${{ secrets.TURSO_HEAT_URL }}
+      TURSO_HEAT_TOKEN: ${{ secrets.TURSO_HEAT_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Atlas
+        uses: arigaio/setup-atlas@v0
+
+      - name: Apply migrations (calories)
+        run: atlas migrate apply --env calories
+
+      - name: Apply migrations (expenses)
+        run: atlas migrate apply --env expenses
+
+      - name: Apply migrations (heat)
+        run: atlas migrate apply --env heat

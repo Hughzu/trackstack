@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  const entry = expensesService.completeChecklistItem({
+  const entry = await expensesService.completeChecklistItem({
     id: data.id,
     userId: getCurrentUserId(),
     date: data.date
