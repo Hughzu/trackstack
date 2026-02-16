@@ -1,27 +1,49 @@
 ---
+import Layout from "@/app/layouts/Layout.astro";
+import { appConfig } from "@app/config";
+import "@/core/styles/global.css";
+import AuthShell from "@/core/ui-kit/AuthShell.astro";
+import Button from "@/core/ui-kit/Button.astro";
+
 export const prerender = false;
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sign in</title>
-  </head>
-  <body>
-    <main>
-      <h1>Sign in</h1>
-      <form method="post" action="/api/auth/login">
-        <label>
+<Layout title="Sign in">
+  <AuthShell appName={appConfig.appName} title="Sign in">
+    <form
+      method="post"
+      action="/api/auth/login"
+      class="flex flex-col gap-6"
+    >
+      <div class="flex flex-col gap-1">
+        <label for="email" class="text-xs text-text-muted ml-1">
           Email
-          <input type="email" name="email" autocomplete="email" required />
         </label>
-        <label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          autocomplete="email"
+          required
+          class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label for="password" class="text-xs text-text-muted ml-1">
           Password
-          <input type="password" name="password" autocomplete="current-password" required />
         </label>
-        <button type="submit">Sign in</button>
-      </form>
-    </main>
-  </body>
-</html>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          autocomplete="current-password"
+          required
+          class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors"
+        />
+      </div>
+
+      <Button type="submit" class="w-full">Sign in</Button>
+    </form>
+  </AuthShell>
+</Layout>
