@@ -1,121 +1,154 @@
-# 🗺️ TrackStack & Platform Engineering: Master Plan
+# 🗺️ TrackStack & Platform Engineering: Master Plan v6
 
-**Date:** 2026-02-03
-**Strategy:** "Product First, Platform Second"
-**Goal:** Build a functional personal app ("TrackStack") while building a high-value Platform Engineering portfolio.
+**Date:** 2026-02-16
+**Strategy:** "The Managed Polylith" (Framework-based Approach)
+**Goal:** Build "TrackStack" while creating `tstack`, a CLI that generates and **maintains** the core infrastructure and boilerplate for future apps.
 
 ---
 
 ## 1. The Dual Vision
 
-This project solves two problems simultaneously:
-1.  **The User Need (TrackStack):** A "Lazy UX" application to track personal drift (calories, finance). Needs to be live ASAP.
-2.  **The Career Need (The Platform):** Prove ability to build "Golden Paths" and manage complex infrastructure lifecycles (VMs -> Containers -> K8s) without rewriting application code.
-
-## 2. Application Architecture: "Headless Modular Monolith"
-
-We decouple the Frontend from the Backend to allow infrastructure evolution without code refactoring.
-
-* **Frontend (The Constant):**
-    * **Tech:** Astro (SSR) + TailwindCSS.
-    * **Role:** Handles UI, Auth state, and acts as BFF (Backend For Frontend) in Phase 1.
-    * **Build Artifact:** Docker Image A (`trackstack-web`).
-* **Backend (The Variable):**
-    * **Tech:** C# .NET Core (Modular Monolith).
-    * **Phase 1:** Logic lives inside Astro (Node.js) for speed.
-    * **Phase 2:** Logic moves to C# API.
-    * **Build Artifact:** Docker Image B (`trackstack-api`).
-
-## 3. The Platform Strategy: "Golden Paths"
-
-We do not maintain 4 different apps. We maintain **1 App** and **4 Infrastructure Templates**.
-We use a custom CLI to inject these infrastructure configs into the repo.
-
-### The CLI (`@trackstack/cli`)
-* **Tech:** Node.js + `@clack/prompts` (DevEx focus).
-* **Role:** Scaffolding tool.
-* **Commands:**
-    * `init`: Bootstrap the Astro project.
-    * `infra add [path]`: Generates the specific Terraform/Ansible configuration in `infra/environments/`.
-
-### The 4 Golden Paths (Service Catalog)
-
-| Level | Path Name | App Stack | Infrastructure Stack | Career "Flex" |
-| :--- | :--- | :--- | :--- | :--- |
-| **Lvl 1** | `quickstart` | Astro Fullstack | **Docker on EC2** (UserData) | Speed to market. Simplicity. |
-| **Lvl 2** | `legacy-ops` | C# Monolith | **EC2 + Ansible + Terraform** | Linux internals, Config Mgmt, OS hardening. |
-| **Lvl 3** | `cloud-native` | C# Monolith | **AWS Fargate (ECS)** | Modern standard. Containerization at scale. |
-| **Lvl 4** | `hyperscale` | C# Microservices | **K3s on Spot Instances** | Kubernetes orchestration, Helm, Cost optimization. |
+1. **The Product (TrackStack):** A "Lazy UX" personal tracking app.
+2. **The Platform (The Career Flex):** A custom CLI (`tstack`) that acts as a **Framework**. It injects a managed "Core" (Auth, DB, Infra) into apps so the developer only focuses on "Modules" (Business Logic).
 
 ---
 
-## 4. Repository Structure & CI/CD Strategy
+## 2. Application Architecture: "The Managed Polylith"
 
-We use a **Mono-Repo** approach where Infrastructure lives alongside Code, separated by environment.
+We split the application into two distinct zones.
+
+### Zone A: The "Core" (⛔ Managed by CLI)
+
+Technical plumbing that rarely changes between apps.
+
+* **Backend (Go):** `internal/core/` (Auth OIDC, Turso DB Setup, Logger, Server Config).
+* **Frontend (Astro):** `src/core/` (Base Layouts, UI Kit like Buttons/Cards, Global Hooks).
+* **Infrastructure:** `iac/_vendor/` (Complex Terraform Modules).
+
+### Zone B: The "Modules" (✅ Owned by User)
+
+The unique business value of the specific application.
+
+* **Backend (Go):** `internal/modules/` (e.g., Calories logic, Heat logic).
+* **Frontend (Astro):** `src/modules/` (Specific pages and components).
+* **Configuration:** `cmd/main.go` (Wires Core and Modules together via Dependency Injection).
+
+---
+
+## 3. The Platform Engine: `tstack` CLI
+
+The CLI is a "Fat Binary" (Go Embed) containing the Golden Paths.
+
+### The Lifecycle
+
+1. **Init:** `tstack init --name budget-app`
+* Generates the repo structure.
+* Injects the **Core** (Read-Only recommendation).
+* Scaffolds the first **Module**.
+
+
+2. **Dev:** User writes code in `internal/modules` and `src/modules`.
+* *Rule:* Modules imports Core. Core **never** imports Modules.
+
+
+3. **Upgrade:** `tstack upgrade`
+* The CLI checks for updates in the "Core" layer (e.g., a security fix in Auth).
+* It overwrites `internal/core` and `src/core` (unless the user has explicitly "ejected").
+* It ensures all apps benefit from platform improvements without rewriting code.
+
+
+
+---
+
+## 4. The 4 Golden Paths (Infrastructure)
+
+The CLI configures the infrastructure to support the Polylith at different scales.
+
+| Step | Path Name | Deployment Target | FinOps Strategy |
+| --- | --- | --- | --- |
+| **0** | `local` | **Localhost** | Free. SQLite/Turso. |
+| **1** | `serverless` | **Lambda + CloudFront** | **Production.** Scale-to-Zero. Cost: **~$0.60/mo**. |
+| **2** | `container` | **Fargate Spot** | **Lab.** Ephemeral testing of Networking. |
+| **3** | `cloud-native` | **EKS (Kubernetes)** | **Lab.** Distributed Polylith (Feature Flags). |
+
+---
+
+## 5. Repository Structure (The Vendor Pattern)
+
+This structure enforces the separation between "Platform Code" and "Product Code".
 
 ```text
-trackstack/
-├── src/                      # 📦 APPLICATION CODE
-│   ├── web/                  # Astro Project
-│   └── api/                  # C# Project
+my-app/
+├── cmd/
+│   └── main.go                  # 🔌 WIRING (Injects Core into Modules)
 │
-├── infra/                    # 🏗️ PLATFORM CODE
-│   ├── modules/              # Reusable Terraform Modules (The "Library")
-│   │   ├── aws-vm/
-│   │   ├── aws-fargate/
-│   │   └── k8s-cluster/
+├── internal/
+│   ├── core/                    # ⛔ MANAGED (Do not edit)
+│   │   ├── auth/                # OIDC/Session logic
+│   │   ├── db/                  # Turso connection
+│   │   └── server/              # HTTP Server (Chi/Echo)
 │   │
-│   └── environments/         # Instantiated Infra (Generated by CLI)
-│       ├── dev-quickstart/   # Contains main.tf (Lvl 1)
-│       ├── prod-legacy/      # Contains main.tf + playbook.yml (Lvl 2)
-│       └── prod-k8s/         # Contains helm-values.yaml (Lvl 4)
+│   └── modules/                 # ✅ USER LAND
+│       ├── calories/            # Hexagonal Module
+│       └── heat/                # Hexagonal Module
 │
-├── .github/workflows/        # 🚀 CI/CD PIPELINES
-│   ├── build-app.yml         # Builds Docker Images (Common)
-│   ├── deploy-quickstart.yml # Triggers on changes in infra/environments/dev-quickstart
-│   └── deploy-k8s.yml        # Triggers on changes in infra/environments/prod-k8s
+├── src/web/src/
+│   ├── core/                    # ⛔ MANAGED (Do not edit)
+│   │   ├── layouts/             # AppShell.astro, AuthLayout.astro
+│   │   └── ui/                  # Button.astro, Card.astro (Design System)
+│   │
+│   ├── modules/                 # ✅ USER LAND
+│   │   └── calories/            # Calorie Dashboard Components
+│   │
+│   └── pages/                   # ✅ ROUTING
 │
-└── Makefile                  # Unified command interface
+├── iac/
+│   ├── _vendor/                 # ⛔ MANAGED Terraform Modules
+│   └── environments/            # ✅ USER Configuration
+│
+├── tstack.yaml                  # CLI Config (Version tracking)
+└── Dockerfile                   # 🐳 Universal Builder
 
 ```
 
-### CI/CD Rules
+---
 
-1. **Isolation:** One Workflow file per Golden Path.
-2. **Trigger:** Pipelines trigger *only* when relevant `infra/environments/xxx` folder changes (or Manual Dispatch).
-3. **State Management:**
-* Each environment has a distinct S3 Backend Key (e.g., `state/prod-k8s.tfstate`).
-* CLI handles the configuration of this key during `infra add`.
+## 6. Execution Roadmap
+
+### 🏁 Phase 1: The Prototype (Manual Mode)
+
+* **Goal:** Build the first app manually to define the "Core" vs "Module" boundary.
+* **Tasks:**
+1. **Go:** Create `internal/core` (Auth/DB) and `internal/modules/calories`.
+2. **Astro:** Create `src/core` (Layouts) and `src/modules`.
+3. **Docker:** Write the Universal Dockerfile (Embed).
+4. **Deploy:** Ship to AWS Lambda (Step 1).
+
+
+
+### 🛠️ Phase 2: The Tooling (The CLI)
+
+* **Goal:** Extract the "Core" into the CLI.
+* **Tasks:**
+1. Initialize `tstack` (Go Cobra).
+2. Implement `tstack init` (Embeds the Core files).
+3. Implement `tstack upgrade` (Overwrite logic for Core folders).
+
+
+
+### 🚀 Phase 3: The Scale (The Labs)
+
+* **Goal:** Add Infrastructure complexity.
+* **Tasks:**
+1. Add Step 2 (Fargate) and Step 3 (EKS) templates to the CLI.
+2. Demonstrate deploying the same App Artifact to K8s.
+
+
 
 ---
 
-## 5. Execution Roadmap
+## 7. Technical Guardrails
 
-### Phase 1: The Product (Week 1)
-
-* **Goal:** A working TrackStack app on my phone.
-* **Tech:** Astro + SQLite + Tailwind.
-* **Infra:** Manual Deploy or Lvl 1 (Quickstart).
-* **Outcome:** "I am using the app."
-
-### Phase 2: The Platform Foundation (Week 2)
-
-* **Goal:** Build the tool that builds the app.
-* **Tech:** Node.js CLI, Terraform Modules for Lvl 2 & 3.
-* **Outcome:** `trackstack infra add cloud-native` works locally.
-
-### Phase 3: The Migration & Storytelling (Week 3+)
-
-* **Goal:** Demonstrate the "Zero Code Change" migration.
-* **Action:** Deploy Lvl 2 (Ansible). Then Deploy Lvl 3 (Fargate).
-* **Deliverable:** A blog post/README explaining how the Platform enabled this migration seamlessly.
-* **Stretch Goal:** Implement Lvl 4 (K3s on Spot) for the ultimate "Cost Effective SRE" badge.
-
----
-
-## 6. Technical Constraints (The Guardrails)
-
-* **No Premature Optimization:** Start with Monolith C#. Only split to Microservices when K8s infra is ready.
-* **Infrastructure as Code:** No ClickOps. Everything in Terraform.
-* **Secrets:** Injected via GitHub Secrets -> Terraform -> Env Vars. No `.env` files in Git.
-* **Cost Control:** K8s must use Spot Instances (K3s). Database starts as SQLite (Volume) before moving to RDS.
+1. **Dependency Rule:** `Core` -> `Modules` is **FORBIDDEN**. `Modules` -> `Core` is **REQUIRED**.
+2. **Eject Strategy:** If a user *must* modify a file in `core/`, they accept that `tstack upgrade` will no longer update that specific file (or they manage merge conflicts).
+3. **Stateless:** All state lives in Turso or S3. The app is ephemeral.
