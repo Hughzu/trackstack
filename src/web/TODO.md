@@ -1,4 +1,3 @@
-- add authentication
-- deploy the app on amplify to test UX and use the thing ? 
+- deploy the app on AWS 
 - prepare a first core with amplify / oidc / ...
 - first cli version 
