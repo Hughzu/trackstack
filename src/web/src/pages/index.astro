@@ -2,60 +2,11 @@
 import AppShell from '@/shared/layouts/AppShell.astro';
 import Card from '@/shared/components/UI/Card.astro';
 import PercentageBar from '@/shared/components/UI/PercentageBar.astro';
-import { expensesService } from '@/modules/expenses/services/expensesService';
-import { caloriesService } from '@/modules/calories/services/caloriesService';
-import { heatService } from '@/modules/heat/services/heatService';
+import { dashboardService } from '@/modules/dashboard/services/dashboardService';
 import { getCurrentUserId } from '@/shared/auth/currentUser';
 
 const currentUserId = getCurrentUserId();
-
-const expenseDashboard = await expensesService.getDashboard(currentUserId);
-const balance = {
-  remaining: Math.round((expenseDashboard.settings.income - expenseDashboard.totalSpent) * 100) / 100,
-  income: expenseDashboard.settings.income
-};
-
-const spent = {
-  fund: Math.round(expenseDashboard.spentByCategory.fund * 100) / 100,
-  fun: Math.round(expenseDashboard.spentByCategory.fun * 100) / 100,
-  future: Math.round(expenseDashboard.spentByCategory.future * 100) / 100
-};
-
-const budget = {
-  fund: Math.round((balance.income * expenseDashboard.settings.ratioFund) / 100),
-  fun: Math.round((balance.income * expenseDashboard.settings.ratioFun) / 100),
-  future: Math.round((balance.income * expenseDashboard.settings.ratioFuture) / 100)
-};
-
-const expenseRatios = [
-  {
-    percent: balance.income ? Math.round((spent.fund / balance.income) * 100) : 0,
-    color: 'bg-red-500',
-    label: 'Fund.',
-    over: spent.fund > budget.fund
-  },
-  {
-    percent: balance.income ? Math.round((spent.fun / balance.income) * 100) : 0,
-    color: 'bg-orange-500',
-    label: 'Fun',
-    over: spent.fun > budget.fun
-  },
-  {
-    percent: balance.income ? Math.round((spent.future / balance.income) * 100) : 0,
-    color: 'bg-emerald-500',
-    label: 'Future',
-    over: spent.future > budget.future
-  }
-];
-
-const healthSummary = await caloriesService.getTodaySummary(currentUserId);
-const calorieTarget = healthSummary.target.targetKcal;
-const caloriePercent = calorieTarget
-  ? Math.min(Math.round((healthSummary.consumed / calorieTarget) * 100), 100)
-  : 0;
-
-const daysSinceRefill = await heatService.getDaysSinceLastRefill(currentUserId);
-const seasonSnapshot = await heatService.getSeasonSnapshot(currentUserId);
+const dashboard = await dashboardService.getDashboardViewModel(currentUserId);
 ---
 
 <AppShell title="Overview" currentDomain="home">
@@ -65,33 +16,33 @@ const seasonSnapshot = await heatService.getSeasonSnapshot(currentUserId);
         <div class="flex justify-between items-start mb-4">
           <div>
             <span class="text-xs text-text-muted uppercase tracking-widest">Remaining</span>
-            <div class="text-3xl font-bold text-text-main">€{balance.remaining}</div>
+            <div class="text-3xl font-bold text-text-main">€{dashboard.expenses.balance.remaining}</div>
           </div>
           <div class="text-right">
             <span class="text-xs text-text-muted uppercase tracking-widest">Income</span>
-            <div class="text-sm font-mono text-text-muted">€{balance.income}</div>
+            <div class="text-sm font-mono text-text-muted">€{dashboard.expenses.balance.income}</div>
           </div>
         </div>
 
         <div class="mb-3">
-          <PercentageBar segments={expenseRatios} />
+          <PercentageBar segments={dashboard.expenses.ratios} />
         </div>
 
         <div class="flex justify-between text-center divide-x divide-white/10">
           <div class="flex-1 px-1">
             <div class="text-[10px] text-text-muted uppercase">Fund.</div>
-            <div class="text-xs font-bold">€{spent.fund}</div>
-            <div class="text-[10px] text-text-muted">/ €{budget.fund}</div>
+            <div class="text-xs font-bold">€{dashboard.expenses.spent.fund}</div>
+            <div class="text-[10px] text-text-muted">/ €{dashboard.expenses.budget.fund}</div>
           </div>
           <div class="flex-1 px-1">
             <div class="text-[10px] text-text-muted uppercase">Fun</div>
-            <div class="text-xs font-bold">€{spent.fun}</div>
-            <div class="text-[10px] text-text-muted">/ €{budget.fun}</div>
+            <div class="text-xs font-bold">€{dashboard.expenses.spent.fun}</div>
+            <div class="text-[10px] text-text-muted">/ €{dashboard.expenses.budget.fun}</div>
           </div>
           <div class="flex-1 px-1">
             <div class="text-[10px] text-text-muted uppercase">Future</div>
-            <div class="text-xs font-bold">€{spent.future}</div>
-            <div class="text-[10px] text-text-muted">/ €{budget.future}</div>
+            <div class="text-xs font-bold">€{dashboard.expenses.spent.future}</div>
+            <div class="text-[10px] text-text-muted">/ €{dashboard.expenses.budget.future}</div>
           </div>
         </div>
       </Card>
@@ -103,20 +54,20 @@ const seasonSnapshot = await heatService.getSeasonSnapshot(currentUserId);
           <div>
             <span class="text-xs text-text-muted uppercase tracking-widest">Consumed</span>
             <div class="flex items-baseline gap-2">
-              <span class="text-3xl font-bold text-text-main">{healthSummary.consumed}</span>
-              <span class="text-sm font-mono text-text-muted">/ {calorieTarget} kcal</span>
+              <span class="text-3xl font-bold text-text-main">{dashboard.calories.consumed}</span>
+              <span class="text-sm font-mono text-text-muted">/ {dashboard.calories.target} kcal</span>
             </div>
           </div>
           <div class="text-right">
             <span class="text-xs text-text-muted uppercase tracking-widest">Protein</span>
-            <div class="text-sm font-bold text-primary">{healthSummary.protein}g</div>
+            <div class="text-sm font-bold text-primary">{dashboard.calories.protein}g</div>
           </div>
         </div>
 
         <div class="relative w-full h-3 bg-gray-800 rounded-full overflow-hidden">
           <div
             class="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500"
-            style={`width: ${caloriePercent}%`}
+            style={`width: ${dashboard.calories.percent}%`}
           ></div>
         </div>
       </Card>
@@ -127,17 +78,17 @@ const seasonSnapshot = await heatService.getSeasonSnapshot(currentUserId);
         <div class="flex items-center justify-between">
           <div>
             <span class="text-xs text-text-muted uppercase tracking-widest">Days Since Refill</span>
-            <div class="text-3xl font-bold text-text-main">{daysSinceRefill}</div>
+            <div class="text-3xl font-bold text-text-main">{dashboard.heat.daysSinceRefill}</div>
           </div>
           <div class="text-right">
             <span class="text-xs text-text-muted uppercase tracking-widest">Season</span>
-            <div class="text-sm font-mono text-text-muted">{seasonSnapshot.seasonLabel}</div>
+            <div class="text-sm font-mono text-text-muted">{dashboard.heat.season.label}</div>
           </div>
         </div>
 
         <div class="mt-4 flex justify-between text-xs text-text-muted">
-          <span>This Season: <span class="text-text-main font-semibold">{seasonSnapshot.seasonToDate}</span></span>
-          <span>Last Season: <span class="text-text-main font-semibold">{seasonSnapshot.lastSeasonToDate}</span></span>
+          <span>This Season: <span class="text-text-main font-semibold">{dashboard.heat.season.current}</span></span>
+          <span>Last Season: <span class="text-text-main font-semibold">{dashboard.heat.season.last}</span></span>
         </div>
       </Card>
     </section>

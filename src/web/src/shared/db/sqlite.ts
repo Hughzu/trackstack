@@ -52,26 +52,71 @@ const createDbClient = (domain: string): DbClient => {
     throw new Error(`Missing TURSO_${domain.toUpperCase()}_TOKEN for ${domain} database`);
   }
 
-  console.info(`[db] ${domain} -> ${url}`);
+  logInfo("db_connect", { domain, url: url.replace(authToken || "", "***") });
 
   const client: Client = createClient({ url, authToken });
 
   return {
-    execute: async (sql: string, args?: StatementArgs) =>
-      client.execute({ sql, args: args ?? [] }),
+    execute: async (sql: string, args?: StatementArgs) => {
+      const start = performance.now();
+      try {
+        const result = await client.execute({ sql, args: args ?? [] });
+        logDebug("db_query", { domain, sql, durationMs: performance.now() - start });
+        return result;
+      } catch (err) {
+        logError("db_query_error", { domain, sql, error: err instanceof Error ? err.message : String(err) });
+        throw err;
+      }
+    },
     get: async <T>(sql: string, args?: StatementArgs) => {
-      const result = await client.execute({ sql, args: args ?? [] });
-      return (result.rows?.[0] as T | undefined) ?? undefined;
+      const start = performance.now();
+      try {
+        const result = await client.execute({ sql, args: args ?? [] });
+        logDebug("db_query_get", { domain, sql, durationMs: performance.now() - start });
+        return (result.rows?.[0] as T | undefined) ?? undefined;
+      } catch (err) {
+        logError("db_query_error", { domain, sql, error: err instanceof Error ? err.message : String(err) });
+        throw err;
+      }
     },
     all: async <T>(sql: string, args?: StatementArgs) => {
-      const result = await client.execute({ sql, args: args ?? [] });
-      return (result.rows as T[]) ?? [];
+      const start = performance.now();
+      try {
+        const result = await client.execute({ sql, args: args ?? [] });
+        logDebug("db_query_all", { domain, sql, rows: result.rows.length, durationMs: performance.now() - start });
+        return (result.rows as T[]) ?? [];
+      } catch (err) {
+        logError("db_query_error", { domain, sql, error: err instanceof Error ? err.message : String(err) });
+        throw err;
+      }
     },
     run: async (sql: string, args?: StatementArgs) => {
-      const result = await client.execute({ sql, args: args ?? [] });
-      return result.rowsAffected ?? 0;
+      const start = performance.now();
+      try {
+        const result = await client.execute({ sql, args: args ?? [] });
+        logDebug("db_query_run", { domain, sql, affected: result.rowsAffected, durationMs: performance.now() - start });
+        return result.rowsAffected ?? 0;
+      } catch (err) {
+        logError("db_query_error", { domain, sql, error: err instanceof Error ? err.message : String(err) });
+        throw err;
+      }
     }
   };
+};
+
+// Simple Structured Logger
+const logInfo = (event: string, data: Record<string, any>) => {
+  console.info(JSON.stringify({ level: "info", event, ...data, timestamp: new Date().toISOString() }));
+};
+
+const logError = (event: string, data: Record<string, any>) => {
+  console.error(JSON.stringify({ level: "error", event, ...data, timestamp: new Date().toISOString() }));
+};
+
+const logDebug = (event: string, data: Record<string, any>) => {
+  if (process.env.NODE_ENV === "development") {
+    // console.debug(JSON.stringify({ level: "debug", event, ...data, timestamp: new Date().toISOString() }));
+  }
 };
 
 export const getDb = (domain: string): DbClient => {
