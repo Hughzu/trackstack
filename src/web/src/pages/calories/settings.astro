@@ -9,160 +9,145 @@ const target = await caloriesService.getTarget(currentUserId);
 ---
 
 <Layout>
-  <div class="min-h-screen pb-24 bg-background">
+  <form
+    id="calorie-target-form"
+    class="min-h-screen bg-background text-text-main font-sans pb-20 animate-fade-in flex flex-col relative max-w-lg mx-auto"
+  >
     <!-- Header -->
     <header
-      class="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border"
+      class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50"
     >
-      <div class="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
-        <div class="flex items-center gap-3">
-          <a
-            href="/calories"
-            class="p-2 -ml-2 text-text-muted hover:text-text-main transition-colors"
-            aria-label="Back to calories"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="w-5 h-5"><path d="m15 18-6-6 6-6"></path></svg
-            >
-          </a>
-          <h1
-            class="text-xl font-bold bg-gradient-to-r from-brand-primary to-brand-secondary bg-clip-text text-transparent"
-          >
-            Calories Settings
-          </h1>
-        </div>
-        <button
-          type="submit"
-          form="calorie-target-form"
-          class="text-primary font-bold text-sm hover:text-primary/80 transition-colors"
-        >
-          Save
-        </button>
-      </div>
+      <a
+        href="/calories"
+        class="text-text-muted hover:text-text-main text-sm transition-colors"
+        >Cancel</a
+      >
+      <h1 class="text-base font-bold text-text-main">Calories Settings</h1>
+      <button
+        type="submit"
+        class="text-primary font-bold text-sm hover:text-primary/80 transition-colors"
+      >
+        Save
+      </button>
     </header>
 
-    <div
-      class="bg-surface border border-border rounded-2xl p-4 flex items-center justify-between shadow-sm"
-    >
-      <div class="flex flex-col">
-        <span class="text-sm font-medium">Calories</span>
-        <span class="text-[10px] text-text-muted"
-          >Sets your daily intake target</span
-        >
-      </div>
-      <div class="relative w-28">
-        <label>
-          <input
-            type="number"
-            name="targetKcal"
-            value={target.targetKcal}
-            min="0"
-            required
-            class="w-full bg-transparent text-right font-bold text-xl focus:outline-none border-b border-transparent focus:border-primary transition-colors text-text-main placeholder:text-text-muted/30"
-          />
-        </label>
-        <span
-          class="absolute right-0 top-1/2 -translate-y-1/2 text-xs text-text-muted"
-          >kcal</span
-        >
-      </div>
-    </div>
-  </div>
-
-  <section class="flex flex-col gap-4">
-    <div class="flex justify-between items-end px-1">
-      <h2 class="text-xs text-text-muted uppercase tracking-widest font-bold">
-        Macros
-      </h2>
-      <span
-        class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono"
+    <main class="p-6 flex flex-col gap-8 flex-1">
+      <div
+        class="bg-surface border border-border rounded-2xl p-4 flex items-center justify-between shadow-sm"
       >
-        Protein required
-      </span>
-    </div>
-
-    <div
-      class="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-6 shadow-sm"
-    >
-      <div class="space-y-3">
-        <div class="flex justify-between text-sm items-center">
-          <span class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span class="font-medium">Protein</span>
-          </span>
-          <span
-            class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
-            >{target.targetProteinG}g</span
+        <div class="flex flex-col">
+          <span class="text-sm font-medium">Calories</span>
+          <span class="text-[10px] text-text-muted"
+            >Sets your daily intake target</span
           >
         </div>
-        <label>
-          <input
-            type="number"
-            name="targetProtein"
-            value={target.targetProteinG}
-            min="0"
-            required
-            class="w-full bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-2 text-text-main placeholder:text-text-muted/30 transition-colors"
-          />
-        </label>
-      </div>
-
-      <div class="space-y-3">
-        <div class="flex justify-between text-sm items-center">
-          <span class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-orange-400"></span>
-            <span class="font-medium">Carbs</span>
-          </span>
+        <div class="relative w-28">
+          <label>
+            <input
+              type="number"
+              name="targetKcal"
+              value={target.targetKcal}
+              min="0"
+              required
+              class="w-full bg-transparent text-right font-bold text-xl focus:outline-none border-b border-transparent focus:border-primary transition-colors text-text-main placeholder:text-text-muted/30"
+            />
+          </label>
           <span
-            class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
-            >{target.targetCarbsG ?? 0}g</span
+            class="absolute right-0 top-1/2 -translate-y-1/2 text-xs text-text-muted"
+            >kcal</span
           >
         </div>
-        <label>
-          <input
-            type="number"
-            name="targetCarbs"
-            value={target.targetCarbsG ?? ""}
-            min="0"
-            placeholder="Optional"
-            class="w-full bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-2 text-text-main placeholder:text-text-muted/30 transition-colors"
-          />
-        </label>
       </div>
 
-      <div class="space-y-3">
-        <div class="flex justify-between text-sm items-center">
-          <span class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
-            <span class="font-medium">Fat</span>
-          </span>
-          <span
-            class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
-            >{target.targetFatG ?? 0}g</span
+      <section class="flex flex-col gap-4">
+        <div class="flex justify-between items-end px-1">
+          <h2
+            class="text-xs text-text-muted uppercase tracking-widest font-bold"
           >
+            Macros
+          </h2>
+          <span
+            class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono"
+          >
+            Protein required
+          </span>
         </div>
-        <label>
-          <input
-            type="number"
-            name="targetFat"
-            value={target.targetFatG ?? ""}
-            min="0"
-            placeholder="Optional"
-            class="w-full bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-2 text-text-main placeholder:text-text-muted/30 transition-colors"
-          />
-        </label>
-      </div>
-    </div>
-  </section>
+
+        <div
+          class="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-6 shadow-sm"
+        >
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm items-center">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="font-medium">Protein</span>
+              </span>
+              <span
+                class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
+                >{target.targetProteinG}g</span
+              >
+            </div>
+            <label>
+              <input
+                type="number"
+                name="targetProtein"
+                value={target.targetProteinG}
+                min="0"
+                required
+                class="w-full bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-2 text-text-main placeholder:text-text-muted/30 transition-colors"
+              />
+            </label>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm items-center">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                <span class="font-medium">Carbs</span>
+              </span>
+              <span
+                class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
+                >{target.targetCarbsG ?? 0}g</span
+              >
+            </div>
+            <label>
+              <input
+                type="number"
+                name="targetCarbs"
+                value={target.targetCarbsG ?? ""}
+                min="0"
+                placeholder="Optional"
+                class="w-full bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-2 text-text-main placeholder:text-text-muted/30 transition-colors"
+              />
+            </label>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm items-center">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                <span class="font-medium">Fat</span>
+              </span>
+              <span
+                class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
+                >{target.targetFatG ?? 0}g</span
+              >
+            </div>
+            <label>
+              <input
+                type="number"
+                name="targetFat"
+                value={target.targetFatG ?? ""}
+                min="0"
+                placeholder="Optional"
+                class="w-full bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-2 text-text-main placeholder:text-text-muted/30 transition-colors"
+              />
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+  </form>
 </Layout>
 
 <script>
