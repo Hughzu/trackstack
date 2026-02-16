@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { promisify } from "node:util";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { createClient } from "@libsql/client";
 
 const scryptAsync = promisify(crypto.scrypt);
@@ -36,7 +37,9 @@ const hashPassword = async (password) => {
 const resolveDbUrl = () => {
   const envUrl = process.env.TURSO_USERS_URL;
   if (envUrl && envUrl.trim().length > 0) return envUrl.trim();
-  const filePath = path.resolve(process.cwd(), "src", "data", "users.sqlite");
+  const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+  const repoRoot = path.resolve(scriptDir, "..", "..", "..");
+  const filePath = path.join(repoRoot, "src", "data", "users.sqlite");
   return `file:${filePath}`;
 };
 

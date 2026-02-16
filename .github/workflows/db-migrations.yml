@@ -13,6 +13,8 @@ jobs:
   migrate:
     runs-on: ubuntu-latest
     env:
+      TURSO_USERS_URL: ${{ secrets.TURSO_USERS_URL }}
+      TURSO_USERS_TOKEN: ${{ secrets.TURSO_USERS_TOKEN }}
       TURSO_CALORIES_URL: ${{ secrets.TURSO_CALORIES_URL }}
       TURSO_CALORIES_TOKEN: ${{ secrets.TURSO_CALORIES_TOKEN }}
       TURSO_EXPENSES_URL: ${{ secrets.TURSO_EXPENSES_URL }}
@@ -34,3 +36,6 @@ jobs:
 
       - name: Apply migrations (heat)
         run: atlas migrate apply --env heat
+
+      - name: Apply migrations (users)
+        run: atlas migrate apply --env users

@@ -11,10 +11,19 @@ const isAllowedApiPath = (pathname: string) => {
   return false;
 };
 
+const isPublicPage = (pathname: string) => {
+  if (pathname === "/login") return true;
+  return false;
+};
+
 export const onRequest: MiddlewareHandler = async (context, next) => {
   const url = new URL(context.request.url);
   const pathname = url.pathname;
   const isApiRequest = pathname.startsWith("/api/");
+
+  if (!isApiRequest && isPublicPage(pathname)) {
+    return next();
+  }
 
   if (isApiRequest && isAllowedApiPath(pathname)) {
     return next();
@@ -53,6 +62,10 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 
   if (isApiRequest && !authContext.userId) {
     return new Response("Unauthorized", { status: 401 });
+  }
+
+  if (!isApiRequest && !authContext.userId) {
+    return context.redirect("/login");
   }
 
   return runWithAuthContext(authContext, () => next());

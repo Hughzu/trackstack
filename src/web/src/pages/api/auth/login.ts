@@ -9,13 +9,25 @@ export const prerender = false;
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   let payload: { email?: string; password?: string } = {};
-  try {
-    payload = await request.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" }
-    });
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    try {
+      payload = await request.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+  } else {
+    const form = await request.formData();
+    const email = form.get("email");
+    const password = form.get("password");
+    payload = {
+      email: typeof email === "string" ? email : undefined,
+      password: typeof password === "string" ? password : undefined
+    };
   }
 
   const email = payload.email?.trim().toLowerCase();
@@ -50,6 +62,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   cookies.set(authConfig.cookie.name, rawToken, cookieOptions);
 
   await authDb.updateUserLastLogin(user.id, now.toISOString());
+
+  if (!contentType.includes("application/json")) {
+    return new Response(null, { status: 303, headers: { Location: "/" } });
+  }
 
   return new Response(null, { status: 204 });
 };
