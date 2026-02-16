@@ -1,6 +1,4 @@
-- clean web app (apply patterns, clean the vibe coded code)
 - add authentication
-- hetzner provisioning
-- deploy the app (dockerize front?)
-- clean and make sure you understand the cicd, the provisioning and the k3s config
-- begin cli for golden paths? 
+- deploy the app on amplify to test UX and use the thing ? 
+- prepare a first core with amplify / oidc / ...
+- first cli version 
