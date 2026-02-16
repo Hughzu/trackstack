@@ -1,0 +1,60 @@
+---
+interface Props {
+    id: string;
+    title?: string;
+    class?: string;
+}
+
+const { id, title, class: className } = Astro.props;
+---
+
+<dialog
+    id={id}
+    class:list={[
+        "backdrop:bg-black/60 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto open:animate-fade-in focus:outline-none",
+        className,
+    ]}
+>
+    <div
+        class="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 shadow-2xl shadow-black/50 mx-auto"
+    >
+        {
+            title && (
+                <h3 class="text-lg font-bold text-text-main mb-2">{title}</h3>
+            )
+        }
+        <slot />
+    </div>
+</dialog>
+
+<script define:vars={{ id }}>
+    const dialog = document.getElementById(id);
+
+    if (dialog) {
+        dialog.addEventListener("click", (event) => {
+            if (event.target === dialog) {
+                dialog.close();
+            }
+        });
+    }
+</script>
+
+<style>
+    dialog {
+        max-width: 100vw;
+        max-height: 100vh;
+    }
+
+    dialog::backdrop {
+        animation: fade-in 0.2s ease-out;
+    }
+
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+</style>

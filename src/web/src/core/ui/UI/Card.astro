@@ -1,28 +1,35 @@
 ---
 interface Props {
   title?: string;
-  href?: string;  
-  variant?: 'default' | 'highlight';
+  href?: string;
+  variant?: "default" | "highlight" | "glass";
   class?: string;
 }
 
-const { title, href, variant = 'default', class: className } = Astro.props;
+const { title, href, variant = "default", class: className } = Astro.props;
 
-const baseClasses = "relative flex flex-col p-5 rounded-2xl border transition-all duration-300 overflow-hidden";
+const baseClasses =
+  "relative flex flex-col p-5 rounded-2xl border transition-all duration-300 overflow-hidden";
 const variants = {
-  default: "bg-surface border-border text-text-main hover:border-gray-600",
-  highlight: "bg-[#1e2128] border-primary/20 shadow-lg shadow-black/40"
+  default: "bg-surface border-border text-text-main hover:border-gray-500",
+  highlight:
+    "bg-surface border-primary/20 shadow-lg shadow-black/40 ring-1 ring-primary/20",
+  glass: "bg-surface/50 backdrop-blur-md border-white/5 text-text-main",
 };
 
-const Tag = href ? 'a' : 'div';
+const Tag = href ? "a" : "div";
 ---
 
 <Tag href={href} class:list={[baseClasses, variants[variant], className]}>
-  {title && (
-    <h3 class="text-sm font-semibold text-primary uppercase tracking-widest mb-4">
-      {title}
-    </h3>
-  )}
+  {
+    title && (
+      <div class="mb-4">
+        <h3 class="text-xs font-bold text-primary uppercase tracking-widest">
+          {title}
+        </h3>
+      </div>
+    )
+  }
   <div class="flex-1 flex flex-col">
     <slot />
   </div>

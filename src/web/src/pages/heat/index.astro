@@ -4,6 +4,7 @@ import Fab from "@/core/ui/UI/Fab.astro";
 import HeatStatusCard from "@/modules/heat/components/HeatStatusCard.astro";
 import SeasonSnapshotCard from "@/modules/heat/components/SeasonSnapshotCard.astro";
 import RefillHistoryList from "@/modules/heat/components/RefillHistoryList.astro";
+import RefillDeleteModal from "@/modules/heat/components/RefillDeleteModal.astro";
 import { heatService } from "@/modules/heat/services/heatService";
 import { getCurrentUserId } from "@/core/auth/currentUser";
 
@@ -70,110 +71,4 @@ const historyPage = await heatService.getHistory(1, 20, currentUserId);
   </div>
 </AppShell>
 
-<div
-  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm"
-  data-refill-modal
->
-  <div
-    class="w-[90%] max-w-xs rounded-2xl border border-border bg-surface p-4 shadow-lg"
-  >
-    <h4 class="text-sm font-bold text-text-main">Delete refill?</h4>
-    <p class="mt-1 text-xs text-text-muted">
-      This removes the entry from your history.
-    </p>
-    <div class="mt-4 flex gap-2">
-      <button
-        class="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted hover:text-text-main hover:border-primary/50 transition-colors"
-        data-refill-cancel
-        type="button"
-      >
-        Cancel
-      </button>
-      <button
-        class="flex-1 rounded-lg bg-red-500/20 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/30 transition-colors"
-        data-refill-confirm
-        type="button"
-      >
-        Delete
-      </button>
-    </div>
-  </div>
-</div>
-
-<script>
-  const historyRoot = document.querySelector("[data-refill-history]");
-  const modal = document.querySelector("[data-refill-modal]");
-  const cancelButton = modal?.querySelector("[data-refill-cancel]");
-  const confirmButton = modal?.querySelector("[data-refill-confirm]");
-  let pendingId = null;
-
-  const openModal = (id) => {
-    pendingId = id;
-    modal?.classList.remove("hidden");
-    modal?.classList.add("flex");
-  };
-
-  const closeModal = () => {
-    pendingId = null;
-    modal?.classList.add("hidden");
-    modal?.classList.remove("flex");
-  };
-
-  if (modal) {
-    modal.addEventListener("click", (event) => {
-      if (event.target === modal) {
-        closeModal();
-      }
-    });
-  }
-
-  if (cancelButton) {
-    cancelButton.addEventListener("click", () => closeModal());
-  }
-
-  if (confirmButton) {
-    confirmButton.addEventListener("click", async () => {
-      if (!pendingId) return;
-
-      confirmButton.setAttribute("disabled", "true");
-      const originalText = confirmButton.textContent;
-      confirmButton.textContent = "Deleting...";
-
-      try {
-        const response = await fetch("/api/heat/refill", {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ id: pendingId }),
-        });
-
-        if (response.ok) {
-          window.location.reload();
-          return;
-        }
-      } catch {
-        // noop
-      }
-
-      confirmButton.removeAttribute("disabled");
-      confirmButton.textContent = originalText || "Delete";
-      window.alert("Unable to delete refill. Please try again.");
-    });
-  }
-
-  if (historyRoot) {
-    historyRoot.addEventListener("click", async (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-
-      const button = target.closest("[data-refill-delete]");
-      if (!button) return;
-
-      const refillId = button.getAttribute("data-refill-id");
-      if (!refillId) return;
-
-      openModal(refillId);
-    });
-  }
-</script>
+<RefillDeleteModal />
