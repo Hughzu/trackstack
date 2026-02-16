@@ -1,5 +1,5 @@
 ---
-import AppShell from "@/core/layouts/AppShell.astro";
+import AppShell from "@/app/layouts/AppShell.astro";
 import Fab from "@/core/ui-kit/Fab.astro";
 import ConfirmModal from "@/core/ui-kit/ConfirmModal.astro";
 import DashboardSummary from "@/modules/expenses/components/DashboardSummary.astro";
@@ -9,77 +9,18 @@ import { expensesService } from "@/modules/expenses/services/expensesService";
 import { getCurrentUserId } from "@/core/auth/currentUser";
 
 const currentUserId = getCurrentUserId();
-const dashboard = await expensesService.getDashboard(currentUserId);
-
-const balance = {
-  remaining:
-    Math.round((dashboard.settings.income - dashboard.totalSpent) * 100) / 100,
-  income: dashboard.settings.income,
-};
-
-const spent = {
-  fund: Math.round(dashboard.spentByCategory.fund * 100) / 100,
-  fun: Math.round(dashboard.spentByCategory.fun * 100) / 100,
-  future: Math.round(dashboard.spentByCategory.future * 100) / 100,
-};
-
-const budget = {
-  fund: Math.round((balance.income * dashboard.settings.ratioFund) / 100),
-  fun: Math.round((balance.income * dashboard.settings.ratioFun) / 100),
-  future: Math.round((balance.income * dashboard.settings.ratioFuture) / 100),
-};
-
-const totalSpent = spent.fund + spent.fun + spent.future;
-
-const ratios = [
-  {
-    percent: balance.income
-      ? Math.round((spent.fund / balance.income) * 100)
-      : 0,
-    color: "bg-red-500",
-    label: "Fund.",
-    value: spent.fund,
-    budget: budget.fund,
-    target: dashboard.settings.ratioFund,
-    over: spent.fund > budget.fund,
-  },
-  {
-    percent: balance.income
-      ? Math.round((spent.fun / balance.income) * 100)
-      : 0,
-    color: "bg-orange-500",
-    label: "Fun",
-    value: spent.fun,
-    budget: budget.fun,
-    target: dashboard.settings.ratioFun,
-    over: spent.fun > budget.fun,
-  },
-  {
-    percent: balance.income
-      ? Math.round((spent.future / balance.income) * 100)
-      : 0,
-    color: "bg-emerald-500",
-    label: "Future",
-    value: spent.future,
-    budget: budget.future,
-    target: dashboard.settings.ratioFuture,
-    over: spent.future > budget.future,
-  },
-];
-
-const pendingObligations = dashboard.pendingChecklist;
-const history = dashboard.history;
+const viewModel = await expensesService.getDashboardViewModel(currentUserId);
 ---
 
 <AppShell title="Wealth" currentDomain="expenses">
   <div class="flex flex-col gap-5 pb-24">
     <DashboardSummary
-      periodKey={dashboard.sheet.periodKey}
-      balance={balance}
-      ratios={ratios}
+      periodKey={viewModel.periodKey}
+      balance={viewModel.balance}
+      ratios={viewModel.ratios}
     />
-    <ObligationsList pendingObligations={pendingObligations} />
-    <ExpenseHistoryList history={history} />
+    <ObligationsList pendingObligations={viewModel.pendingObligations} />
+    <ExpenseHistoryList history={viewModel.history} />
   </div>
 
   <div slot="actions" class="flex gap-2 w-full max-w-sm mx-auto">

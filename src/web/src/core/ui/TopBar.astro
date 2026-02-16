@@ -1,8 +1,18 @@
 ---
-import { appConfig } from "@app/config";
+type Profile = {
+  initials?: string;
+  imageUrl?: string;
+  href?: string;
+  ariaLabel?: string;
+};
 
-const { appName, profile } = appConfig;
-const fallbackInitials = appName
+interface Props {
+  appName: string;
+  profile?: Profile;
+}
+
+const { appName, profile } = Astro.props;
+const fallbackInitials = (appName ?? "")
   .split(" ")
   .map((part) => part[0])
   .join("")

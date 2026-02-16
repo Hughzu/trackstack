@@ -63,6 +63,35 @@ type EntryRow = {
   created_at: string;
 };
 
+export type ExpenseDashboardViewModel = {
+  periodKey: string;
+  balance: {
+    remaining: number;
+    income: number;
+  };
+  spent: {
+    fund: number;
+    fun: number;
+    future: number;
+  };
+  budget: {
+    fund: number;
+    fun: number;
+    future: number;
+  };
+  ratios: Array<{
+    percent: number;
+    color: string;
+    label: string;
+    value: number;
+    budget: number;
+    target: number;
+    over: boolean;
+  }>;
+  pendingObligations: ChecklistItem[];
+  history: ExpenseEntry[];
+};
+
 const DEFAULT_SETTINGS = {
   income: 2215,
   ratioFund: 60,
@@ -144,6 +173,72 @@ const mapEntryRow = (row: EntryRow): ExpenseEntry => ({
   type: row.type,
   createdAt: new Date(row.created_at)
 });
+
+const buildDashboardViewModel = (dashboard: {
+  settings: ExpenseSettings;
+  sheet: ExpenseSheet;
+  totalSpent: number;
+  spentByCategory: Record<ExpenseCategory, number>;
+  pendingChecklist: ChecklistItem[];
+  history: ExpenseEntry[];
+}): ExpenseDashboardViewModel => {
+  const balance = {
+    remaining: Math.round((dashboard.settings.income - dashboard.totalSpent) * 100) / 100,
+    income: dashboard.settings.income
+  };
+
+  const spent = {
+    fund: Math.round(dashboard.spentByCategory.fund * 100) / 100,
+    fun: Math.round(dashboard.spentByCategory.fun * 100) / 100,
+    future: Math.round(dashboard.spentByCategory.future * 100) / 100
+  };
+
+  const budget = {
+    fund: Math.round((balance.income * dashboard.settings.ratioFund) / 100),
+    fun: Math.round((balance.income * dashboard.settings.ratioFun) / 100),
+    future: Math.round((balance.income * dashboard.settings.ratioFuture) / 100)
+  };
+
+  const ratios = [
+    {
+      percent: balance.income ? Math.round((spent.fund / balance.income) * 100) : 0,
+      color: "bg-red-500",
+      label: "Fund.",
+      value: spent.fund,
+      budget: budget.fund,
+      target: dashboard.settings.ratioFund,
+      over: spent.fund > budget.fund
+    },
+    {
+      percent: balance.income ? Math.round((spent.fun / balance.income) * 100) : 0,
+      color: "bg-orange-500",
+      label: "Fun",
+      value: spent.fun,
+      budget: budget.fun,
+      target: dashboard.settings.ratioFun,
+      over: spent.fun > budget.fun
+    },
+    {
+      percent: balance.income ? Math.round((spent.future / balance.income) * 100) : 0,
+      color: "bg-emerald-500",
+      label: "Future",
+      value: spent.future,
+      budget: budget.future,
+      target: dashboard.settings.ratioFuture,
+      over: spent.future > budget.future
+    }
+  ];
+
+  return {
+    periodKey: dashboard.sheet.periodKey,
+    balance,
+    spent,
+    budget,
+    ratios,
+    pendingObligations: dashboard.pendingChecklist,
+    history: dashboard.history
+  };
+};
 
 const createSheet = async (userId: string, periodKey: string): Promise<ExpenseSheet> => {
   const db = getExpensesDb();
@@ -654,5 +749,10 @@ export const expensesService = {
       pendingChecklist: pendingRows.map(mapChecklistRow),
       history: historyRows.map(mapEntryRow)
     };
+  },
+
+  getDashboardViewModel: async (userId: string): Promise<ExpenseDashboardViewModel> => {
+    const dashboard = await expensesService.getDashboard(userId);
+    return buildDashboardViewModel(dashboard);
   }
 };

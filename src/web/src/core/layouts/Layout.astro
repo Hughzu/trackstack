@@ -1,7 +1,9 @@
 ---
-import { appConfig } from "@app/config";
+interface Props {
+  title?: string;
+}
 
-const title = appConfig.appName;
+const { title = "App" } = Astro.props;
 ---
 
 <!doctype html>

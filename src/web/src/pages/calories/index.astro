@@ -1,5 +1,5 @@
 ---
-import AppShell from "@/core/layouts/AppShell.astro";
+import AppShell from "@/app/layouts/AppShell.astro";
 import Fab from "@/core/ui-kit/Fab.astro";
 import DailySummary from "@/modules/calories/components/DailySummary.astro";
 import QuickAdd from "@/modules/calories/components/QuickAdd.astro";
@@ -10,19 +10,17 @@ import { caloriesService } from "@/modules/calories/services/caloriesService";
 import { getCurrentUserId } from "@/core/auth/currentUser";
 
 const currentUserId = getCurrentUserId();
-const summary = await caloriesService.getTodaySummary(currentUserId);
-const logs = await caloriesService.getTodayLogs(currentUserId);
-const recentMeals = await caloriesService.getRecentLogs(currentUserId, 8);
+const viewModel = await caloriesService.getDashboardViewModel(currentUserId, 8);
 ---
 
 <AppShell title="Health" currentDomain="calories">
   <div class="flex flex-col gap-5 pb-24">
     <section>
-      <DailySummary summary={summary} />
+      <DailySummary summary={viewModel.summary} />
     </section>
 
-    <QuickAdd recentMeals={recentMeals} />
-    <LogList logs={logs} />
+    <QuickAdd recentMeals={viewModel.recentMeals} />
+    <LogList logs={viewModel.logs} />
   </div>
 
   <div slot="actions" class="flex gap-2 w-full max-w-sm mx-auto">

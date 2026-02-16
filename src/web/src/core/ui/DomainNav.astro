@@ -1,12 +1,16 @@
 ---
-import { appConfig, type AppDomain } from "@app/config";
+type AppDomain = {
+  id: string;
+  label: string;
+  href: string;
+};
 
 interface Props {
   current: string;
-  domains?: AppDomain[];
+  domains: AppDomain[];
 }
 
-const { current, domains = appConfig.domains } = Astro.props;
+const { current, domains } = Astro.props;
 ---
 
 <nav

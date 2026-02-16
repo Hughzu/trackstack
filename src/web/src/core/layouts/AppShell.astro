@@ -3,18 +3,32 @@ import { ClientRouter } from "astro:transitions";
 import DomainNav from "@/core/ui/DomainNav.astro";
 import TopBar from "@/core/ui/TopBar.astro";
 import "@/core/styles/global.css";
-import { appConfig, type AppDomain } from "@app/config";
+
+type AppDomain = {
+  id: string;
+  label: string;
+  href: string;
+};
+
+type AppProfile = {
+  initials?: string;
+  imageUrl?: string;
+  href?: string;
+  ariaLabel?: string;
+};
+
 interface Props {
   title?: string;
   currentDomain?: string;
-  domains?: AppDomain[];
+  domains: AppDomain[];
+  appName: string;
+  profile?: AppProfile;
 }
-const {
-  title = appConfig.appName,
-  currentDomain = appConfig.domains[0]?.id ?? "home",
-  domains
-} = Astro.props;
-const navDomains = domains ?? appConfig.domains;
+
+const { title, currentDomain, domains, appName, profile } = Astro.props;
+const navDomains = domains ?? [];
+const resolvedTitle = title ?? appName ?? "";
+const resolvedDomain = currentDomain ?? navDomains[0]?.id ?? "home";
 ---
 
 <!doctype html>
@@ -27,7 +41,7 @@ const navDomains = domains ?? appConfig.domains;
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
+    <title>{resolvedTitle}</title>
     <ClientRouter />
   </head>
   <body
@@ -37,8 +51,8 @@ const navDomains = domains ?? appConfig.domains;
       class="sticky top-0 z-50 bg-background/95 backdrop-blur-md
 transition-all duration-300 border-b border-transparent transition-border"
     >
-      <TopBar />
-      <DomainNav current={currentDomain} domains={navDomains} />
+      <TopBar appName={appName} profile={profile} />
+      <DomainNav current={resolvedDomain} domains={navDomains} />
     </header>
     <main class="max-w-3xl mx-auto px-4 pt-6 animate-fade-in min-h-[60vh]">
       <slot />

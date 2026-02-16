@@ -20,6 +20,12 @@ type SeasonSnapshot = {
   deltaPct: number | null;
 };
 
+export type HeatDashboardViewModel = {
+  daysSinceRefill: number;
+  seasonSnapshot: SeasonSnapshot;
+  history: Refill[];
+};
+
 const mapRowToRefill = (row: RefillRow): Refill => ({
   id: row.id,
   userId: row.user_id,
@@ -53,6 +59,23 @@ const getSeasonSum = async (userId: string, start: Date, end: Date) => {
 };
 
 export const heatService = {
+  getDashboardViewModel: async (
+    userId: string,
+    page = 1,
+    limit = 20
+  ): Promise<HeatDashboardViewModel> => {
+    const [daysSinceRefill, seasonSnapshot, historyPage] = await Promise.all([
+      heatService.getDaysSinceLastRefill(userId),
+      heatService.getSeasonSnapshot(userId),
+      heatService.getHistory(page, limit, userId)
+    ]);
+
+    return {
+      daysSinceRefill,
+      seasonSnapshot,
+      history: historyPage.data
+    };
+  },
   /**
    * Calculates days elapsed since the most recent refill.
    */

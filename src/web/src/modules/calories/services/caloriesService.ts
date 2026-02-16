@@ -45,6 +45,18 @@ type CalorieTargetRow = {
   updated_at: string;
 };
 
+export type CaloriesDashboardViewModel = {
+  summary: {
+    consumed: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    target: CalorieTarget;
+  };
+  logs: CalorieLog[];
+  recentMeals: CalorieLog[];
+};
+
 const DEFAULT_TARGET = {
   targetKcal: 2300,
   targetProteinG: 120,
@@ -90,6 +102,22 @@ const buildDateTimeIso = (date: string, time?: string) => {
 };
 
 export const caloriesService = {
+  getDashboardViewModel: async (
+    userId: string,
+    recentLimit = 8
+  ): Promise<CaloriesDashboardViewModel> => {
+    const [summary, logs, recentMeals] = await Promise.all([
+      caloriesService.getTodaySummary(userId),
+      caloriesService.getTodayLogs(userId),
+      caloriesService.getRecentLogs(userId, recentLimit)
+    ]);
+
+    return {
+      summary,
+      logs,
+      recentMeals
+    };
+  },
   getTarget: async (userId: string): Promise<CalorieTarget> => {
     const db = getCaloriesDb();
     const row = await db.get<CalorieTargetRow>(

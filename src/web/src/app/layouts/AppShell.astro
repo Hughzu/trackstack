@@ -1,0 +1,31 @@
+---
+import CoreAppShell from "@/core/layouts/AppShell.astro";
+import { appConfig, type AppDomain, type AppProfile } from "@app/config";
+
+interface Props {
+  title?: string;
+  currentDomain?: string;
+  domains?: AppDomain[];
+  appName?: string;
+  profile?: AppProfile;
+}
+
+const {
+  title,
+  currentDomain,
+  domains = appConfig.domains,
+  appName = appConfig.appName,
+  profile = appConfig.profile
+} = Astro.props;
+---
+
+<CoreAppShell
+  title={title}
+  currentDomain={currentDomain}
+  domains={domains}
+  appName={appName}
+  profile={profile}
+>
+  <slot />
+  <slot name="actions" slot="actions" />
+</CoreAppShell>
