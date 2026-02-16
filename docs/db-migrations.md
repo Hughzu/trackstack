@@ -3,6 +3,7 @@
 Each domain database has its own migration directory and Turso database.
 Current domains are derived from `src/data/*.sqlite`:
 
+- `users`
 - `calories`
 - `expenses`
 - `heat`
@@ -18,6 +19,7 @@ Current domains are derived from `src/data/*.sqlite`:
 Create databases (names match domain):
 
 ```bash
+turso db create users
 turso db create calories
 turso db create expenses
 turso db create heat
@@ -26,6 +28,7 @@ turso db create heat
 Fetch URLs:
 
 ```bash
+turso db show users --url
 turso db show calories --url
 turso db show expenses --url
 turso db show heat --url
@@ -34,6 +37,7 @@ turso db show heat --url
 Create tokens (one per DB):
 
 ```bash
+turso db tokens create users
 turso db tokens create calories
 turso db tokens create expenses
 turso db tokens create heat
@@ -45,6 +49,9 @@ Set these in your local `.env` (not committed) or CI secrets.
 For the Astro app, use `src/web/.env`:
 
 ```bash
+TURSO_USERS_URL=libsql://<users-db>.turso.io
+TURSO_USERS_TOKEN=<token>
+
 TURSO_CALORIES_URL=libsql://<calories-db>.turso.io
 TURSO_CALORIES_TOKEN=<token>
 
@@ -64,6 +71,7 @@ domain migration directory.
 atlas migrate apply --env calories
 atlas migrate apply --env expenses
 atlas migrate apply --env heat
+atlas migrate apply --env users
 ```
 
 ## Apply migrations locally (SQLite)

@@ -28,6 +28,16 @@ variable "heat_token" {
   default = getenv("TURSO_HEAT_TOKEN")
 }
 
+variable "users_url" {
+  type    = string
+  default = getenv("TURSO_USERS_URL")
+}
+
+variable "users_token" {
+  type    = string
+  default = getenv("TURSO_USERS_TOKEN")
+}
+
 env "calories" {
   url = "${var.calories_url}?authToken=${var.calories_token}"
   migration {
@@ -48,6 +58,14 @@ env "heat" {
   url = "${var.heat_url}?authToken=${var.heat_token}"
   migration {
     dir = "file://migrations/heat"
+  }
+  exclude = ["_litestream*"]
+}
+
+env "users" {
+  url = "${var.users_url}?authToken=${var.users_token}"
+  migration {
+    dir = "file://migrations/users"
   }
   exclude = ["_litestream*"]
 }

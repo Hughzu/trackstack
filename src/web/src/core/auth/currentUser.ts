@@ -1,3 +1,22 @@
-export const CURRENT_USER_ID = "2f1c1c90-8f4d-4c6f-9a8e-7b1c90b9f6e1";
+import { AsyncLocalStorage } from "node:async_hooks";
 
-export const getCurrentUserId = (): string => CURRENT_USER_ID;
+type AuthContext = {
+  userId?: string;
+  sessionId?: string;
+};
+
+const authStorage = new AsyncLocalStorage<AuthContext>();
+
+export const runWithAuthContext = <T>(context: AuthContext, callback: () => T) => {
+  return authStorage.run(context, callback);
+};
+
+export const getCurrentUserId = (): string => {
+  const userId = authStorage.getStore()?.userId;
+  if (!userId) throw new Error("Missing authenticated user");
+  return userId;
+};
+
+export const getCurrentSessionId = (): string | undefined => {
+  return authStorage.getStore()?.sessionId;
+};
