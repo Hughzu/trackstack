@@ -5,11 +5,21 @@ import { getCurrentUserId } from "@/shared/auth/currentUser";
 export const prerender = false;
 
 export const POST: APIRoute = async () => {
-  const sheet = await expensesService.closeSheet(getCurrentUserId());
-  return new Response(JSON.stringify(sheet), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json"
-    }
-  });
+  try {
+    const sheet = await expensesService.closeSheet(getCurrentUserId());
+    return new Response(JSON.stringify(sheet), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+  } catch (error) {
+    console.error("Error in POST /api/expenses/close:", error);
+    return new Response(JSON.stringify({ error: "Server Error" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+  }
 };

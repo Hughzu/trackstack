@@ -1,40 +1,24 @@
 export const prerender = false;
 
-import { getDb } from "@/shared/db/sqlite";
+import { healthService } from "@/core/services/healthService";
 import type { APIRoute } from "astro";
 
 export const GET: APIRoute = async () => {
-    try {
-        const db = getDb("health");
-        // Simple query to verify DB connection
-        await db.run("SELECT 1");
+    const health = await healthService.checkHealth();
 
-        return new Response(
-            JSON.stringify({
-                status: "ok",
-                uptime: process.uptime(),
-                timestamp: new Date().toISOString()
-            }),
-            {
-                status: 200,
-                headers: {
-                    "Content-Type": "application/json"
-                }
+    if (health.status === "error") {
+        return new Response(JSON.stringify(health), {
+            status: 503,
+            headers: {
+                "Content-Type": "application/json"
             }
-        );
-    } catch (error) {
-        console.error("Health check failed:", error);
-        return new Response(
-            JSON.stringify({
-                status: "error",
-                message: "Database connection failed"
-            }),
-            {
-                status: 503,
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            }
-        );
+        });
     }
+
+    return new Response(JSON.stringify(health), {
+        status: 200,
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
 };

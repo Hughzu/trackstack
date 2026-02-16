@@ -17,7 +17,7 @@ export const POST: APIRoute = async ({ request }) => {
         }
       });
     }
-    
+
     // Basic validation
     if (!data.date || !data.weightKg || !data.bags) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -46,36 +46,46 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 export const DELETE: APIRoute = async ({ request }) => {
-  let data: { id?: string } = {};
   try {
-    data = await request.json();
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-      status: 400,
+    let data: { id?: string } = {};
+    try {
+      data = await request.json();
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+
+    if (!data.id) {
+      return new Response(JSON.stringify({ error: 'Missing refill id' }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+
+    const deleted = await heatService.deleteRefill(data.id, getCurrentUserId());
+    if (!deleted) {
+      return new Response(JSON.stringify({ error: 'Refill not found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+
+    return new Response(null, { status: 204 });
+  } catch (error) {
+    console.error("Error in DELETE /api/heat/refill:", error);
+    return new Response(JSON.stringify({ error: 'Server Error' }), {
+      status: 500,
       headers: {
         'Content-Type': 'application/json'
       }
     });
   }
-
-  if (!data.id) {
-    return new Response(JSON.stringify({ error: 'Missing refill id' }), {
-      status: 400,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-  }
-
-  const deleted = await heatService.deleteRefill(data.id, getCurrentUserId());
-  if (!deleted) {
-    return new Response(JSON.stringify({ error: 'Refill not found' }), {
-      status: 404,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-  }
-
-  return new Response(null, { status: 204 });
 };
