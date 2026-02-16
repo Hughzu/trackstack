@@ -1,102 +1,80 @@
 ---
 import Layout from "@/core/layouts/Layout.astro";
 import "@/core/styles/global.css";
+import FormShell from "@/core/ui/UI/FormShell.astro";
+import FormCard from "@/core/ui/UI/FormCard.astro";
 
 const today = new Date().toISOString().split("T")[0];
 ---
 
 <Layout>
-  <form
-    id="refill-form"
-    class="min-h-screen bg-background flex flex-col animate-fade-in relative max-w-lg mx-auto text-text-main font-sans"
-  >
-    <header
-      class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50"
-    >
-      <a
-        href="/heat"
-        class="text-text-muted hover:text-text-main text-sm transition-colors"
-        >Cancel</a
+  <FormShell title="Log Refill" cancelHref="/heat" formId="refill-form">
+    <div class="flex flex-col items-center gap-2 mt-4">
+      <label
+        for="bags"
+        class="text-xs text-text-muted uppercase tracking-widest"
+        >Bags Added</label
       >
-      <h1 class="text-base font-bold">Log Refill</h1>
-      <button
-        type="submit"
-        class="text-primary font-bold text-sm hover:text-primary/80 transition-colors"
-      >
-        Save
-      </button>
-    </header>
-
-    <main class="flex-1 p-6 flex flex-col gap-8">
-      <div class="flex flex-col items-center gap-2 mt-4">
-        <label
-          for="bags"
-          class="text-xs text-text-muted uppercase tracking-widest"
-          >Bags Added</label
+      <div class="relative w-full max-w-[200px]">
+        <input
+          type="number"
+          id="bags"
+          name="bags"
+          placeholder="0"
+          min="1"
+          value="1"
+          required
+          autofocus
+          class="w-full bg-transparent border-b-2 border-border text-center text-5xl font-bold text-text-main focus:outline-none focus:border-primary pb-2 placeholder:text-text-muted/20"
+        />
+        <span
+          class="absolute right-8 top-1/2 -translate-y-1/2 text-sm text-text-muted"
+          >bags</span
         >
-        <div class="relative w-full max-w-[200px]">
-          <input
-            type="number"
-            id="bags"
-            name="bags"
-            placeholder="0"
-            min="1"
-            value="1"
-            required
-            autofocus
-            class="w-full bg-transparent border-b-2 border-border text-center text-5xl font-bold text-text-main focus:outline-none focus:border-primary pb-2 placeholder:text-text-muted/20"
-          />
-          <span
-            class="absolute right-8 top-1/2 -translate-y-1/2 text-sm text-text-muted"
-            >bags</span
-          >
-        </div>
+      </div>
+    </div>
+
+    <FormCard>
+      <div class="flex flex-col gap-1">
+        <label for="weightKg" class="text-xs text-text-muted ml-1"
+          >Total Weight (kg)</label
+        >
+        <input
+          type="number"
+          id="weightKg"
+          name="weightKg"
+          value="15"
+          required
+          class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors"
+        />
       </div>
 
-      <div
-        class="flex flex-col gap-4 bg-surface rounded-2xl p-4 border border-border"
-      >
-        <div class="flex flex-col gap-1">
-          <label for="weightKg" class="text-xs text-text-muted ml-1"
-            >Total Weight (kg)</label
-          >
-          <input
-            type="number"
-            id="weightKg"
-            name="weightKg"
-            value="15"
-            required
-            class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors"
-          />
-        </div>
-
-        <div class="flex flex-col gap-1">
-          <label for="temperature" class="text-xs text-text-muted ml-1"
-            >Avg Temperature (°C)</label
-          >
-          <input
-            type="number"
-            id="temperature"
-            name="temperature"
-            placeholder="e.g. 12"
-            class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors"
-          />
-        </div>
-
-        <div class="flex flex-col gap-1">
-          <label for="date" class="text-xs text-text-muted ml-1">Date</label>
-          <input
-            type="date"
-            id="date"
-            name="date"
-            value={today}
-            required
-            class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
-          />
-        </div>
+      <div class="flex flex-col gap-1">
+        <label for="temperature" class="text-xs text-text-muted ml-1"
+          >Avg Temperature (°C)</label
+        >
+        <input
+          type="number"
+          id="temperature"
+          name="temperature"
+          placeholder="e.g. 12"
+          class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors"
+        />
       </div>
-    </main>
-  </form>
+
+      <div class="flex flex-col gap-1">
+        <label for="date" class="text-xs text-text-muted ml-1">Date</label>
+        <input
+          type="date"
+          id="date"
+          name="date"
+          value={today}
+          required
+          class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
+        />
+      </div>
+    </FormCard>
+  </FormShell>
 </Layout>
 
 <script>

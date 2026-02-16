@@ -1,5 +1,6 @@
 ---
 import Card from "@/core/ui/UI/Card.astro";
+import SectionHeader from "@/core/ui/UI/SectionHeader.astro";
 
 interface Props {
   seasonLabel: string;
@@ -14,12 +15,12 @@ const formatNumber = (value: number) =>
 ---
 
 <section>
-  <div class="flex items-center justify-between px-1 mb-2">
-    <span class="text-xs font-bold text-text-muted uppercase tracking-widest"
-      >Season Snapshot</span
-    >
-    <span class="text-[11px] text-text-muted">{seasonLabel}</span>
-  </div>
+  <SectionHeader
+    title="Season Snapshot"
+    subtitle={seasonLabel}
+    size="xs"
+    uppercase
+  />
   <div class="grid grid-cols-2 gap-3">
     <Card variant="highlight">
       <div class="flex flex-col items-center justify-center py-2">

@@ -3,6 +3,7 @@
 @theme {
   --color-primary: var(--color-primary);
   --color-surface: var(--color-surface);
+  --color-panel: var(--color-panel);
   --color-background: var(--color-background);
   --color-text-main: var(--color-text-main);
   --color-text-muted: var(--color-text-muted);
@@ -22,6 +23,7 @@
   --color-primary: #ffc25b;
   --color-background: #0f1115; 
   --color-surface: #1a1d23;    
+  --color-panel: #1e2128;
   --color-text-main: #ffffff;
   --color-text-muted: #9ca3af;
   --color-border: #2d3139;

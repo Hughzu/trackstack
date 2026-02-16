@@ -1,0 +1,120 @@
+---
+import Modal from "@/core/ui/UI/Modal.astro";
+import Button from "@/core/ui/UI/Button.astro";
+
+interface Props {
+  id: string;
+  title: string;
+  description?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  confirmLoadingLabel?: string;
+  triggerAttribute: string;
+  idAttribute: string;
+  endpoint: string;
+  method?: "DELETE" | "POST";
+  payloadKey?: string;
+  errorMessage?: string;
+  successRedirect?: string;
+}
+
+const {
+  id,
+  title,
+  description,
+  confirmLabel = "Confirm",
+  cancelLabel = "Cancel",
+  confirmLoadingLabel = "Working...",
+  triggerAttribute,
+  idAttribute,
+  endpoint,
+  method = "DELETE",
+  payloadKey = "id",
+  errorMessage = "Something went wrong. Please try again.",
+  successRedirect
+} = Astro.props;
+---
+
+<Modal id={id} title={title}>
+  {description && <p class="text-sm text-text-muted mb-6">{description}</p>}
+
+  <div class="flex gap-3">
+    <Button variant="secondary" class="flex-1" data-close-modal>
+      {cancelLabel}
+    </Button>
+    <Button variant="danger" class="flex-1" data-confirm-modal>
+      {confirmLabel}
+    </Button>
+  </div>
+</Modal>
+
+<script
+  define:vars={{
+    id,
+    triggerAttribute,
+    idAttribute,
+    endpoint,
+    method,
+    payloadKey,
+    errorMessage,
+    successRedirect,
+    confirmLoadingLabel
+  }}
+>
+  const modal = document.getElementById(id);
+  const confirmBtn = modal?.querySelector("[data-confirm-modal]");
+  const closeBtns = modal?.querySelectorAll("[data-close-modal]");
+
+  let pendingId = null;
+
+  closeBtns?.forEach((btn) => {
+    btn.addEventListener("click", () => modal?.close());
+  });
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    const trigger = target.closest(`[${triggerAttribute}]`);
+    if (!trigger) return;
+
+    pendingId = trigger.getAttribute(idAttribute);
+    if (!pendingId) return;
+
+    modal?.showModal();
+  });
+
+  confirmBtn?.addEventListener("click", async () => {
+    if (!pendingId) return;
+
+    const originalText = confirmBtn.textContent;
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = confirmLoadingLabel;
+
+    try {
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [payloadKey]: pendingId })
+      });
+
+      if (response.ok) {
+        if (successRedirect) {
+          window.location.href = successRedirect;
+          return;
+        }
+        window.location.reload();
+        return;
+      }
+
+      throw new Error("Request failed");
+    } catch (err) {
+      console.error(err);
+      window.alert(errorMessage);
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = originalText;
+      modal?.close();
+    }
+  });
+</script>

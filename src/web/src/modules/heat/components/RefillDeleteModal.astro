@@ -1,79 +1,18 @@
 ---
-import Modal from "@/core/ui/UI/Modal.astro";
-import Button from "@/core/ui/UI/Button.astro";
+import ConfirmModal from "@/core/ui/UI/ConfirmModal.astro";
 
 const MODAL_ID = "refill-delete-modal";
 ---
 
-<Modal id={MODAL_ID} title="Delete refill?">
-    <p class="text-sm text-text-muted mb-6">
-        This removes the entry from your history. This action cannot be undone.
-    </p>
-
-    <div class="flex gap-3">
-        <Button variant="secondary" class="flex-1" data-close-modal>
-            Cancel
-        </Button>
-        <Button variant="danger" class="flex-1" id="confirm-delete-refill">
-            Delete
-        </Button>
-    </div>
-</Modal>
-
-<script define:vars={{ MODAL_ID }}>
-    const modal = document.getElementById(MODAL_ID);
-    const confirmBtn = document.getElementById("confirm-delete-refill");
-    const closeBtns = modal?.querySelectorAll("[data-close-modal]");
-
-    let pendingId = null;
-
-    // Global handler to open this specific modal
-    window.openDeleteRefillModal = (id) => {
-        pendingId = id;
-        modal?.showModal();
-    };
-
-    // Close handlers
-    closeBtns?.forEach((btn) => {
-        btn.addEventListener("click", () => modal?.close());
-    });
-
-    // Confirm delete logic
-    confirmBtn?.addEventListener("click", async () => {
-        if (!pendingId) return;
-
-        const originalText = confirmBtn.textContent;
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = "Deleting...";
-
-        try {
-            const response = await fetch("/api/heat/refill", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: pendingId }),
-            });
-
-            if (response.ok) {
-                window.location.reload();
-                return;
-            } else {
-                throw new Error("Failed to delete");
-            }
-        } catch (e) {
-            console.error(e);
-            window.alert("Unable to delete refill. Please try again.");
-        } finally {
-            confirmBtn.disabled = false;
-            confirmBtn.textContent = originalText;
-            modal?.close();
-        }
-    });
-
-    // Listen for clicks on delete triggers across the page
-    document.addEventListener("click", (event) => {
-        const trigger = event.target.closest("[data-refill-delete]");
-        if (trigger && trigger.dataset.refillId) {
-            window.openDeleteRefillModal(trigger.dataset.refillId);
-        }
-    });
-</script>
+<ConfirmModal
+  id={MODAL_ID}
+  title="Delete refill?"
+  description="This removes the entry from your history. This action cannot be undone."
+  confirmLabel="Delete"
+  confirmLoadingLabel="Deleting..."
+  triggerAttribute="data-refill-delete"
+  idAttribute="data-refill-id"
+  endpoint="/api/heat/refill"
+  method="DELETE"
+  errorMessage="Unable to delete refill. Please try again."
+/>

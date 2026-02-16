@@ -1,0 +1,27 @@
+---
+interface Props {
+  title: string;
+  subtitle?: string;
+  size?: "sm" | "xs";
+  uppercase?: boolean;
+  class?: string;
+}
+
+const {
+  title,
+  subtitle,
+  size = "sm",
+  uppercase = false,
+  class: className
+} = Astro.props;
+
+const titleSize = size === "xs" ? "text-xs" : "text-sm";
+const titleCase = uppercase ? "uppercase tracking-widest" : "";
+---
+
+<div class:list={["flex items-center justify-between px-1 mb-2", className]}>
+  <span class:list={["font-bold text-text-muted", titleSize, titleCase]}>
+    {title}
+  </span>
+  {subtitle && <span class="text-[11px] text-text-muted">{subtitle}</span>}
+</div>
