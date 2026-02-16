@@ -1,4 +1,4 @@
 - destroy existing infra ? Create another account ? 
 - deploy the app on AWS 
-- prepare a first core with amplify / oidc / ...
-- first cli version 
+- document through the blog app, recreate it ? 
+- first cli version for bootstrap / core etc etc
