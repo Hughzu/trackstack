@@ -1,16 +1,12 @@
 ---
+import { appConfig, type AppDomain } from "@app/config";
+
 interface Props {
-  current: "expenses" | "heat" | "calories" | "home";
+  current: string;
+  domains?: AppDomain[];
 }
 
-const { current } = Astro.props;
-
-const domains = [
-  { id: "home", label: "Overview", href: "/" },
-  { id: "expenses", label: "Expenses", href: "/expenses" },
-  { id: "calories", label: "Health", href: "/calories" },
-  { id: "heat", label: "Heat", href: "/heat" },
-];
+const { current, domains = appConfig.domains } = Astro.props;
 ---
 
 <nav

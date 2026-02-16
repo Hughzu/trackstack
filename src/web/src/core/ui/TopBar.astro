@@ -1,17 +1,41 @@
 ---
-// import { Image } from "astro:assets";
-// Assuming you might use your logo here, otherwise text is fine
-// import StLogo from "@/assets/23St-logo.svg"; 
+import { appConfig } from "@app/config";
+
+const { appName, profile } = appConfig;
+const fallbackInitials = appName
+  .split(" ")
+  .map((part) => part[0])
+  .join("")
+  .slice(0, 2)
+  .toUpperCase();
+const initials = profile?.initials ?? fallbackInitials;
+const Tag = profile?.href ? "a" : "button";
 ---
 
 <div class="flex justify-between items-center px-4 py-3 max-w-3xl mx-auto">
   <div class="font-bold text-xl tracking-tight text-text-main">
-    TrackStack
+    {appName}
   </div>
 
-  <button class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-border hover:border-primary transition-colors cursor-pointer">
-     <div class="w-full h-full flex items-center justify-center bg-gray-300 text-xs font-bold text-gray-600">
-       HZ
-     </div>
-  </button>
+  <Tag
+    href={profile?.href}
+    type={!profile?.href ? "button" : undefined}
+    aria-label={profile?.ariaLabel ?? "Open profile"}
+    class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-border hover:border-primary transition-colors cursor-pointer"
+  >
+    {
+      profile?.imageUrl ? (
+        <img
+          src={profile.imageUrl}
+          alt={profile?.ariaLabel ?? "Profile"}
+          class="w-full h-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div class="w-full h-full flex items-center justify-center bg-gray-300 text-xs font-bold text-gray-600">
+          {initials}
+        </div>
+      )
+    }
+  </Tag>
 </div>
