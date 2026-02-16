@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { expensesService } from "@/modules/expenses/services/expensesService";
-import { getCurrentUserId } from "@/shared/auth/currentUser";
+import { getCurrentUserId } from "@/core/auth/currentUser";
 
 export const prerender = false;
 

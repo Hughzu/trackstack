@@ -1,38 +1,73 @@
 ---
-import Layout from '@/shared/layouts/Layout.astro';
-import '@/shared/styles/global.css'; 
+import AppShell from "@/core/layouts/AppShell.astro";
+import "@/core/styles/global.css";
 
 const categories = [
-  { id: 'fund', label: 'Fundamentals', color: 'peer-checked:border-red-500 peer-checked:ring-2 peer-checked:ring-red-500/30', icon: '🏠' },
-  { id: 'fun', label: 'Fun', color: 'peer-checked:border-orange-500 peer-checked:ring-2 peer-checked:ring-orange-500/30', icon: '🎉' },
-  { id: 'future', label: 'Future', color: 'peer-checked:border-emerald-500 peer-checked:ring-2 peer-checked:ring-emerald-500/30', icon: '🚀' },
+  {
+    id: "fund",
+    label: "Fundamentals",
+    color:
+      "peer-checked:border-red-500 peer-checked:ring-2 peer-checked:ring-red-500/30",
+    icon: "🏠",
+  },
+  {
+    id: "fun",
+    label: "Fun",
+    color:
+      "peer-checked:border-orange-500 peer-checked:ring-2 peer-checked:ring-orange-500/30",
+    icon: "🎉",
+  },
+  {
+    id: "future",
+    label: "Future",
+    color:
+      "peer-checked:border-emerald-500 peer-checked:ring-2 peer-checked:ring-emerald-500/30",
+    icon: "🚀",
+  },
 ];
 
-const today = new Date().toISOString().split('T')[0];
+const today = new Date().toISOString().split("T")[0];
 ---
 
-<Layout>
-  <form id="expense-form" class="min-h-screen bg-background flex flex-col animate-fade-in relative max-w-lg mx-auto text-text-main font-sans">
-    
-    <header class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
-      <a href="/expenses" class="text-text-muted hover:text-text-main text-sm transition-colors">Cancel</a>
+<AppShell>
+  <form
+    id="expense-form"
+    class="min-h-screen bg-background flex flex-col animate-fade-in relative max-w-lg mx-auto text-text-main font-sans"
+  >
+    <header
+      class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50"
+    >
+      <a
+        href="/expenses"
+        class="text-text-muted hover:text-text-main text-sm transition-colors"
+        >Cancel</a
+      >
       <h1 class="text-base font-bold">New Expense</h1>
-      <button type="submit" class="text-primary font-bold text-sm hover:text-primary/80 transition-colors">
+      <button
+        type="submit"
+        class="text-primary font-bold text-sm hover:text-primary/80 transition-colors"
+      >
         Save
       </button>
     </header>
 
     <main class="flex-1 p-6 flex flex-col gap-8">
-      
       <div class="flex flex-col items-center gap-2 mt-4">
-        <label for="amount" class="text-xs text-text-muted uppercase tracking-widest">Amount</label>
+        <label
+          for="amount"
+          class="text-xs text-text-muted uppercase tracking-widest"
+          >Amount</label
+        >
         <div class="relative w-full max-w-[200px]">
-          <span class="absolute left-0 top-1/2 -translate-y-1/2 text-3xl font-bold text-text-muted">€</span>
-          <input 
-            type="number" 
-            id="amount" 
-            name="amount" 
-            placeholder="0.00" 
+          <span
+            class="absolute left-0 top-1/2 -translate-y-1/2 text-3xl font-bold text-text-muted"
+            >€</span
+          >
+          <input
+            type="number"
+            id="amount"
+            name="amount"
+            placeholder="0.00"
             step="0.01"
             required
             autofocus
@@ -42,84 +77,110 @@ const today = new Date().toISOString().split('T')[0];
       </div>
 
       <div class="flex flex-col gap-3">
-        <label class="text-xs text-text-muted uppercase tracking-widest px-1">Category</label>
+        <label class="text-xs text-text-muted uppercase tracking-widest px-1"
+          >Category</label
+        >
         <div class="grid grid-cols-3 gap-3">
-          {categories.map(cat => (
-            <label class="cursor-pointer group relative">
-              <input type="radio" name="category" value={cat.id} class="peer sr-only" required />
-              <div class={`
+          {
+            categories.map((cat) => (
+              <label class="cursor-pointer group relative">
+                <input
+                  type="radio"
+                  name="category"
+                  value={cat.id}
+                  class="peer sr-only"
+                  required
+                />
+                <div
+                  class={`
                 h-24 rounded-2xl border border-border bg-surface 
                 flex flex-col items-center justify-center gap-2
                 transition-all duration-200
                 ${cat.color}
-              `}>
-                <span class="text-2xl group-active:scale-90 transition-transform">{cat.icon}</span>
-                <span class="text-xs font-medium text-text-muted">{cat.label}</span>
-              </div>
-              
-              <div class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4 text-primary">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            </label>
-          ))}
+              `}
+                >
+                  <span class="text-2xl group-active:scale-90 transition-transform">
+                    {cat.icon}
+                  </span>
+                  <span class="text-xs font-medium text-text-muted">
+                    {cat.label}
+                  </span>
+                </div>
+
+                <div class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="size-4 text-primary"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </label>
+            ))
+          }
         </div>
       </div>
 
-      <div class="flex flex-col gap-4 bg-surface rounded-2xl p-4 border border-border">
+      <div
+        class="flex flex-col gap-4 bg-surface rounded-2xl p-4 border border-border"
+      >
         <div class="flex flex-col gap-1">
           <label for="title" class="text-xs text-text-muted ml-1">Title</label>
-          <input 
-            type="text" 
-            id="title" 
-            name="title" 
-            placeholder="e.g. Groceries" 
+          <input
+            type="text"
+            id="title"
+            name="title"
+            placeholder="e.g. Groceries"
             class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors"
           />
         </div>
 
         <div class="flex flex-col gap-1">
           <label for="date" class="text-xs text-text-muted ml-1">Date</label>
-          <input 
-            type="date" 
-            id="date" 
-            name="date" 
+          <input
+            type="date"
+            id="date"
+            name="date"
             value={today}
             class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors [color-scheme:dark]"
           />
         </div>
       </div>
-
     </main>
   </form>
-</Layout>
+</AppShell>
 
 <script>
-  const form = document.getElementById('expense-form');
+  const form = document.getElementById("expense-form");
 
-  form?.addEventListener('submit', async (event) => {
+  form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const formData = new FormData(form);
     const payload = Object.fromEntries(formData);
 
     try {
-      const response = await fetch('/api/expenses/expense', {
-        method: 'POST',
+      const response = await fetch("/api/expenses/expense", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        window.location.href = '/expenses';
+        window.location.href = "/expenses";
         return;
       }
     } catch {
       // noop
     }
 
-    window.alert('Failed to save expense.');
+    window.alert("Failed to save expense.");
   });
 </script>

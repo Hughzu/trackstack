@@ -1,9 +1,10 @@
 ---
-import AppShell from '@/shared/layouts/AppShell.astro';
-import Card from '@/shared/components/UI/Card.astro';
-import Fab from '@/shared/components/UI/Fab.astro';
-import { caloriesService } from '@/modules/calories/services/caloriesService';
-import { getCurrentUserId } from '@/shared/auth/currentUser';
+import AppShell from "@/core/layouts/AppShell.astro";
+import Card from "@/core/ui/UI/Card.astro";
+import Fab from "@/core/ui/UI/Fab.astro";
+
+import { caloriesService } from "@/modules/calories/services/caloriesService";
+import { getCurrentUserId } from "@/core/auth/currentUser";
 
 const currentUserId = getCurrentUserId();
 const summary = await caloriesService.getTodaySummary(currentUserId);
@@ -16,64 +17,86 @@ const percent = summary.target.targetKcal
 const macroTotal = summary.carbs + summary.fat + summary.protein;
 const macros = [
   {
-    label: 'Carbs',
+    label: "Carbs",
     amount: `${summary.carbs}g`,
     percent: macroTotal ? Math.round((summary.carbs / macroTotal) * 100) : 0,
-    color: 'bg-orange-400'
+    color: "bg-orange-400",
   },
   {
-    label: 'Fat',
+    label: "Fat",
     amount: `${summary.fat}g`,
     percent: macroTotal ? Math.round((summary.fat / macroTotal) * 100) : 0,
-    color: 'bg-yellow-400'
+    color: "bg-yellow-400",
   },
   {
-    label: 'Protein',
+    label: "Protein",
     amount: `${summary.protein}g`,
     percent: macroTotal ? Math.round((summary.protein / macroTotal) * 100) : 0,
-    color: 'bg-emerald-400'
+    color: "bg-emerald-400",
   },
 ];
 
 const formatTime = (date: Date) =>
-  date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 ---
 
 <AppShell title="Health" currentDomain="calories">
-  
   <div class="flex flex-col gap-5 pb-24">
-
     <!-- Summary Card -->
     <section>
       <Card variant="highlight">
         <div class="flex justify-between items-start mb-6">
           <div>
-            <span class="text-xs text-text-muted uppercase tracking-widest">Daily Intake</span>
+            <span class="text-xs text-text-muted uppercase tracking-widest"
+              >Daily Intake</span
+            >
             <div class="flex items-baseline gap-2">
-              <span class="text-3xl font-bold text-text-main">{summary.consumed}</span>
-              <span class="text-sm font-mono text-text-muted">/ {summary.target.targetKcal} kcal</span>
+              <span class="text-3xl font-bold text-text-main"
+                >{summary.consumed}</span
+              >
+              <span class="text-sm font-mono text-text-muted"
+                >/ {summary.target.targetKcal} kcal</span
+              >
             </div>
           </div>
           <div class="text-right">
-             <span class="text-xs text-text-muted uppercase tracking-widest">Protein</span>
-             <div class="text-sm font-bold text-primary">{summary.protein}g <span class="text-text-muted font-normal">/ {summary.target.targetProteinG}g</span></div>
+            <span class="text-xs text-text-muted uppercase tracking-widest"
+              >Protein</span
+            >
+            <div class="text-sm font-bold text-primary">
+              {summary.protein}g <span class="text-text-muted font-normal"
+                >/ {summary.target.targetProteinG}g</span
+              >
+            </div>
           </div>
         </div>
 
         <!-- Progress Bar -->
-        <div class="relative w-full h-3 bg-gray-800 rounded-full overflow-hidden mb-6">
-          <div class="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500" style={`width: ${percent}%`}></div>
+        <div
+          class="relative w-full h-3 bg-gray-800 rounded-full overflow-hidden mb-6"
+        >
+          <div
+            class="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500"
+            style={`width: ${percent}%`}
+          >
+          </div>
         </div>
 
         <!-- Macros Grid -->
-         <div class="grid grid-cols-3 gap-2 text-center divide-x divide-white/10">
-           {macros.map(m => (
+        <div
+          class="grid grid-cols-3 gap-2 text-center divide-x divide-white/10"
+        >
+          {
+            macros.map((m) => (
               <div class="px-1">
-                <div class="text-[10px] text-text-muted uppercase">{m.label}</div>
+                <div class="text-[10px] text-text-muted uppercase">
+                  {m.label}
+                </div>
                 <div class="text-xs font-bold">{m.amount}</div>
               </div>
-           ))}
-         </div>
+            ))
+          }
+        </div>
       </Card>
     </section>
 
@@ -86,72 +109,103 @@ const formatTime = (date: Date) =>
         style="scrollbar-width: none; -ms-overflow-style: none;"
       >
         <div class="flex gap-2 min-w-max pt-1 pb-0 px-1">
-        {recentMeals.map(meal => (
-          <button
-            class="px-3 py-2 rounded-xl border border-primary/20 bg-[#20242c] hover:border-primary/50 hover:bg-[#232833] transition-colors whitespace-nowrap"
-            type="button"
-            data-calorie-quick-item
-            data-calorie-title={meal.title ?? ''}
-            data-calorie-kcal={meal.calories}
-            data-calorie-protein={meal.proteinG}
-            data-calorie-carbs={meal.carbsG ?? 0}
-            data-calorie-fat={meal.fatG ?? 0}
-            aria-label={`Quick add ${meal.title ?? 'meal'}`}
-          >
-            <span class="text-sm text-text-main">{meal.title ?? 'Untitled'}</span>
-          </button>
-        ))}
+          {
+            recentMeals.map((meal) => (
+              <button
+                class="px-3 py-2 rounded-xl border border-primary/20 bg-[#20242c] hover:border-primary/50 hover:bg-[#232833] transition-colors whitespace-nowrap"
+                type="button"
+                data-calorie-quick-item
+                data-calorie-title={meal.title ?? ""}
+                data-calorie-kcal={meal.calories}
+                data-calorie-protein={meal.proteinG}
+                data-calorie-carbs={meal.carbsG ?? 0}
+                data-calorie-fat={meal.fatG ?? 0}
+                aria-label={`Quick add ${meal.title ?? "meal"}`}
+              >
+                <span class="text-sm text-text-main">
+                  {meal.title ?? "Untitled"}
+                </span>
+              </button>
+            ))
+          }
         </div>
 
-        {recentMeals.length === 0 && (
-          <div class="text-center py-4 text-xs text-text-muted italic">
-            No recent meals yet.
-          </div>
-        )}
+        {
+          recentMeals.length === 0 && (
+            <div class="text-center py-4 text-xs text-text-muted italic">
+              No recent meals yet.
+            </div>
+          )
+        }
       </div>
     </section>
 
     <!-- Recent Logs -->
     <section>
       <h3 class="text-sm font-bold text-text-muted mb-2 px-1">Today's Logs</h3>
-      <div class="bg-[#1e2128] border border-primary/20 rounded-2xl shadow-lg shadow-black/40 divide-y divide-white/5 overflow-hidden" data-calorie-history>
-        {logs.map(log => (
-          <div class="p-3 flex justify-between items-center group">
-            <div>
-              <div class="font-medium text-sm text-text-main">{log.title ?? 'Untitled'}</div>
-               <div class="text-[10px] text-text-muted flex gap-2">
-                 <span>{formatTime(log.dateTime)}</span>
-                 <span class="text-primary">{log.proteinG}g prot</span>
-               </div>
+      <div
+        class="bg-[#1e2128] border border-primary/20 rounded-2xl shadow-lg shadow-black/40 divide-y divide-white/5 overflow-hidden"
+        data-calorie-history
+      >
+        {
+          logs.map((log) => (
+            <div class="p-3 flex justify-between items-center group">
+              <div>
+                <div class="font-medium text-sm text-text-main">
+                  {log.title ?? "Untitled"}
+                </div>
+                <div class="text-[10px] text-text-muted flex gap-2">
+                  <span>{formatTime(log.dateTime)}</span>
+                  <span class="text-primary">{log.proteinG}g prot</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-sm text-text-main">
+                  {log.calories}
+                </span>
+                <button
+                  class="text-gray-600 hover:text-red-500 transition-colors p-1"
+                  aria-label="Delete"
+                  data-calorie-delete
+                  data-calorie-id={log.id}
+                  type="button"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="size-4"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div class="flex items-center gap-3">
-              <span class="font-mono text-sm text-text-main">{log.calories}</span>
-              <button
-                class="text-gray-600 hover:text-red-500 transition-colors p-1"
-                aria-label="Delete"
-                data-calorie-delete
-                data-calorie-id={log.id}
-                type="button"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                </svg>
-              </button>
+          ))
+        }
+        {
+          logs.length === 0 && (
+            <div class="p-4 text-center text-text-muted text-xs italic">
+              No logs yet for today.
             </div>
-          </div>
-        ))}
-        {logs.length === 0 && (
-          <div class="p-4 text-center text-text-muted text-xs italic">
-            No logs yet for today.
-          </div>
-        )}
+          )
+        }
       </div>
     </section>
-
   </div>
 
   <div slot="actions" class="flex gap-2 w-full max-w-sm mx-auto">
-    <Fab variant="secondary" href="/calories/settings" class="flex-1 justify-center"> 
+    <Fab
+      variant="secondary"
+      href="/calories/settings"
+      class="flex-1 justify-center"
+    >
       <svg
         slot="icon"
         xmlns="http://www.w3.org/2000/svg"
@@ -167,19 +221,36 @@ const formatTime = (date: Date) =>
         ></path><path
           stroke-linecap="round"
           stroke-linejoin="round"
-          d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path></svg>
+          d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path></svg
+      >
       Settings
     </Fab>
     <Fab variant="primary" href="/calories/new" class="flex-2 justify-center">
-      <svg slot="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+      <svg
+        slot="icon"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="size-5"
+        ><path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 4.5v15m7.5-7.5h-15"></path></svg
+      >
       Add Meal
     </Fab>
   </div>
-
 </AppShell>
 
-<div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm" data-calorie-modal>
-  <div class="w-[90%] max-w-xs rounded-2xl border border-border bg-surface p-4 shadow-lg">
+<div
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm"
+  data-calorie-modal
+>
+  <div
+    class="w-[90%] max-w-xs rounded-2xl border border-border bg-surface p-4 shadow-lg"
+  >
     <h4 class="text-sm font-bold text-text-main">Delete log?</h4>
     <p class="mt-1 text-xs text-text-muted">
       This removes the entry from today’s list.
@@ -204,27 +275,27 @@ const formatTime = (date: Date) =>
 </div>
 
 <script>
-  const historyRoot = document.querySelector('[data-calorie-history]');
-  const quickAddRoot = document.querySelector('[data-calorie-quick-add]');
-  const modal = document.querySelector('[data-calorie-modal]');
-  const cancelButton = modal?.querySelector('[data-calorie-cancel]');
-  const confirmButton = modal?.querySelector('[data-calorie-confirm]');
+  const historyRoot = document.querySelector("[data-calorie-history]");
+  const quickAddRoot = document.querySelector("[data-calorie-quick-add]");
+  const modal = document.querySelector("[data-calorie-modal]");
+  const cancelButton = modal?.querySelector("[data-calorie-cancel]");
+  const confirmButton = modal?.querySelector("[data-calorie-confirm]");
   let pendingId = null;
 
   const openModal = (id) => {
     pendingId = id;
-    modal?.classList.remove('hidden');
-    modal?.classList.add('flex');
+    modal?.classList.remove("hidden");
+    modal?.classList.add("flex");
   };
 
   const closeModal = () => {
     pendingId = null;
-    modal?.classList.add('hidden');
-    modal?.classList.remove('flex');
+    modal?.classList.add("hidden");
+    modal?.classList.remove("flex");
   };
 
   if (modal) {
-    modal.addEventListener('click', (event) => {
+    modal.addEventListener("click", (event) => {
       if (event.target === modal) {
         closeModal();
       }
@@ -232,24 +303,24 @@ const formatTime = (date: Date) =>
   }
 
   if (cancelButton) {
-    cancelButton.addEventListener('click', () => closeModal());
+    cancelButton.addEventListener("click", () => closeModal());
   }
 
   if (confirmButton) {
-    confirmButton.addEventListener('click', async () => {
+    confirmButton.addEventListener("click", async () => {
       if (!pendingId) return;
 
-      confirmButton.setAttribute('disabled', 'true');
+      confirmButton.setAttribute("disabled", "true");
       const originalText = confirmButton.textContent;
-      confirmButton.textContent = 'Deleting...';
+      confirmButton.textContent = "Deleting...";
 
       try {
-        const response = await fetch('/api/calories/log', {
-          method: 'DELETE',
+        const response = await fetch("/api/calories/log", {
+          method: "DELETE",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ id: pendingId })
+          body: JSON.stringify({ id: pendingId }),
         });
 
         if (response.ok) {
@@ -260,21 +331,21 @@ const formatTime = (date: Date) =>
         // noop
       }
 
-      confirmButton.removeAttribute('disabled');
-      confirmButton.textContent = originalText || 'Delete';
-      window.alert('Unable to delete log. Please try again.');
+      confirmButton.removeAttribute("disabled");
+      confirmButton.textContent = originalText || "Delete";
+      window.alert("Unable to delete log. Please try again.");
     });
   }
 
   if (historyRoot) {
-    historyRoot.addEventListener('click', (event) => {
+    historyRoot.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
 
-      const button = target.closest('[data-calorie-delete]');
+      const button = target.closest("[data-calorie-delete]");
       if (!button) return;
 
-      const logId = button.getAttribute('data-calorie-id');
+      const logId = button.getAttribute("data-calorie-id");
       if (!logId) return;
 
       openModal(logId);
@@ -282,38 +353,38 @@ const formatTime = (date: Date) =>
   }
 
   if (quickAddRoot) {
-    quickAddRoot.addEventListener('click', async (event) => {
+    quickAddRoot.addEventListener("click", async (event) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
 
-      const button = target.closest('[data-calorie-quick-item]');
+      const button = target.closest("[data-calorie-quick-item]");
       if (!button) return;
 
-      const title = button.getAttribute('data-calorie-title') || undefined;
-      const calories = Number(button.getAttribute('data-calorie-kcal'));
-      const protein = Number(button.getAttribute('data-calorie-protein'));
-      const carbs = Number(button.getAttribute('data-calorie-carbs'));
-      const fat = Number(button.getAttribute('data-calorie-fat'));
+      const title = button.getAttribute("data-calorie-title") || undefined;
+      const calories = Number(button.getAttribute("data-calorie-kcal"));
+      const protein = Number(button.getAttribute("data-calorie-protein"));
+      const carbs = Number(button.getAttribute("data-calorie-carbs"));
+      const fat = Number(button.getAttribute("data-calorie-fat"));
 
       if (!Number.isFinite(calories) || !Number.isFinite(protein)) return;
 
-      button.setAttribute('disabled', 'true');
+      button.setAttribute("disabled", "true");
       const originalText = button.textContent;
-      button.textContent = 'Adding...';
+      button.textContent = "Adding...";
 
       try {
-        const response = await fetch('/api/calories/log', {
-          method: 'POST',
+        const response = await fetch("/api/calories/log", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             calories,
             protein,
             carbs,
             fat,
-            title
-          })
+            title,
+          }),
         });
 
         if (response.ok) {
@@ -324,9 +395,9 @@ const formatTime = (date: Date) =>
         // noop
       }
 
-      button.removeAttribute('disabled');
-      button.textContent = originalText || 'Quick add';
-      window.alert('Unable to add meal. Please try again.');
+      button.removeAttribute("disabled");
+      button.textContent = originalText || "Quick add";
+      window.alert("Unable to add meal. Please try again.");
     });
   }
 </script>

@@ -1,4 +1,4 @@
-import { getDb } from "@/shared/db/sqlite";
+import { getDb } from "@/core/db/sqlite";
 
 const DOMAIN = "expenses";
 

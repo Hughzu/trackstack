@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { heatService } from '@/modules/heat/services/heatService';
-import { getCurrentUserId } from '@/shared/auth/currentUser';
+import { getCurrentUserId } from '@/core/auth/currentUser';
 
 export const prerender = false;
 

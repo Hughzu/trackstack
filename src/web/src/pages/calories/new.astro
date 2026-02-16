@@ -1,23 +1,39 @@
 ---
-import Layout from '@/shared/layouts/Layout.astro';
-import '@/shared/styles/global.css';
+import AppShell from "@/core/layouts/AppShell.astro";
+import "@/core/styles/global.css";
 
-const today = new Date().toISOString().split('T')[0];
+const today = new Date().toISOString().split("T")[0];
 ---
 
-<Layout>
-  <form id="calorie-form" class="min-h-screen bg-background flex flex-col animate-fade-in relative max-w-lg mx-auto text-text-main font-sans">
-    <header class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
-      <a href="/calories" class="text-text-muted hover:text-text-main text-sm transition-colors">Cancel</a>
+<AppShell>
+  <form
+    id="calorie-form"
+    class="min-h-screen bg-background flex flex-col animate-fade-in relative max-w-lg mx-auto text-text-main font-sans"
+  >
+    <header
+      class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50"
+    >
+      <a
+        href="/calories"
+        class="text-text-muted hover:text-text-main text-sm transition-colors"
+        >Cancel</a
+      >
       <h1 class="text-base font-bold">Add Log</h1>
-      <button type="submit" class="text-primary font-bold text-sm hover:text-primary/80 transition-colors">
+      <button
+        type="submit"
+        class="text-primary font-bold text-sm hover:text-primary/80 transition-colors"
+      >
         Save
       </button>
     </header>
 
     <main class="flex-1 p-6 flex flex-col gap-8">
       <div class="flex flex-col items-center gap-2 mt-4">
-        <label for="calories" class="text-xs text-text-muted uppercase tracking-widest">Calories</label>
+        <label
+          for="calories"
+          class="text-xs text-text-muted uppercase tracking-widest"
+          >Calories</label
+        >
         <div class="relative w-full max-w-[200px]">
           <input
             type="number"
@@ -28,40 +44,93 @@ const today = new Date().toISOString().split('T')[0];
             required
             class="w-full bg-transparent border-b-2 border-border text-center text-5xl font-bold text-text-main focus:outline-none focus:border-primary pb-2 placeholder:text-text-muted/20"
           />
-          <span class="absolute right-0 top-1/2 -translate-y-1/2 text-sm text-text-muted font-bold translate-x-8">kcal</span>
+          <span
+            class="absolute right-0 top-1/2 -translate-y-1/2 text-sm text-text-muted font-bold translate-x-8"
+            >kcal</span
+          >
         </div>
       </div>
 
       <div class="flex flex-col gap-3">
-        <label class="text-xs text-text-muted uppercase tracking-widest px-1">Macros (Optional)</label>
+        <label class="text-xs text-text-muted uppercase tracking-widest px-1"
+          >Macros (Optional)</label
+        >
         <div class="grid grid-cols-3 gap-3">
-          <div class="bg-surface rounded-2xl p-3 border border-border flex flex-col items-center gap-1">
-            <label for="protein" class="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Protein</label>
+          <div
+            class="bg-surface rounded-2xl p-3 border border-border flex flex-col items-center gap-1"
+          >
+            <label
+              for="protein"
+              class="text-[10px] text-emerald-400 uppercase font-bold tracking-wider"
+              >Protein</label
+            >
             <div class="relative w-full">
-              <input type="number" id="protein" name="protein" placeholder="0" required class="w-full bg-transparent text-center font-bold text-xl focus:outline-none text-text-main placeholder:text-text-muted/20" />
-              <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-text-muted">g</span>
+              <input
+                type="number"
+                id="protein"
+                name="protein"
+                placeholder="0"
+                required
+                class="w-full bg-transparent text-center font-bold text-xl focus:outline-none text-text-main placeholder:text-text-muted/20"
+              />
+              <span
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-text-muted"
+                >g</span
+              >
             </div>
           </div>
 
-          <div class="bg-surface rounded-2xl p-3 border border-border flex flex-col items-center gap-1">
-            <label for="carbs" class="text-[10px] text-orange-400 uppercase font-bold tracking-wider">Carbs</label>
+          <div
+            class="bg-surface rounded-2xl p-3 border border-border flex flex-col items-center gap-1"
+          >
+            <label
+              for="carbs"
+              class="text-[10px] text-orange-400 uppercase font-bold tracking-wider"
+              >Carbs</label
+            >
             <div class="relative w-full">
-              <input type="number" id="carbs" name="carbs" placeholder="0" class="w-full bg-transparent text-center font-bold text-xl focus:outline-none text-text-main placeholder:text-text-muted/20" />
-              <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-text-muted">g</span>
+              <input
+                type="number"
+                id="carbs"
+                name="carbs"
+                placeholder="0"
+                class="w-full bg-transparent text-center font-bold text-xl focus:outline-none text-text-main placeholder:text-text-muted/20"
+              />
+              <span
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-text-muted"
+                >g</span
+              >
             </div>
           </div>
 
-          <div class="bg-surface rounded-2xl p-3 border border-border flex flex-col items-center gap-1">
-            <label for="fat" class="text-[10px] text-yellow-400 uppercase font-bold tracking-wider">Fat</label>
+          <div
+            class="bg-surface rounded-2xl p-3 border border-border flex flex-col items-center gap-1"
+          >
+            <label
+              for="fat"
+              class="text-[10px] text-yellow-400 uppercase font-bold tracking-wider"
+              >Fat</label
+            >
             <div class="relative w-full">
-              <input type="number" id="fat" name="fat" placeholder="0" class="w-full bg-transparent text-center font-bold text-xl focus:outline-none text-text-main placeholder:text-text-muted/20" />
-              <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-text-muted">g</span>
+              <input
+                type="number"
+                id="fat"
+                name="fat"
+                placeholder="0"
+                class="w-full bg-transparent text-center font-bold text-xl focus:outline-none text-text-main placeholder:text-text-muted/20"
+              />
+              <span
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-text-muted"
+                >g</span
+              >
             </div>
           </div>
         </div>
       </div>
 
-      <div class="flex flex-col gap-4 bg-surface rounded-2xl p-4 border border-border">
+      <div
+        class="flex flex-col gap-4 bg-surface rounded-2xl p-4 border border-border"
+      >
         <div class="flex flex-col gap-1">
           <label for="title" class="text-xs text-text-muted ml-1">Title</label>
           <input
@@ -89,34 +158,34 @@ const today = new Date().toISOString().split('T')[0];
       </div>
     </main>
   </form>
-</Layout>
+</AppShell>
 
 <script>
-  const form = document.getElementById('calorie-form');
+  const form = document.getElementById("calorie-form");
 
-  form?.addEventListener('submit', async (event) => {
+  form?.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const formData = new FormData(form);
     const payload = Object.fromEntries(formData);
 
     try {
-      const response = await fetch('/api/calories/log', {
-        method: 'POST',
+      const response = await fetch("/api/calories/log", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        window.location.href = '/calories';
+        window.location.href = "/calories";
         return;
       }
     } catch {
       // noop
     }
 
-    window.alert('Failed to save log.');
+    window.alert("Failed to save log.");
   });
 </script>

@@ -1,9 +1,9 @@
 ---
-import AppShell from '@/shared/layouts/AppShell.astro';
-import Card from '@/shared/components/UI/Card.astro';
-import PercentageBar from '@/shared/components/UI/PercentageBar.astro';
-import { dashboardService } from '@/modules/dashboard/services/dashboardService';
-import { getCurrentUserId } from '@/shared/auth/currentUser';
+import AppShell from "@/core/layouts/AppShell.astro";
+import Card from "@/core/ui/UI/Card.astro";
+import PercentageBar from "@/core/ui/UI/PercentageBar.astro";
+import { dashboardService } from "@/modules/dashboard/services/dashboardService";
+import { getCurrentUserId } from "@/core/auth/currentUser";
 
 const currentUserId = getCurrentUserId();
 const dashboard = await dashboardService.getDashboardViewModel(currentUserId);
@@ -15,12 +15,20 @@ const dashboard = await dashboardService.getDashboardViewModel(currentUserId);
       <Card variant="highlight" title="Expenses" href="/expenses">
         <div class="flex justify-between items-start mb-4">
           <div>
-            <span class="text-xs text-text-muted uppercase tracking-widest">Remaining</span>
-            <div class="text-3xl font-bold text-text-main">€{dashboard.expenses.balance.remaining}</div>
+            <span class="text-xs text-text-muted uppercase tracking-widest"
+              >Remaining</span
+            >
+            <div class="text-3xl font-bold text-text-main">
+              €{dashboard.expenses.balance.remaining}
+            </div>
           </div>
           <div class="text-right">
-            <span class="text-xs text-text-muted uppercase tracking-widest">Income</span>
-            <div class="text-sm font-mono text-text-muted">€{dashboard.expenses.balance.income}</div>
+            <span class="text-xs text-text-muted uppercase tracking-widest"
+              >Income</span
+            >
+            <div class="text-sm font-mono text-text-muted">
+              €{dashboard.expenses.balance.income}
+            </div>
           </div>
         </div>
 
@@ -31,18 +39,28 @@ const dashboard = await dashboardService.getDashboardViewModel(currentUserId);
         <div class="flex justify-between text-center divide-x divide-white/10">
           <div class="flex-1 px-1">
             <div class="text-[10px] text-text-muted uppercase">Fund.</div>
-            <div class="text-xs font-bold">€{dashboard.expenses.spent.fund}</div>
-            <div class="text-[10px] text-text-muted">/ €{dashboard.expenses.budget.fund}</div>
+            <div class="text-xs font-bold">
+              €{dashboard.expenses.spent.fund}
+            </div>
+            <div class="text-[10px] text-text-muted">
+              / €{dashboard.expenses.budget.fund}
+            </div>
           </div>
           <div class="flex-1 px-1">
             <div class="text-[10px] text-text-muted uppercase">Fun</div>
             <div class="text-xs font-bold">€{dashboard.expenses.spent.fun}</div>
-            <div class="text-[10px] text-text-muted">/ €{dashboard.expenses.budget.fun}</div>
+            <div class="text-[10px] text-text-muted">
+              / €{dashboard.expenses.budget.fun}
+            </div>
           </div>
           <div class="flex-1 px-1">
             <div class="text-[10px] text-text-muted uppercase">Future</div>
-            <div class="text-xs font-bold">€{dashboard.expenses.spent.future}</div>
-            <div class="text-[10px] text-text-muted">/ €{dashboard.expenses.budget.future}</div>
+            <div class="text-xs font-bold">
+              €{dashboard.expenses.spent.future}
+            </div>
+            <div class="text-[10px] text-text-muted">
+              / €{dashboard.expenses.budget.future}
+            </div>
           </div>
         </div>
       </Card>
@@ -52,23 +70,36 @@ const dashboard = await dashboardService.getDashboardViewModel(currentUserId);
       <Card variant="highlight" title="Daily Intake" href="/calories">
         <div class="flex justify-between items-start mb-4">
           <div>
-            <span class="text-xs text-text-muted uppercase tracking-widest">Consumed</span>
+            <span class="text-xs text-text-muted uppercase tracking-widest"
+              >Consumed</span
+            >
             <div class="flex items-baseline gap-2">
-              <span class="text-3xl font-bold text-text-main">{dashboard.calories.consumed}</span>
-              <span class="text-sm font-mono text-text-muted">/ {dashboard.calories.target} kcal</span>
+              <span class="text-3xl font-bold text-text-main"
+                >{dashboard.calories.consumed}</span
+              >
+              <span class="text-sm font-mono text-text-muted"
+                >/ {dashboard.calories.target} kcal</span
+              >
             </div>
           </div>
           <div class="text-right">
-            <span class="text-xs text-text-muted uppercase tracking-widest">Protein</span>
-            <div class="text-sm font-bold text-primary">{dashboard.calories.protein}g</div>
+            <span class="text-xs text-text-muted uppercase tracking-widest"
+              >Protein</span
+            >
+            <div class="text-sm font-bold text-primary">
+              {dashboard.calories.protein}g
+            </div>
           </div>
         </div>
 
-        <div class="relative w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+        <div
+          class="relative w-full h-3 bg-gray-800 rounded-full overflow-hidden"
+        >
           <div
             class="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500"
             style={`width: ${dashboard.calories.percent}%`}
-          ></div>
+          >
+          </div>
         </div>
       </Card>
     </section>
@@ -77,18 +108,34 @@ const dashboard = await dashboardService.getDashboardViewModel(currentUserId);
       <Card variant="highlight" title="Heating" href="/heat">
         <div class="flex items-center justify-between">
           <div>
-            <span class="text-xs text-text-muted uppercase tracking-widest">Days Since Refill</span>
-            <div class="text-3xl font-bold text-text-main">{dashboard.heat.daysSinceRefill}</div>
+            <span class="text-xs text-text-muted uppercase tracking-widest"
+              >Days Since Refill</span
+            >
+            <div class="text-3xl font-bold text-text-main">
+              {dashboard.heat.daysSinceRefill}
+            </div>
           </div>
           <div class="text-right">
-            <span class="text-xs text-text-muted uppercase tracking-widest">Season</span>
-            <div class="text-sm font-mono text-text-muted">{dashboard.heat.season.label}</div>
+            <span class="text-xs text-text-muted uppercase tracking-widest"
+              >Season</span
+            >
+            <div class="text-sm font-mono text-text-muted">
+              {dashboard.heat.season.label}
+            </div>
           </div>
         </div>
 
         <div class="mt-4 flex justify-between text-xs text-text-muted">
-          <span>This Season: <span class="text-text-main font-semibold">{dashboard.heat.season.current}</span></span>
-          <span>Last Season: <span class="text-text-main font-semibold">{dashboard.heat.season.last}</span></span>
+          <span
+            >This Season: <span class="text-text-main font-semibold"
+              >{dashboard.heat.season.current}</span
+            ></span
+          >
+          <span
+            >Last Season: <span class="text-text-main font-semibold"
+              >{dashboard.heat.season.last}</span
+            ></span
+          >
         </div>
       </Card>
     </section>

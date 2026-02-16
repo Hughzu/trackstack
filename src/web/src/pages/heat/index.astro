@@ -1,11 +1,11 @@
 ---
-import AppShell from "@/shared/layouts/AppShell.astro";
-import Fab from "@/shared/components/UI/Fab.astro";
+import AppShell from "@/core/layouts/AppShell.astro";
+import Fab from "@/core/ui/UI/Fab.astro";
 import HeatStatusCard from "@/modules/heat/components/HeatStatusCard.astro";
 import SeasonSnapshotCard from "@/modules/heat/components/SeasonSnapshotCard.astro";
 import RefillHistoryList from "@/modules/heat/components/RefillHistoryList.astro";
 import { heatService } from "@/modules/heat/services/heatService";
-import { getCurrentUserId } from "@/shared/auth/currentUser";
+import { getCurrentUserId } from "@/core/auth/currentUser";
 
 // Fetch Data
 const currentUserId = getCurrentUserId();
