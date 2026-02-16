@@ -1,6 +1,13 @@
 ---
 import Layout from "@/core/layouts/Layout.astro";
 import "@/core/styles/global.css";
+import FormShell from "@/core/ui/UI/FormShell.astro";
+import FormCard from "@/core/ui/UI/FormCard.astro";
+import SectionHeader from "@/core/ui/UI/SectionHeader.astro";
+import List from "@/core/ui/UI/List.astro";
+import ListRow from "@/core/ui/UI/ListRow.astro";
+import IconButton from "@/core/ui/UI/IconButton.astro";
+import ConfirmModal from "@/core/ui/UI/ConfirmModal.astro";
 import { expensesService } from "@/modules/expenses/services/expensesService";
 import { getCurrentUserId } from "@/core/auth/currentUser";
 
@@ -18,356 +25,322 @@ const formatCategory = (category: string) => {
 ---
 
 <Layout>
-  <form
-    id="expenses-settings-form"
-    class="min-h-screen bg-background text-text-main font-sans pb-20 animate-fade-in flex flex-col relative max-w-lg mx-auto"
+  <FormShell
+    title="Settings"
+    cancelHref="/expenses"
+    formId="expenses-settings-form"
+    class="pb-20"
   >
-    <header
-      class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50"
-    >
-      <a
-        href="/expenses"
-        class="text-text-muted hover:text-text-main text-sm transition-colors"
-        >Cancel</a
-      >
-      <h1 class="text-base font-bold text-text-main">Settings</h1>
-      <button
-        type="submit"
-        class="text-primary font-bold text-sm hover:text-primary/80 transition-colors"
-      >
-        Save
-      </button>
-    </header>
-
-    <main class="p-6 flex flex-col gap-8 flex-1">
-      <section class="flex flex-col gap-3">
-        <h2
-          class="text-xs text-text-muted uppercase tracking-widest font-bold px-1"
-        >
-          Projected Income
-        </h2>
-        <div
-          class="bg-surface border border-border rounded-2xl p-4 flex items-center justify-between shadow-sm"
-        >
-          <div class="flex flex-col">
-            <span class="text-sm font-medium">Monthly Net</span>
-            <span class="text-[10px] text-text-muted"
-              >Sets the budget denominator</span
-            >
-          </div>
-          <div class="relative w-32">
-            <span
-              class="absolute left-0 top-1/2 -translate-y-1/2 text-text-muted"
-              >€</span
-            >
-            <input
-              type="number"
-              name="income"
-              value={config.income}
-              class="w-full bg-transparent text-right font-bold text-xl focus:outline-none border-b border-transparent focus:border-primary transition-colors text-text-main placeholder:text-text-muted/30"
-            />
-          </div>
-        </div>
-      </section>
-
-      <section class="flex flex-col gap-4">
-        <div class="flex justify-between items-end px-1">
-          <h2
-            class="text-xs text-text-muted uppercase tracking-widest font-bold"
-          >
-            Ratios
-          </h2>
-          <span
-            class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono"
-            data-ratio-total
-          >
-            Total: {ratioTotal}%
+    <section class="flex flex-col gap-3">
+      <SectionHeader title="Projected Income" size="xs" uppercase />
+      <FormCard class="flex items-center justify-between">
+        <div class="flex flex-col">
+          <span class="text-sm font-medium">Monthly Net</span>
+          <span class="text-[10px] text-text-muted">
+            Sets the budget denominator
           </span>
         </div>
-
-        <div
-          class="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-6 shadow-sm"
-        >
-          <div class="space-y-3">
-            <div class="flex justify-between text-sm items-center">
-              <span class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <span class="font-medium">Fundamentals</span>
-              </span>
-              <span
-                class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
-                data-ratio-label="fund">{config.ratioFund}%</span
-              >
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              name="ratioFund"
-              value={config.ratioFund}
-              class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-500 hover:accent-red-400 transition-colors"
-            />
-          </div>
-
-          <div class="space-y-3">
-            <div class="flex justify-between text-sm items-center">
-              <span class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-orange-500"></span>
-                <span class="font-medium">Fun</span>
-              </span>
-              <span
-                class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
-                data-ratio-label="fun">{config.ratioFun}%</span
-              >
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              name="ratioFun"
-              value={config.ratioFun}
-              class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500 hover:accent-orange-400 transition-colors"
-            />
-          </div>
-
-          <div class="space-y-3">
-            <div class="flex justify-between text-sm items-center">
-              <span class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span class="font-medium">Future</span>
-              </span>
-              <span
-                class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
-                data-ratio-label="future">{config.ratioFuture}%</span
-              >
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              name="ratioFuture"
-              value={config.ratioFuture}
-              class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400 transition-colors"
-            />
-          </div>
-        </div>
-      </section>
-
-      <section class="flex flex-col gap-3">
-        <div class="px-1">
-          <h2
-            class="text-xs text-text-muted uppercase tracking-widest font-bold"
+        <div class="relative w-32">
+          <span
+            class="absolute left-0 top-1/2 -translate-y-1/2 text-text-muted"
+            >€</span
           >
-            Monthly Checklist
-          </h2>
-          <p class="text-[10px] text-text-muted mt-0.5">
-            Recurring payments to check off every month.
-          </p>
+          <input
+            type="number"
+            name="income"
+            value={config.income}
+            class="w-full bg-transparent text-right font-bold text-xl focus:outline-none border-b border-transparent focus:border-primary transition-colors text-text-main placeholder:text-text-muted/30"
+          />
+        </div>
+      </FormCard>
+    </section>
+
+    <section class="flex flex-col gap-4">
+      <div class="flex justify-between items-end px-1">
+        <SectionHeader title="Ratios" size="xs" uppercase />
+        <span
+          class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono"
+          data-ratio-total
+        >
+          Total: {ratioTotal}%
+        </span>
+      </div>
+
+      <FormCard class="gap-6">
+        <div class="space-y-3">
+          <div class="flex justify-between text-sm items-center">
+            <span class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-red-500"></span>
+              <span class="font-medium">Fundamentals</span>
+            </span>
+            <span
+              class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
+              data-ratio-label="fund"
+              >{config.ratioFund}%</span
+            >
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            name="ratioFund"
+            value={config.ratioFund}
+            class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-500 hover:accent-red-400 transition-colors"
+          />
         </div>
 
-        <div
-          class="bg-surface border border-border rounded-2xl overflow-hidden divide-y divide-white/5 shadow-sm"
-          data-checklist-list
-        >
-          {
-            obligations.map((item) => (
-              <div class="p-3 pl-4 flex justify-between items-center group hover:bg-white/5 transition-colors">
-                <div class="font-medium text-sm">{item.title}</div>
-                <div class="flex items-center gap-3">
-                  <span class="text-[10px] uppercase text-text-muted">
-                    {formatCategory(item.category)}
-                  </span>
-                  <span class="font-mono text-sm text-text-muted">
-                    €{item.amount}
-                  </span>
-                  <button
-                    type="button"
-                    class="text-gray-600 hover:text-red-500 transition-colors w-10 h-10 flex items-center justify-center rounded-full -mr-2 active:bg-red-500/10"
-                    data-checklist-delete
-                    data-checklist-id={item.id}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      class="size-4"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                      />
-                    </svg>
-                  </button>
-                </div>
+        <div class="space-y-3">
+          <div class="flex justify-between text-sm items-center">
+            <span class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+              <span class="font-medium">Fun</span>
+            </span>
+            <span
+              class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
+              data-ratio-label="fun"
+              >{config.ratioFun}%</span
+            >
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            name="ratioFun"
+            value={config.ratioFun}
+            class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500 hover:accent-orange-400 transition-colors"
+          />
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex justify-between text-sm items-center">
+            <span class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span class="font-medium">Future</span>
+            </span>
+            <span
+              class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
+              data-ratio-label="future"
+              >{config.ratioFuture}%</span
+            >
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            name="ratioFuture"
+            value={config.ratioFuture}
+            class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400 transition-colors"
+          />
+        </div>
+      </FormCard>
+    </section>
+
+    <section class="flex flex-col gap-3">
+      <div class="px-1">
+        <SectionHeader title="Monthly Checklist" size="xs" uppercase />
+        <p class="text-[10px] text-text-muted mt-0.5">
+          Recurring payments to check off every month.
+        </p>
+      </div>
+
+      <List
+        data-checklist-list
+        isEmpty={obligations.length === 0}
+        emptyMessage="All obligations paid for this month!"
+      >
+        {
+          obligations.map((item) => (
+            <ListRow>
+              <div slot="left" class="font-medium text-sm">
+                {item.title}
               </div>
-            ))
-          }
-
-          <div
-            class="p-3 bg-black/20 grid grid-cols-[1.6fr_0.8fr_0.7fr_auto] gap-3 items-center"
-            data-checklist-add
-          >
-            <input
-              type="text"
-              placeholder="Name (e.g. Netflix)"
-              class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 transition-colors text-text-main"
-              data-checklist-title
-            />
-            <input
-              type="number"
-              placeholder="€"
-              class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 text-right transition-colors text-text-main"
-              data-checklist-amount
-            />
-            <select
-              class="min-w-0 bg-surface border border-border rounded-lg px-2 py-1 text-xs text-text-main appearance-none focus:outline-none focus:border-primary"
-              data-checklist-category
-            >
-              <option value="fund">Fund.</option>
-              <option value="fun">Fun</option>
-              <option value="future">Future</option>
-            </select>
-            <button
-              type="button"
-              class="text-primary hover:text-primary/80 font-bold text-xs bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 transition-all"
-              data-checklist-submit
-            >
-              Add
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section class="flex flex-col gap-3">
-        <div class="px-1">
-          <h2
-            class="text-xs text-text-muted uppercase tracking-widest font-bold"
-          >
-            Recurring Expenses
-          </h2>
-          <p class="text-[10px] text-text-muted mt-0.5">
-            Auto-added to every new sheet.
-          </p>
-        </div>
-        <div
-          class="bg-surface border border-border rounded-2xl overflow-hidden divide-y divide-white/5 shadow-sm"
-          data-recurring-list
-        >
-          {
-            recurring.map((item) => (
-              <div class="p-3 pl-4 flex justify-between items-center group hover:bg-white/5 transition-colors">
-                <div class="font-medium text-sm">{item.title}</div>
-                <div class="flex items-center gap-3">
-                  <span class="text-[10px] uppercase text-text-muted">
-                    {formatCategory(item.category)}
-                  </span>
-                  <span class="font-mono text-sm text-text-muted">
-                    €{item.amount}
-                  </span>
-                  <button
-                    type="button"
-                    class="text-gray-600 hover:text-red-500 transition-colors w-10 h-10 flex items-center justify-center rounded-full -mr-2 active:bg-red-500/10"
-                    data-recurring-delete
-                    data-recurring-id={item.id}
+              <div slot="right" class="flex items-center gap-3">
+                <span class="text-[10px] uppercase text-text-muted">
+                  {formatCategory(item.category)}
+                </span>
+                <span class="font-mono text-sm text-text-muted">
+                  €{item.amount}
+                </span>
+                <IconButton
+                  variant="danger"
+                  type="button"
+                  data-checklist-delete
+                  data-checklist-id={item.id}
+                  ariaLabel="Delete checklist item"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="size-4"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      class="size-4"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                    />
+                  </svg>
+                </IconButton>
               </div>
-            ))
-          }
+            </ListRow>
+          ))
+        }
 
-          <div
-            class="p-3 bg-black/20 grid grid-cols-[1.6fr_0.8fr_0.7fr_auto] gap-3 items-center"
-            data-recurring-add
+        <div
+          class="p-3 bg-black/20 grid grid-cols-[1.6fr_0.8fr_0.7fr_auto] gap-3 items-center"
+          data-checklist-add
+        >
+          <input
+            type="text"
+            placeholder="Name (e.g. Netflix)"
+            class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 transition-colors text-text-main"
+            data-checklist-title
+          />
+          <input
+            type="number"
+            placeholder="€"
+            class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 text-right transition-colors text-text-main"
+            data-checklist-amount
+          />
+          <select
+            class="min-w-0 bg-surface border border-border rounded-lg px-2 py-1 text-xs text-text-main appearance-none focus:outline-none focus:border-primary"
+            data-checklist-category
           >
-            <input
-              type="text"
-              placeholder="Name (e.g. Rent)"
-              class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 transition-colors text-text-main"
-              data-recurring-title
-            />
-            <input
-              type="number"
-              placeholder="€"
-              class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 text-right transition-colors text-text-main"
-              data-recurring-amount
-            />
-            <select
-              class="min-w-0 bg-surface border border-border rounded-lg px-2 py-1 text-xs text-text-main appearance-none focus:outline-none focus:border-primary"
-              data-recurring-category
-            >
-              <option value="fund">Fund.</option>
-              <option value="fun">Fun</option>
-              <option value="future">Future</option>
-            </select>
-            <button
-              type="button"
-              class="text-primary hover:text-primary/80 font-bold text-xs bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 transition-all"
-              data-recurring-submit
-            >
-              Add
-            </button>
-          </div>
+            <option value="fund">Fund.</option>
+            <option value="fun">Fun</option>
+            <option value="future">Future</option>
+          </select>
+          <button
+            type="button"
+            class="text-primary hover:text-primary/80 font-bold text-xs bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 transition-all"
+            data-checklist-submit
+          >
+            Add
+          </button>
         </div>
-      </section>
-    </main>
-  </form>
+      </List>
+    </section>
+
+    <section class="flex flex-col gap-3">
+      <div class="px-1">
+        <SectionHeader title="Recurring Expenses" size="xs" uppercase />
+        <p class="text-[10px] text-text-muted mt-0.5">
+          Auto-added to every new sheet.
+        </p>
+      </div>
+      <List
+        data-recurring-list
+        isEmpty={recurring.length === 0}
+        emptyMessage="No recurring expenses yet."
+      >
+        {
+          recurring.map((item) => (
+            <ListRow>
+              <div slot="left" class="font-medium text-sm">
+                {item.title}
+              </div>
+              <div slot="right" class="flex items-center gap-3">
+                <span class="text-[10px] uppercase text-text-muted">
+                  {formatCategory(item.category)}
+                </span>
+                <span class="font-mono text-sm text-text-muted">
+                  €{item.amount}
+                </span>
+                <IconButton
+                  variant="danger"
+                  type="button"
+                  data-recurring-delete
+                  data-recurring-id={item.id}
+                  ariaLabel="Delete recurring expense"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="size-4"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                    />
+                  </svg>
+                </IconButton>
+              </div>
+            </ListRow>
+          ))
+        }
+
+        <div
+          class="p-3 bg-black/20 grid grid-cols-[1.6fr_0.8fr_0.7fr_auto] gap-3 items-center"
+          data-recurring-add
+        >
+          <input
+            type="text"
+            placeholder="Name (e.g. Rent)"
+            class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 transition-colors text-text-main"
+            data-recurring-title
+          />
+          <input
+            type="number"
+            placeholder="€"
+            class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 text-right transition-colors text-text-main"
+            data-recurring-amount
+          />
+          <select
+            class="min-w-0 bg-surface border border-border rounded-lg px-2 py-1 text-xs text-text-main appearance-none focus:outline-none focus:border-primary"
+            data-recurring-category
+          >
+            <option value="fund">Fund.</option>
+            <option value="fun">Fun</option>
+            <option value="future">Future</option>
+          </select>
+          <button
+            type="button"
+            class="text-primary hover:text-primary/80 font-bold text-xs bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 transition-all"
+            data-recurring-submit
+          >
+            Add
+          </button>
+        </div>
+      </List>
+    </section>
+  </FormShell>
 </Layout>
 
-<div
-  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm"
-  data-expense-modal
->
-  <div
-    class="w-[90%] max-w-xs rounded-2xl border border-border bg-surface p-4 shadow-lg"
-  >
-    <h4 class="text-sm font-bold text-text-main" data-expense-modal-title>
-      Delete item?
-    </h4>
-    <p class="mt-1 text-xs text-text-muted" data-expense-modal-body>
-      This removes the item from your list.
-    </p>
-    <div class="mt-4 flex gap-2">
-      <button
-        class="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted hover:text-text-main hover:border-primary/50 transition-colors"
-        data-expense-cancel
-        type="button"
-      >
-        Cancel
-      </button>
-      <button
-        class="flex-1 rounded-lg bg-red-500/20 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/30 transition-colors"
-        data-expense-confirm
-        type="button"
-      >
-        Delete
-      </button>
-    </div>
-  </div>
-</div>
+<ConfirmModal
+  id="expense-checklist-delete-modal"
+  title="Delete checklist item?"
+  description="This removes the item from your monthly checklist."
+  confirmLabel="Delete"
+  confirmLoadingLabel="Deleting..."
+  triggerAttribute="data-checklist-delete"
+  idAttribute="data-checklist-id"
+  endpoint="/api/expenses/checklist"
+  method="DELETE"
+  errorMessage="Unable to delete checklist item."
+/>
+
+<ConfirmModal
+  id="expense-recurring-delete-modal"
+  title="Delete recurring expense?"
+  description="This removes the item from future sheets."
+  confirmLabel="Delete"
+  confirmLoadingLabel="Deleting..."
+  triggerAttribute="data-recurring-delete"
+  idAttribute="data-recurring-id"
+  endpoint="/api/expenses/recurring"
+  method="DELETE"
+  errorMessage="Unable to delete recurring expense."
+/>
 
 <script>
   const form = document.getElementById("expenses-settings-form");
-  const checklistRoot = document.querySelector("[data-checklist-list]");
   const checklistAdd = document.querySelector("[data-checklist-add]");
-  const recurringRoot = document.querySelector("[data-recurring-list]");
   const recurringAdd = document.querySelector("[data-recurring-add]");
   const ratioTotalEl = document.querySelector("[data-ratio-total]");
   const ratioLabels = {
@@ -375,12 +348,6 @@ const formatCategory = (category: string) => {
     fun: document.querySelector('[data-ratio-label="fun"]'),
     future: document.querySelector('[data-ratio-label="future"]'),
   };
-  const modal = document.querySelector("[data-expense-modal]");
-  const modalTitle = modal?.querySelector("[data-expense-modal-title]");
-  const modalBody = modal?.querySelector("[data-expense-modal-body]");
-  const cancelButton = modal?.querySelector("[data-expense-cancel]");
-  const confirmButton = modal?.querySelector("[data-expense-confirm]");
-  let pendingDelete = null;
 
   const parseAmount = (value) => {
     const parsed = Number(value);
@@ -417,63 +384,6 @@ const formatCategory = (category: string) => {
       input.addEventListener("change", updateRatios);
     });
   };
-
-  const openModal = (options) => {
-    pendingDelete = options;
-    if (modalTitle) modalTitle.textContent = options.title;
-    if (modalBody) modalBody.textContent = options.body;
-    modal?.classList.remove("hidden");
-    modal?.classList.add("flex");
-  };
-
-  const closeModal = () => {
-    pendingDelete = null;
-    modal?.classList.add("hidden");
-    modal?.classList.remove("flex");
-  };
-
-  if (modal) {
-    modal.addEventListener("click", (event) => {
-      if (event.target === modal) {
-        closeModal();
-      }
-    });
-  }
-
-  if (cancelButton) {
-    cancelButton.addEventListener("click", () => closeModal());
-  }
-
-  if (confirmButton) {
-    confirmButton.addEventListener("click", async () => {
-      if (!pendingDelete) return;
-
-      confirmButton.setAttribute("disabled", "true");
-      const originalText = confirmButton.textContent;
-      confirmButton.textContent = "Deleting...";
-
-      try {
-        const response = await fetch(pendingDelete.endpoint, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ id: pendingDelete.id }),
-        });
-
-        if (response.ok) {
-          window.location.reload();
-          return;
-        }
-      } catch {
-        // noop
-      }
-
-      confirmButton.removeAttribute("disabled");
-      confirmButton.textContent = originalText || "Delete";
-      window.alert("Unable to delete item.");
-    });
-  }
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -561,25 +471,6 @@ const formatCategory = (category: string) => {
     });
   }
 
-  if (checklistRoot) {
-    checklistRoot.addEventListener("click", async (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-
-      const deleteButton = target.closest("[data-checklist-delete]");
-      if (!deleteButton) return;
-
-      const id = deleteButton.getAttribute("data-checklist-id");
-      if (!id) return;
-      openModal({
-        id,
-        endpoint: "/api/expenses/checklist",
-        title: "Delete checklist item?",
-        body: "This removes the item from your monthly checklist.",
-      });
-    });
-  }
-
   if (recurringAdd) {
     recurringAdd.addEventListener("click", async (event) => {
       const target = event.target;
@@ -631,25 +522,6 @@ const formatCategory = (category: string) => {
       const button = recurringAdd.querySelector("[data-recurring-submit]");
       if (!(button instanceof HTMLButtonElement)) return;
       button.click();
-    });
-  }
-
-  if (recurringRoot) {
-    recurringRoot.addEventListener("click", async (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-
-      const deleteButton = target.closest("[data-recurring-delete]");
-      if (!deleteButton) return;
-
-      const id = deleteButton.getAttribute("data-recurring-id");
-      if (!id) return;
-      openModal({
-        id,
-        endpoint: "/api/expenses/recurring",
-        title: "Delete recurring expense?",
-        body: "This removes the item from future sheets.",
-      });
     });
   }
 </script>

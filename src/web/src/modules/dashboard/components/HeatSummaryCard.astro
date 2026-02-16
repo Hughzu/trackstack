@@ -1,0 +1,52 @@
+---
+import Card from "@/core/ui/UI/Card.astro";
+
+interface Props {
+  dashboard: {
+    heat: {
+      daysSinceRefill: number;
+      season: {
+        label: string;
+        current: number;
+        last: number;
+      };
+    };
+  };
+}
+
+const { dashboard } = Astro.props;
+---
+
+<Card variant="highlight" title="Heating" href="/heat">
+  <div class="flex items-center justify-between">
+    <div>
+      <span class="text-xs text-text-muted uppercase tracking-widest">
+        Days Since Refill
+      </span>
+      <div class="text-3xl font-bold text-text-main">
+        {dashboard.heat.daysSinceRefill}
+      </div>
+    </div>
+    <div class="text-right">
+      <span class="text-xs text-text-muted uppercase tracking-widest">Season</span>
+      <div class="text-sm font-mono text-text-muted">
+        {dashboard.heat.season.label}
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 flex justify-between text-xs text-text-muted">
+    <span>
+      This Season:
+      <span class="text-text-main font-semibold">
+        {dashboard.heat.season.current}
+      </span>
+    </span>
+    <span>
+      Last Season:
+      <span class="text-text-main font-semibold">
+        {dashboard.heat.season.last}
+      </span>
+    </span>
+  </div>
+</Card>
