@@ -1,5 +1,5 @@
 ---
-import AppShell from "@/core/layouts/AppShell.astro";
+import Layout from "@/core/layouts/Layout.astro";
 import "@/core/styles/global.css";
 import { caloriesService } from "@/modules/calories/services/caloriesService";
 import { getCurrentUserId } from "@/core/auth/currentUser";
@@ -8,7 +8,7 @@ const currentUserId = getCurrentUserId();
 const target = await caloriesService.getTarget(currentUserId);
 ---
 
-<AppShell>
+<Layout>
   <div class="min-h-screen pb-24 bg-background">
     <!-- Header -->
     <header
@@ -163,7 +163,7 @@ const target = await caloriesService.getTarget(currentUserId);
       </div>
     </div>
   </section>
-</AppShell>
+</Layout>
 
 <script>
   const form = document.getElementById("calorie-target-form");

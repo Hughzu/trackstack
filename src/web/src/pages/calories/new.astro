@@ -1,11 +1,11 @@
 ---
-import AppShell from "@/core/layouts/AppShell.astro";
+import Layout from "@/core/layouts/Layout.astro";
 import "@/core/styles/global.css";
 
 const today = new Date().toISOString().split("T")[0];
 ---
 
-<AppShell>
+<Layout>
   <form
     id="calorie-form"
     class="min-h-screen bg-background flex flex-col animate-fade-in relative max-w-lg mx-auto text-text-main font-sans"
@@ -158,7 +158,7 @@ const today = new Date().toISOString().split("T")[0];
       </div>
     </main>
   </form>
-</AppShell>
+</Layout>
 
 <script>
   const form = document.getElementById("calorie-form");
