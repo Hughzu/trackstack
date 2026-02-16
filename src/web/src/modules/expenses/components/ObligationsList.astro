@@ -1,0 +1,113 @@
+---
+import List from "@/core/ui/UI/List.astro";
+import ListRow from "@/core/ui/UI/ListRow.astro";
+
+interface Props {
+  pendingObligations: {
+    id: string;
+    title: string;
+    amount: number;
+  }[];
+}
+
+const { pendingObligations } = Astro.props;
+---
+
+<section>
+  <details class="group" open>
+    <summary
+      class="list-none flex justify-between items-center mb-2 px-1 cursor-pointer"
+    >
+      <div class="flex items-center gap-2">
+        <h3 class="text-sm font-bold text-text-muted">Obligations</h3>
+        <span
+          class="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full"
+        >
+          {pendingObligations.length} Left
+        </span>
+      </div>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="2"
+        stroke="currentColor"
+        class="size-4 text-text-muted group-open:rotate-180 transition-transform"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="m19.5 8.25-7.5 7.5-7.5-7.5"></path>
+      </svg>
+    </summary>
+
+    <div class="flex flex-col gap-2 animate-fade-in" data-expense-checklist>
+      <List
+        isEmpty={pendingObligations.length === 0}
+        emptyMessage="All obligations paid for this month!"
+      >
+        {
+          pendingObligations.map((item) => (
+            <ListRow data-checklist-row>
+              <div slot="left" class="flex items-center gap-3">
+                <button
+                  class="w-5 h-5 rounded-md border border-gray-600 hover:border-emerald-500 hover:bg-emerald-500/20 flex items-center justify-center transition-all group/btn"
+                  data-checklist-complete
+                  data-checklist-id={item.id}
+                >
+                  <svg
+                    class="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover/btn:opacity-100"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
+                  </svg>
+                </button>
+                <span>{item.title}</span>
+              </div>
+              <div slot="right" class="font-mono text-sm">€{item.amount}</div>
+            </ListRow>
+          ))
+        }
+      </List>
+    </div>
+  </details>
+</section>
+
+<script>
+  const checklistRoot = document.querySelector("[data-expense-checklist]");
+
+  if (checklistRoot) {
+    checklistRoot.addEventListener("click", async (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const button = target.closest("[data-checklist-complete]");
+      if (!button) return;
+
+      const itemId = button.getAttribute("data-checklist-id");
+      if (!itemId) return;
+
+      button.setAttribute("disabled", "true");
+      try {
+        const response = await fetch("/api/expenses/checklist/complete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ id: itemId }),
+        });
+
+        if (response.ok) {
+          window.location.reload();
+          return;
+        }
+      } catch {
+        // noop
+      }
+
+      button.removeAttribute("disabled");
+      window.alert("Unable to complete checklist item.");
+    });
+  }
+</script>

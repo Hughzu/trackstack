@@ -1,8 +1,10 @@
 ---
 import AppShell from "@/core/layouts/AppShell.astro";
-import Card from "@/core/ui/UI/Card.astro";
-import PercentageBar from "@/core/ui/UI/PercentageBar.astro";
 import Fab from "@/core/ui/UI/Fab.astro";
+import ConfirmModal from "@/core/ui/UI/ConfirmModal.astro";
+import DashboardSummary from "@/modules/expenses/components/DashboardSummary.astro";
+import ObligationsList from "@/modules/expenses/components/ObligationsList.astro";
+import ExpenseHistoryList from "@/modules/expenses/components/ExpenseHistoryList.astro";
 import { expensesService } from "@/modules/expenses/services/expensesService";
 import { getCurrentUserId } from "@/core/auth/currentUser";
 
@@ -67,265 +69,17 @@ const ratios = [
 
 const pendingObligations = dashboard.pendingChecklist;
 const history = dashboard.history;
-
-const formatCategory = (category: string) => {
-  if (category === "fun") return "Fun";
-  if (category === "future") return "Future";
-  return "Fund.";
-};
-
-const categoryClass = (category: string) => {
-  if (category === "fun") return "text-orange-400";
-  if (category === "future") return "text-emerald-400";
-  return "text-red-400";
-};
-
-const formatDateLabel = (dateValue: string) => {
-  const date = new Date(`${dateValue}T00:00:00`);
-  const today = new Date();
-  const startToday = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
-  const startDate = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-  );
-  const diffDays = Math.round(
-    (startToday.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-  );
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-};
 ---
 
 <AppShell title="Wealth" currentDomain="expenses">
   <div class="flex flex-col gap-5 pb-24">
-    <section>
-      <div class="flex items-center justify-between px-1 mb-2">
-        <div>
-          <div class="text-xs text-text-muted uppercase tracking-widest">
-            Period
-          </div>
-          <div class="text-sm font-semibold text-text-main">
-            {dashboard.sheet.periodKey}
-          </div>
-        </div>
-        <button
-          type="button"
-          class="px-3 py-1.5 rounded-full border border-primary/30 text-[10px] uppercase tracking-widest text-primary hover:border-primary/60 hover:bg-primary/10 transition-colors"
-          data-expense-close
-        >
-          Close month
-        </button>
-      </div>
-      <Card variant="highlight">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <span class="text-xs text-text-muted uppercase tracking-widest"
-              >Remaining</span
-            >
-            <div class="text-3xl font-bold text-text-main">
-              €{balance.remaining}
-            </div>
-          </div>
-          <div class="text-right">
-            <span class="text-xs text-text-muted uppercase tracking-widest"
-              >Income</span
-            >
-            <div class="text-sm font-mono text-text-muted">
-              €{balance.income}
-            </div>
-          </div>
-        </div>
-
-        <div class="mb-4">
-          <PercentageBar segments={ratios} />
-        </div>
-
-        <div class="flex justify-between text-center divide-x divide-white/10">
-          {
-            ratios.map((r) => (
-              <div class="flex-1 px-1">
-                <div
-                  class={`w-1.5 h-1.5 rounded-full ${r.color} mx-auto mb-1`}
-                />
-                <div class="text-[10px] text-text-muted uppercase">
-                  {r.label}
-                </div>
-                <div class="text-xs font-bold">€{r.value}</div>
-                <div class="text-[10px] text-text-muted">/ €{r.budget}</div>
-              </div>
-            ))
-          }
-        </div>
-      </Card>
-    </section>
-
-    <section>
-      <details class="group" open>
-        <summary
-          class="list-none flex justify-between items-center mb-2 px-1 cursor-pointer"
-        >
-          <div class="flex items-center gap-2">
-            <h3 class="text-sm font-bold text-text-muted">Obligations</h3>
-            <span
-              class="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full"
-            >
-              {pendingObligations.length} Left
-            </span>
-          </div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="size-4 text-text-muted group-open:rotate-180 transition-transform"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="m19.5 8.25-7.5 7.5-7.5-7.5"></path>
-          </svg>
-        </summary>
-
-        <div class="flex flex-col gap-2 animate-fade-in" data-expense-checklist>
-          {
-            pendingObligations.map((item) => (
-              <div class="flex justify-between items-center p-3 rounded-xl border bg-[#1e2128] border-primary/20 shadow-md hover:border-primary/50 transition-colors">
-                <div class="flex items-center gap-3">
-                  <button
-                    class="w-5 h-5 rounded-md border border-gray-600 hover:border-emerald-500 hover:bg-emerald-500/20 flex items-center justify-center transition-all group/btn"
-                    data-checklist-complete
-                    data-checklist-id={item.id}
-                  >
-                    <svg
-                      class="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover/btn:opacity-100"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
-                    </svg>
-                  </button>
-                  <span>{item.title}</span>
-                </div>
-                <span class="font-mono text-sm">€{item.amount}</span>
-              </div>
-            ))
-          }
-
-          {
-            pendingObligations.length === 0 && (
-              <div class="text-center py-4 text-xs text-text-muted italic">
-                🎉 All obligations paid for this month!
-              </div>
-            )
-          }
-        </div>
-      </details>
-    </section>
-
-    <section>
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-2 px-1">
-        <h3 class="text-sm font-bold text-text-muted">History</h3>
-        <div class="flex items-center gap-2" data-expense-filters>
-          <button
-            class="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-widest border border-white/10 text-text-muted bg-white/10"
-            data-expense-filter="all"
-            type="button">All</button
-          >
-          <button
-            class="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-widest border border-red-500/40 text-red-300 hover:bg-red-500/10 opacity-50"
-            data-expense-filter="fund"
-            type="button">Fund.</button
-          >
-          <button
-            class="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-widest border border-orange-500/40 text-orange-300 hover:bg-orange-500/10 opacity-50"
-            data-expense-filter="fun"
-            type="button">Fun</button
-          >
-          <button
-            class="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-widest border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 opacity-50"
-            data-expense-filter="future"
-            type="button">Future</button
-          >
-        </div>
-      </div>
-      <div
-        class="bg-[#1e2128] border border-primary/20 rounded-2xl shadow-lg shadow-black/40 divide-y divide-white/5 overflow-hidden"
-        data-expense-history
-      >
-        {
-          history.map((tx) => (
-            <div
-              class="p-3 flex justify-between items-center group"
-              data-expense-item
-              data-expense-category={tx.category}
-            >
-              <div>
-                <div class="font-medium text-sm flex items-center gap-2">
-                  {tx.title}
-                  {tx.type === "recurring" && (
-                    <span class="text-[8px] border border-white/10 px-1 rounded text-text-muted">
-                      AUTO
-                    </span>
-                  )}
-                  {tx.type === "checklist" && (
-                    <span class="text-[8px] border border-white/10 px-1 rounded text-text-muted">
-                      CHECK
-                    </span>
-                  )}
-                </div>
-                <div class="text-[10px] text-text-muted">
-                  {formatDateLabel(tx.date)} •{" "}
-                  <span class={categoryClass(tx.category)}>
-                    {formatCategory(tx.category)}
-                  </span>
-                </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <span class="font-mono text-sm text-red-400">
-                  -€{tx.amount}
-                </span>
-                <button
-                  class="text-gray-600 hover:text-red-500 transition-colors w-10 h-10 flex items-center justify-center rounded-full -mr-2 active:bg-red-500/10"
-                  aria-label="Delete"
-                  type="button"
-                  data-expense-delete
-                  data-expense-id={tx.id}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="size-4"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          ))
-        }
-        {
-          history.length === 0 && (
-            <div class="p-4 text-center text-text-muted text-xs italic">
-              No expenses yet for this sheet.
-            </div>
-          )
-        }
-      </div>
-    </section>
+    <DashboardSummary
+      periodKey={dashboard.sheet.periodKey}
+      balance={balance}
+      ratios={ratios}
+    />
+    <ObligationsList pendingObligations={pendingObligations} />
+    <ExpenseHistoryList history={history} />
   </div>
 
   <div slot="actions" class="flex gap-2 w-full max-w-sm mx-auto">
@@ -372,218 +126,28 @@ const formatDateLabel = (dateValue: string) => {
   </div>
 </AppShell>
 
-<div
-  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm"
-  data-expense-modal
->
-  <div
-    class="w-[90%] max-w-xs rounded-2xl border border-border bg-surface p-4 shadow-lg"
-  >
-    <h4 class="text-sm font-bold text-text-main" data-expense-modal-title>
-      Delete expense?
-    </h4>
-    <p class="mt-1 text-xs text-text-muted" data-expense-modal-body>
-      This removes the entry from your history.
-    </p>
-    <div class="mt-4 flex gap-2">
-      <button
-        class="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted hover:text-text-main hover:border-primary/50 transition-colors"
-        data-expense-cancel
-        type="button"
-      >
-        Cancel
-      </button>
-      <button
-        class="flex-1 rounded-lg bg-red-500/20 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/30 transition-colors"
-        data-expense-confirm
-        type="button"
-      >
-        Delete
-      </button>
-    </div>
-  </div>
-</div>
+<ConfirmModal
+  id="expense-delete-modal"
+  title="Delete expense?"
+  description="This removes the entry from your history. This action cannot be undone."
+  confirmLabel="Delete"
+  confirmLoadingLabel="Deleting..."
+  triggerAttribute="data-expense-delete"
+  idAttribute="data-expense-id"
+  endpoint="/api/expenses/expense"
+  method="DELETE"
+  errorMessage="Unable to delete expense."
+/>
 
-<script>
-  const checklistRoot = document.querySelector("[data-expense-checklist]");
-  const historyRoot = document.querySelector("[data-expense-history]");
-  const closeButton = document.querySelector("[data-expense-close]");
-  const filterRoot = document.querySelector("[data-expense-filters]");
-  const modal = document.querySelector("[data-expense-modal]");
-  const modalTitle = modal?.querySelector("[data-expense-modal-title]");
-  const modalBody = modal?.querySelector("[data-expense-modal-body]");
-  const cancelButton = modal?.querySelector("[data-expense-cancel]");
-  const confirmButton = modal?.querySelector("[data-expense-confirm]");
-  let pendingAction = null;
-
-  const openModal = (action) => {
-    pendingAction = action;
-    if (modalTitle) modalTitle.textContent = action.title;
-    if (modalBody) modalBody.textContent = action.body;
-    if (confirmButton && action.confirmText)
-      confirmButton.textContent = action.confirmText;
-    modal?.classList.remove("hidden");
-    modal?.classList.add("flex");
-  };
-
-  const closeModal = () => {
-    pendingAction = null;
-    if (confirmButton) confirmButton.textContent = "Delete";
-    modal?.classList.add("hidden");
-    modal?.classList.remove("flex");
-  };
-
-  if (modal) {
-    modal.addEventListener("click", (event) => {
-      if (event.target === modal) {
-        closeModal();
-      }
-    });
-  }
-
-  if (cancelButton) {
-    cancelButton.addEventListener("click", () => closeModal());
-  }
-
-  if (checklistRoot) {
-    checklistRoot.addEventListener("click", async (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-
-      const button = target.closest("[data-checklist-complete]");
-      if (!button) return;
-
-      const itemId = button.getAttribute("data-checklist-id");
-      if (!itemId) return;
-
-      button.setAttribute("disabled", "true");
-      try {
-        const response = await fetch("/api/expenses/checklist/complete", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ id: itemId }),
-        });
-
-        if (response.ok) {
-          window.location.reload();
-          return;
-        }
-      } catch {
-        // noop
-      }
-
-      button.removeAttribute("disabled");
-      window.alert("Unable to complete checklist item.");
-    });
-  }
-
-  if (confirmButton) {
-    confirmButton.addEventListener("click", async () => {
-      if (!pendingAction) return;
-
-      confirmButton.setAttribute("disabled", "true");
-      const originalText = confirmButton.textContent;
-      confirmButton.textContent = pendingAction.confirmLabel ?? "Working...";
-
-      try {
-        const response = await fetch(
-          pendingAction.endpoint,
-          pendingAction.options ?? {},
-        );
-
-        if (response.ok) {
-          window.location.reload();
-          return;
-        }
-      } catch {
-        // noop
-      }
-
-      confirmButton.removeAttribute("disabled");
-      confirmButton.textContent = originalText || "Delete";
-      window.alert(pendingAction.errorMessage ?? "Unable to complete action.");
-    });
-  }
-
-  if (historyRoot) {
-    historyRoot.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-
-      const button = target.closest("[data-expense-delete]");
-      if (!button) return;
-
-      const expenseId = button.getAttribute("data-expense-id");
-      if (!expenseId) return;
-
-      openModal({
-        title: "Delete expense?",
-        body: "This removes the entry from your history.",
-        endpoint: "/api/expenses/expense",
-        options: {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ id: expenseId }),
-        },
-        confirmText: "Delete",
-        confirmLabel: "Deleting...",
-        errorMessage: "Unable to delete expense.",
-      });
-    });
-  }
-
-  if (closeButton) {
-    closeButton.addEventListener("click", async () => {
-      openModal({
-        title: "Close month?",
-        body: "This closes the current sheet and starts a new one.",
-        endpoint: "/api/expenses/close",
-        options: {
-          method: "POST",
-        },
-        confirmText: "Close month",
-        confirmLabel: "Closing...",
-        errorMessage: "Unable to close month.",
-      });
-    });
-  }
-
-  if (filterRoot && historyRoot) {
-    filterRoot.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-
-      const button = target.closest("[data-expense-filter]");
-      if (!button) return;
-
-      const value = button.getAttribute("data-expense-filter") || "all";
-      const buttons = filterRoot.querySelectorAll("[data-expense-filter]");
-      buttons.forEach((btn) => {
-        if (!(btn instanceof HTMLElement)) return;
-        const isActive = btn.getAttribute("data-expense-filter") === value;
-        if (isActive) {
-          btn.classList.add("bg-white/10");
-          btn.classList.remove("opacity-50");
-        } else {
-          btn.classList.remove("bg-white/10");
-          btn.classList.add("opacity-50");
-        }
-      });
-
-      const rows = historyRoot.querySelectorAll("[data-expense-item]");
-      rows.forEach((row) => {
-        if (!(row instanceof HTMLElement)) return;
-        const category = row.getAttribute("data-expense-category");
-        if (value === "all" || category === value) {
-          row.classList.remove("hidden");
-        } else {
-          row.classList.add("hidden");
-        }
-      });
-    });
-  }
-</script>
+<ConfirmModal
+  id="expense-close-modal"
+  title="Close month?"
+  description="This closes the current sheet and starts a new one."
+  confirmLabel="Close month"
+  confirmLoadingLabel="Closing..."
+  triggerAttribute="data-expense-close"
+  endpoint="/api/expenses/close"
+  method="POST"
+  sendPayload={false}
+  errorMessage="Unable to close month."
+/>
