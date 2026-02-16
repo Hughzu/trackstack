@@ -1,4 +1,6 @@
 ---
+import DropdownMenu from "@/core/ui-kit/DropdownMenu.astro";
+
 type Profile = {
   initials?: string;
   imageUrl?: string;
@@ -19,7 +21,6 @@ const fallbackInitials = (appName ?? "")
   .slice(0, 2)
   .toUpperCase();
 const initials = profile?.initials ?? fallbackInitials;
-const Tag = profile?.href ? "a" : "button";
 ---
 
 <div class="flex justify-between items-center px-4 py-3 max-w-3xl mx-auto">
@@ -27,25 +28,50 @@ const Tag = profile?.href ? "a" : "button";
     {appName}
   </div>
 
-  <Tag
-    href={profile?.href}
-    type={!profile?.href ? "button" : undefined}
-    aria-label={profile?.ariaLabel ?? "Open profile"}
-    class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-border hover:border-primary transition-colors cursor-pointer"
-  >
-    {
-      profile?.imageUrl ? (
-        <img
-          src={profile.imageUrl}
-          alt={profile?.ariaLabel ?? "Profile"}
-          class="w-full h-full object-cover"
-          loading="lazy"
-        />
-      ) : (
-        <div class="w-full h-full flex items-center justify-center bg-gray-300 text-xs font-bold text-gray-600">
-          {initials}
-        </div>
-      )
-    }
-  </Tag>
+  <DropdownMenu class="" panelClass="min-w-[10rem]">
+    <button
+      slot="trigger"
+      type="button"
+      aria-label={profile?.ariaLabel ?? "Open profile"}
+      aria-expanded="false"
+      class="w-9 h-9 rounded-full bg-surface overflow-hidden border border-border hover:border-primary transition-colors cursor-pointer"
+    >
+      {
+        profile?.imageUrl ? (
+          <img
+            src={profile.imageUrl}
+            alt={profile?.ariaLabel ?? "Profile"}
+            class="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div class="w-full h-full flex items-center justify-center bg-panel text-xs font-bold text-text-main">
+            {initials}
+          </div>
+        )
+      }
+    </button>
+
+    <button
+      type="button"
+      role="menuitem"
+      data-logout
+      class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-text-main hover:bg-panel transition-colors"
+    >
+      <span class="text-sm">Logout</span>
+    </button>
+  </DropdownMenu>
 </div>
+
+<script>
+  const logoutButton = document.querySelector("[data-logout]");
+
+  logoutButton?.addEventListener("click", async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+    } finally {
+      window.location.href = "/login";
+    }
+  });
+</script>
