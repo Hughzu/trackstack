@@ -3,6 +3,8 @@
 This is a minimal, drop-in blueprint for implementing opaque session tokens with rotation in Astro endpoints.
 It avoids JWTs entirely and stores only a random session token in a secure cookie.
 
+This approach aligns well with Trackstack's "Managed Polylith" goals: minimal dependencies, easy to port to Go, and a clean core/module split.
+
 ## Flow Overview
 
 - Login: create session record -> set cookie
@@ -28,6 +30,11 @@ Notes:
 - You can store `id` as a hashed token for better security.
 - `parent_id` lets you track rotation chains if you want to debug/inspect.
 
+Optional fields (low-cost hardening):
+- `absolute_expires_at`: hard cap to prevent perpetual sessions.
+- `last_seen_at`: for idle timeout and lower rotation churn.
+- `user_agent_hash` / `ip_prefix`: optional device fingerprinting (audit only).
+
 ## Cookie Settings (recommended defaults)
 
 - Name: `session`
@@ -36,6 +43,7 @@ Notes:
 - `sameSite: "lax"`
 - `path: "/"`
 - `maxAge`: matches session expiry
+- If you add an absolute expiry, set `maxAge` to the shorter of idle expiry and absolute expiry.
 
 ## Token Creation Helpers
 
@@ -135,6 +143,9 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   if (session.revokedAt) return next();
   if (new Date(session.expiresAt) < new Date()) return next();
 
+  // Optional: global logout / password change invalidation
+  // if (session.sessionVersion !== user.sessionVersion) return next();
+
   context.locals.userId = session.userId;
   context.locals.sessionId = session.id;
   return next();
@@ -223,12 +234,20 @@ const shouldRotate = (rotatedAt: string) => {
 };
 ```
 
+Recommended additions (still minimal):
+
+- **Absolute expiry:** enforce a hard cap (e.g. 30 days) even with rotation.
+- **Idle timeout:** expire if `last_seen_at` is older than N hours.
+- **Global logout:** store `users.session_version` and compare on auth; bump to revoke all sessions.
+
 ## Notes
 
 - Prefer storing token hashes in DB.
 - Always set `secure: true` in production.
 - `SameSite=Lax` is a good default and still allows normal navigation.
 - If you need CSRF protection for state-changing requests, add a CSRF token.
+- Beware of rotation race conditions: multiple concurrent requests can revoke a token that was just rotated. Allow a short overlap window or make revocation conditional.
+- If rotating on every request, DB writes can grow quickly. Time-based rotation + idle timeout is usually enough.
 
 ## Minimal DB API (what you need)
 
@@ -236,4 +255,11 @@ const shouldRotate = (rotatedAt: string) => {
 sessions.insert({ id, userId, createdAt, expiresAt, rotatedAt, parentId, revokedAt })
 sessions.findById(id)
 sessions.revoke(id, revokedAt)
+```
+
+Optional low-cost helpers:
+
+```ts
+sessions.touch(id, { lastSeenAt, rotatedAt })
+sessions.revokeByUser(userId)
 ```
