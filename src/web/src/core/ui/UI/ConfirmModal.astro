@@ -10,10 +10,11 @@ interface Props {
   cancelLabel?: string;
   confirmLoadingLabel?: string;
   triggerAttribute: string;
-  idAttribute: string;
+  idAttribute?: string;
   endpoint: string;
   method?: "DELETE" | "POST";
   payloadKey?: string;
+  sendPayload?: boolean;
   errorMessage?: string;
   successRedirect?: string;
 }
@@ -30,6 +31,7 @@ const {
   endpoint,
   method = "DELETE",
   payloadKey = "id",
+  sendPayload = true,
   errorMessage = "Something went wrong. Please try again.",
   successRedirect
 } = Astro.props;
@@ -56,6 +58,7 @@ const {
     endpoint,
     method,
     payloadKey,
+    sendPayload,
     errorMessage,
     successRedirect,
     confirmLoadingLabel
@@ -78,8 +81,13 @@ const {
     const trigger = target.closest(`[${triggerAttribute}]`);
     if (!trigger) return;
 
-    pendingId = trigger.getAttribute(idAttribute);
-    if (!pendingId) return;
+    if (sendPayload) {
+      if (!idAttribute) return;
+      pendingId = trigger.getAttribute(idAttribute);
+      if (!pendingId) return;
+    } else {
+      pendingId = "__no_payload__";
+    }
 
     modal?.showModal();
   });
@@ -92,11 +100,16 @@ const {
     confirmBtn.textContent = confirmLoadingLabel;
 
     try {
-      const response = await fetch(endpoint, {
+      const requestInit = {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [payloadKey]: pendingId })
-      });
+        headers: { "Content-Type": "application/json" }
+      };
+
+      if (sendPayload) {
+        requestInit.body = JSON.stringify({ [payloadKey]: pendingId });
+      }
+
+      const response = await fetch(endpoint, requestInit);
 
       if (response.ok) {
         if (successRedirect) {

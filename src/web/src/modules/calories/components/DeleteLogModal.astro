@@ -1,0 +1,18 @@
+---
+import ConfirmModal from "@/core/ui/UI/ConfirmModal.astro";
+
+const MODAL_ID = "calorie-delete-modal";
+---
+
+<ConfirmModal
+  id={MODAL_ID}
+  title="Delete log?"
+  description="This removes the entry from today’s list. This action cannot be undone."
+  confirmLabel="Delete"
+  confirmLoadingLabel="Deleting..."
+  triggerAttribute="data-calorie-delete"
+  idAttribute="data-calorie-id"
+  endpoint="/api/calories/log"
+  method="DELETE"
+  errorMessage="Unable to delete log. Please try again."
+/>
