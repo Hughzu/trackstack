@@ -96,7 +96,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     ssr: {
-      noExternal: ["@libsql/client"]
+      noExternal: ["@libsql/client", "@libsql/client/web", "@libsql/client/http"]
     },
     resolve: {
       alias: {

@@ -1,6 +1,4 @@
-import fs from "node:fs";
-import path from "node:path";
-import { createClient, type Client, type ResultSet } from "@libsql/client";
+import { createClient, type Client, type ResultSet } from "@libsql/client/web";
 
 type StatementArgs = Array<string | number | boolean | null>;
 
@@ -18,24 +16,12 @@ const readEnv = (key: string) => {
   return metaEnv?.[key] ?? process.env[key];
 };
 
-const resolveDataDir = () => {
-  const envDir = readEnv("DATA_DIR");
-  if (envDir && envDir.trim().length > 0) {
-    return path.isAbsolute(envDir) ? envDir : path.resolve(process.cwd(), envDir);
-  }
-
-  return path.resolve(process.cwd(), "..", "data");
-};
-
 const resolveDomainUrl = (domain: string) => {
   const upper = domain.toUpperCase();
   const tursoUrl = readEnv(`TURSO_${upper}_URL`);
   if (tursoUrl && tursoUrl.trim().length > 0) return tursoUrl.trim();
 
-  const dataDir = resolveDataDir();
-  fs.mkdirSync(dataDir, { recursive: true });
-  const dbPath = path.join(dataDir, `${domain}.sqlite`);
-  return `file:${dbPath}`;
+  throw new Error(`Missing TURSO_${upper}_URL for ${domain} database`);
 };
 
 const resolveDomainToken = (domain: string) => {
