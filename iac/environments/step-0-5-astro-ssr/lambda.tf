@@ -91,22 +91,5 @@ resource "aws_lambda_function" "ssr" {
 
 resource "aws_lambda_function_url" "ssr" {
   function_name      = aws_lambda_function.ssr.function_name
-  authorization_type = "AWS_IAM"
-}
-
-resource "aws_lambda_permission" "allow_cloudfront" {
-  statement_id           = "AllowCloudFrontInvokeUrl"
-  action                 = "lambda:InvokeFunctionUrl"
-  function_name          = aws_lambda_function.ssr.function_name
-  principal              = "cloudfront.amazonaws.com"
-  source_arn             = aws_cloudfront_distribution.ssr.arn
-  function_url_auth_type = "AWS_IAM"
-}
-
-resource "aws_lambda_permission" "allow_cloudfront_invoke" {
-  statement_id  = "AllowCloudFrontInvokeFunction"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.ssr.function_name
-  principal     = "cloudfront.amazonaws.com"
-  source_arn    = aws_cloudfront_distribution.ssr.arn
+  authorization_type = "NONE"
 }
