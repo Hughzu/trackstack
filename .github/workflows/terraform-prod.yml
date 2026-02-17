@@ -1,0 +1,105 @@
+name: Terraform Prod
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'iac/environments/prod/**'
+      - '.github/workflows/terraform-prod.yml'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform action to perform'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: iac/environments/prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.0
+          terraform_wrapper: false
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-Terraform-${{ github.run_number }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TFSTATE_BUCKET }}" \
+            -backend-config="region=${{ secrets.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ secrets.TFSTATE_LOCK_TABLE }}"
+          echo "✅ Terraform initialized successfully"
+
+      - name: Terraform Validate
+        run: |
+          terraform validate
+          echo "✅ Terraform configuration is valid"
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          echo "🔍 Planning infrastructure changes..."
+          set +e
+          terraform plan -detailed-exitcode -no-color -out=tfplan
+          PLAN_EXIT_CODE=$?
+          set -e
+
+          if [ $PLAN_EXIT_CODE -eq 0 ]; then
+            echo "✅ No changes needed"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          elif [ $PLAN_EXIT_CODE -eq 2 ]; then
+            echo "📋 Changes detected, ready to apply"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Plan failed with exit code $PLAN_EXIT_CODE"
+            exit 1
+          fi
+
+      - name: Terraform Apply (Manual)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply' && steps.plan.outputs.has_changes == 'true'
+        run: |
+          echo "🚀 Applying Terraform changes..."
+          terraform apply tfplan
+          echo "✅ Infrastructure applied successfully!"
+
+      - name: Terraform Destroy
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+        run: |
+          echo "🗑️ Destroying infrastructure..."
+          terraform destroy -auto-approve
+          echo "✅ Infrastructure destroyed!"
+
+      - name: Output Infrastructure Details
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
+        run: |
+          echo "📋 Infrastructure Outputs:"
+          terraform output
