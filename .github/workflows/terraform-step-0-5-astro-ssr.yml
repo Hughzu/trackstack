@@ -17,6 +17,14 @@ on:
           - plan
           - apply
           - destroy
+      bootstrap_artifact:
+        description: 'Build and upload Lambda artifact before apply'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 permissions:
   id-token: write
@@ -41,6 +49,29 @@ jobs:
           terraform_version: ~1.5
           terraform_wrapper: false
 
+      - name: Setup Node
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.bootstrap_artifact == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: src/web/pnpm-lock.yaml
+
+      - name: Setup pnpm
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.bootstrap_artifact == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Build Astro (bootstrap artifact)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.bootstrap_artifact == 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          cd dist/server
+          zip -r /tmp/astro-ssr.zip .
+        working-directory: src/web
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -63,7 +94,8 @@ jobs:
         run: |
           set +e
           terraform plan -detailed-exitcode -no-color -out=tfplan \
-            -var="aws_region=${{ secrets.AWS_REGION }}"
+            -var="aws_region=${{ secrets.AWS_REGION }}" \
+            ${BOOTSTRAP_LAMBDA_PATH:+-var="lambda_artifact_path=$BOOTSTRAP_LAMBDA_PATH"}
           PLAN_EXIT_CODE=$?
           set -e
 
@@ -84,3 +116,5 @@ jobs:
         run: |
           terraform destroy -auto-approve \
             -var="aws_region=${{ secrets.AWS_REGION }}"
+    env:
+      BOOTSTRAP_LAMBDA_PATH: ${{ github.event.inputs.bootstrap_artifact == 'true' && '/tmp/astro-ssr.zip' || '' }}

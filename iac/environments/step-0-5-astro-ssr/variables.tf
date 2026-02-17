@@ -33,6 +33,11 @@ variable "lambda_artifact_key" {
   default = null
 }
 
+variable "lambda_artifact_path" {
+  type    = string
+  default = null
+}
+
 variable "lambda_artifact_version" {
   type    = string
   default = null

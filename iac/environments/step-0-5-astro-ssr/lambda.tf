@@ -63,7 +63,7 @@ resource "aws_lambda_function" "ssr" {
 
   s3_bucket         = aws_s3_bucket.artifacts.bucket
   s3_key            = local.lambda_artifact_key
-  s3_object_version = var.lambda_artifact_version
+  s3_object_version = var.lambda_artifact_path != null ? aws_s3_object.lambda_artifact[0].version_id : var.lambda_artifact_version
 
   memory_size = 1024
   timeout     = 30
