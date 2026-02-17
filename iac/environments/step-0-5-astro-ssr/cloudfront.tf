@@ -17,7 +17,7 @@ data "aws_cloudfront_cache_policy" "caching_optimized" {
 }
 
 data "aws_cloudfront_origin_request_policy" "all_viewer" {
-  name = "Managed-AllViewer"
+  name = "Managed-AllViewerExceptHostHeader"
 }
 
 data "aws_cloudfront_origin_request_policy" "cors_s3" {
