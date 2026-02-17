@@ -3,13 +3,13 @@ import { defineConfig } from "astro/config";
 import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import AstroPWA from "@vite-pwa/astro";
-import node from "@astrojs/node";
+import astroAws from "@astro-aws/adapter";
 
 // https://astro.build/config
 export default defineConfig({
   output: "server",
-  adapter: node({
-    mode: "middleware"
+  adapter: astroAws({
+    mode: "ssr"
   }),
   integrations: [
     AstroPWA({
