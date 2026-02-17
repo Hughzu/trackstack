@@ -95,6 +95,9 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
+    ssr: {
+      noExternal: ["@libsql/client"]
+    },
     resolve: {
       alias: {
         "@app": fileURLToPath(new URL("./src/app", import.meta.url))
