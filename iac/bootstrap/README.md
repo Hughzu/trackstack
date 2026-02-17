@@ -205,6 +205,30 @@ cd iac/bootstrap
 
 ---
 
+## Step 0.5: Astro SSR (Terraform)
+
+After IAM bootstrap is synced, provision the Astro SSR stack:
+
+```bash
+cd iac/environments/step-0-5-astro-ssr
+terraform init \
+  -backend-config="bucket=${TFSTATE_BUCKET}" \
+  -backend-config="dynamodb_table=${TFSTATE_LOCK_TABLE}" \
+  -backend-config="region=${AWS_REGION}"
+
+terraform apply \
+  -var="aws_region=${AWS_REGION}"
+```
+
+Before first deploy, set runtime secrets in SSM:
+
+```bash
+cd iac/environments/step-0-5-astro-ssr
+./01-set-runtime-ssm.sh
+```
+
+---
+
 ## Resources Created
 
 | Resource | Name | Purpose |

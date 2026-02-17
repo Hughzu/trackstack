@@ -1,0 +1,89 @@
+name: Deploy Astro SSR
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/web/**'
+      - '.github/workflows/astro-ssr-deploy.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      SSM_PREFIX: /trackstack/step-0-5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: src/web/pnpm-lock.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: src/web
+
+      - name: Build Astro
+        run: pnpm build
+        working-directory: src/web
+
+      - name: Package SSR bundle
+        run: |
+          cd src/web/dist/server
+          zip -r /tmp/astro-ssr.zip .
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-Deploy-${{ github.run_number }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Load infra config from SSM
+        run: |
+          echo "ASTRO_ASSETS_BUCKET=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/assets_bucket" --query Parameter.Value --output text)" >> $GITHUB_ENV
+          echo "ASTRO_ARTIFACTS_BUCKET=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/artifacts_bucket" --query Parameter.Value --output text)" >> $GITHUB_ENV
+          echo "ASTRO_LAMBDA_KEY=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/lambda_key" --query Parameter.Value --output text)" >> $GITHUB_ENV
+          echo "ASTRO_LAMBDA_FUNCTION_NAME=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/lambda_function_name" --query Parameter.Value --output text)" >> $GITHUB_ENV
+          echo "ASTRO_CLOUDFRONT_DISTRIBUTION_ID=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/cloudfront_distribution_id" --query Parameter.Value --output text)" >> $GITHUB_ENV
+
+      - name: Upload Lambda artifact
+        run: |
+          aws s3 cp /tmp/astro-ssr.zip \
+            s3://$ASTRO_ARTIFACTS_BUCKET/$ASTRO_LAMBDA_KEY
+
+      - name: Update Lambda code
+        run: |
+          aws lambda update-function-code \
+            --function-name "$ASTRO_LAMBDA_FUNCTION_NAME" \
+            --s3-bucket "$ASTRO_ARTIFACTS_BUCKET" \
+            --s3-key "$ASTRO_LAMBDA_KEY"
+
+      - name: Upload static assets
+        run: |
+          aws s3 sync src/web/dist/client \
+            s3://$ASTRO_ASSETS_BUCKET \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable"
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$ASTRO_CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/*"

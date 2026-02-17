@@ -26,6 +26,11 @@ variable "resource_prefix" {
   default = "trackstack-"
 }
 
+variable "ssm_parameter_prefix" {
+  type    = string
+  default = "/trackstack/"
+}
+
 variable "tags" {
   type = map(string)
   default = {

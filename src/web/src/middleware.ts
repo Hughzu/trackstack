@@ -16,10 +16,22 @@ const isPublicPage = (pathname: string) => {
   return false;
 };
 
+const originHeaderName = process.env.ORIGIN_VERIFY_HEADER;
+const originHeaderValue = process.env.ORIGIN_VERIFY_VALUE;
+const shouldEnforceOrigin =
+  !import.meta.env.DEV && !!originHeaderName && !!originHeaderValue;
+
 export const onRequest: MiddlewareHandler = async (context, next) => {
   const url = new URL(context.request.url);
   const pathname = url.pathname;
   const isApiRequest = pathname.startsWith("/api/");
+
+  if (shouldEnforceOrigin) {
+    const provided = context.request.headers.get(originHeaderName);
+    if (provided !== originHeaderValue) {
+      return new Response("Forbidden", { status: 403 });
+    }
+  }
 
   if (!isApiRequest && isPublicPage(pathname)) {
     return next();
