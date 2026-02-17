@@ -45,7 +45,7 @@ variable "lambda_artifact_version" {
 
 variable "lambda_handler" {
   type    = string
-  default = "dist/server/entry.mjs"
+  default = "dist/server/entry.handler"
 }
 
 variable "lambda_runtime" {
