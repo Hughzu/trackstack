@@ -55,6 +55,7 @@ const { recentMeals } = Astro.props;
 
 <script>
   const quickAddRoot = document.querySelector("[data-calorie-quick-add]");
+  const signedFetch = window.signedFetch || window.fetch;
 
   if (quickAddRoot) {
     quickAddRoot.addEventListener("click", async (event) => {
@@ -77,7 +78,7 @@ const { recentMeals } = Astro.props;
       button.textContent = "Adding...";
 
       try {
-        const response = await fetch("/api/calories/log", {
+        const response = await signedFetch("/api/calories/log", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

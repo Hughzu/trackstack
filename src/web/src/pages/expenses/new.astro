@@ -136,6 +136,7 @@ const today = new Date().toISOString().split("T")[0];
 
 <script>
   const form = document.getElementById("expense-form");
+  const signedFetch = window.signedFetch || window.fetch;
 
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -143,7 +144,7 @@ const today = new Date().toISOString().split("T")[0];
     const payload = Object.fromEntries(formData);
 
     try {
-      const response = await fetch("/api/expenses/expense", {
+      const response = await signedFetch("/api/expenses/expense", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

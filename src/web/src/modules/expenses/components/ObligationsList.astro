@@ -76,6 +76,7 @@ const { pendingObligations } = Astro.props;
 
 <script>
   const checklistRoot = document.querySelector("[data-expense-checklist]");
+  const signedFetch = window.signedFetch || window.fetch;
 
   if (checklistRoot) {
     checklistRoot.addEventListener("click", async (event) => {
@@ -90,7 +91,7 @@ const { pendingObligations } = Astro.props;
 
       button.setAttribute("disabled", "true");
       try {
-        const response = await fetch("/api/expenses/checklist/complete", {
+        const response = await signedFetch("/api/expenses/checklist/complete", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -343,6 +343,7 @@ const formatCategory = (category: string) => {
   const checklistAdd = document.querySelector("[data-checklist-add]");
   const recurringAdd = document.querySelector("[data-recurring-add]");
   const ratioTotalEl = document.querySelector("[data-ratio-total]");
+  const signedFetch = window.signedFetch || window.fetch;
   const ratioLabels = {
     fund: document.querySelector('[data-ratio-label="fund"]'),
     fun: document.querySelector('[data-ratio-label="fun"]'),
@@ -390,7 +391,7 @@ const formatCategory = (category: string) => {
     const payload = Object.fromEntries(new FormData(form));
 
     try {
-      const response = await fetch("/api/expenses/settings", {
+      const response = await signedFetch("/api/expenses/settings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -431,7 +432,7 @@ const formatCategory = (category: string) => {
 
     button.setAttribute("disabled", "true");
     try {
-      const response = await fetch("/api/expenses/checklist", {
+      const response = await signedFetch("/api/expenses/checklist", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -492,7 +493,7 @@ const formatCategory = (category: string) => {
 
       button.setAttribute("disabled", "true");
       try {
-        const response = await fetch("/api/expenses/recurring", {
+        const response = await signedFetch("/api/expenses/recurring", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

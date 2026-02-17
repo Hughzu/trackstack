@@ -82,6 +82,7 @@ const today = new Date().toISOString().split("T")[0];
   const form = document.getElementById("refill-form") as HTMLFormElement;
   const bagsInput = document.getElementById("bags") as HTMLInputElement;
   const weightInput = document.getElementById("weightKg") as HTMLInputElement;
+  const signedFetch = window.signedFetch || window.fetch;
 
   // Auto-calculate weight when bags change (assuming 15kg/bag)
   bagsInput?.addEventListener("input", () => {
@@ -98,7 +99,7 @@ const today = new Date().toISOString().split("T")[0];
     const data = Object.fromEntries(formData);
 
     try {
-      const res = await fetch("/api/heat/refill", {
+      const res = await signedFetch("/api/heat/refill", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

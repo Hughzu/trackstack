@@ -14,6 +14,7 @@ export const prerender = false;
       method="post"
       action="/api/auth/login"
       class="flex flex-col gap-6"
+      data-login-form
     >
       <div class="flex flex-col gap-1">
         <label for="email" class="text-xs text-text-muted ml-1">
@@ -44,6 +45,59 @@ export const prerender = false;
       </div>
 
       <Button type="submit" class="w-full">Sign in</Button>
+      <p
+        id="login-error"
+        class="text-xs text-red-200 hidden"
+        aria-live="polite"
+      ></p>
     </form>
   </AuthShell>
 </Layout>
+
+<script>
+  const form = document.querySelector("[data-login-form]");
+  const errorEl = document.getElementById("login-error");
+  const signedFetch = window.signedFetch || window.fetch;
+
+  const showError = (message) => {
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.classList.remove("hidden");
+  };
+
+  if (form && window.crypto?.subtle) {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (errorEl) errorEl.classList.add("hidden");
+
+      const formData = new FormData(form);
+      const payload = {
+        email: String(formData.get("email") || ""),
+        password: String(formData.get("password") || "")
+      };
+
+      const response = await signedFetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.status === 204 || response.status === 303) {
+        window.location.href = "/";
+        return;
+      }
+
+      let message = "Login failed";
+      try {
+        const data = await response.json();
+        if (typeof data?.error === "string") message = data.error;
+      } catch {
+        message = response.statusText || message;
+      }
+
+      showError(message);
+    });
+  }
+</script>

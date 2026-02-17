@@ -65,10 +65,11 @@ const initials = profile?.initials ?? fallbackInitials;
 
 <script>
   const logoutButton = document.querySelector("[data-logout]");
+  const signedFetch = window.signedFetch || window.fetch;
 
   logoutButton?.addEventListener("click", async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await signedFetch("/api/auth/logout", { method: "POST" });
     } catch {
     } finally {
       window.location.href = "/login";
