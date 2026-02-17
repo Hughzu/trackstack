@@ -178,6 +178,33 @@ aws sts get-caller-identity
 
 ---
 
+### Step 6: Sync IAM Bootstrap (Terraform)
+
+The bootstrap scripts create the OIDC trust and the IAM role, but **permissions are managed by Terraform** so you can evolve them without re-running bootstrap scripts.
+
+```bash
+cd iac/bootstrap
+./06-sync-iam-bootstrap.sh
+```
+
+For non-interactive runs:
+
+```bash
+cd iac/bootstrap
+./06-sync-iam-bootstrap.sh --auto-approve
+```
+
+### Step 7: Destroy IAM Bootstrap (Terraform)
+
+If you need to tear down the IAM policy managed by Terraform:
+
+```bash
+cd iac/bootstrap
+./07-destroy-iam-bootstrap.sh
+```
+
+---
+
 ## Resources Created
 
 | Resource | Name | Purpose |
@@ -187,6 +214,7 @@ aws sts get-caller-identity
 | DynamoDB Table | `trackstack-terraform-locks` | Prevents concurrent Terraform runs |
 | OIDC Provider | `token.actions.githubusercontent.com` | Trusts GitHub as identity provider |
 | IAM Role | `trackstack-github-deploy-role` | Role GitHub Actions assumes |
+| IAM Policy | `trackstack-terraform-deploy-policy` | Permissions for Terraform deploys (managed by Terraform) |
 
 ## GitHub Secrets Set
 
@@ -242,3 +270,17 @@ jobs:
 2. `configure-aws-credentials` action exchanges the JWT for temporary AWS credentials
 3. Terraform/ AWS CLI commands run with those credentials
 4. Credentials expire when the workflow ends
+
+---
+
+## Cleanup (Rerun Bootstrap)
+
+If you need to rerun bootstrap from scratch, use the cleanup script:
+
+```bash
+cd iac/bootstrap
+./90-destroy-iam-bootstrap.sh
+./91-cleanup-bootstrap.sh --force-empty-buckets
+```
+
+This deletes the admin IAM user, Terraform state bucket, DynamoDB lock table, OIDC provider, Terraform IAM policy, and GitHub secrets. Use with care.

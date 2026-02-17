@@ -55,3 +55,9 @@ data/
 # Generated files
 *_templ.go
 app/static/css/output.css
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/*.tfstate
+**/*.tfstate.*
