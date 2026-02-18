@@ -100,17 +100,24 @@ const {
     confirmBtn.textContent = confirmLoadingLabel;
 
     try {
+      let resolvedEndpoint = endpoint;
       const requestInit = {
         method,
         headers: { "Content-Type": "application/json" }
       };
 
       if (sendPayload) {
-        requestInit.body = JSON.stringify({ [payloadKey]: pendingId });
+        if (method === "DELETE") {
+          const url = new URL(endpoint, window.location.origin);
+          url.searchParams.set(payloadKey, pendingId);
+          resolvedEndpoint = url.toString();
+        } else {
+          requestInit.body = JSON.stringify({ [payloadKey]: pendingId });
+        }
       }
 
       const signedFetch = window.signedFetch || window.fetch;
-      const response = await signedFetch(endpoint, requestInit);
+      const response = await signedFetch(resolvedEndpoint, requestInit);
 
       if (response.ok) {
         if (successRedirect) {

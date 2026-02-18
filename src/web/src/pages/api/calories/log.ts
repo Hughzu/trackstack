@@ -78,19 +78,20 @@ export const POST: APIRoute = async ({ request }) => {
 
 export const DELETE: APIRoute = async ({ request }) => {
   try {
-    let data: { id?: string } = {};
+    let id: string | null = null;
     try {
-      data = await request.json();
+      const data = await request.json();
+      if (data?.id) id = String(data.id);
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
+      // ignore missing/invalid body
     }
 
-    if (!data.id) {
+    if (!id) {
+      const url = new URL(request.url);
+      id = url.searchParams.get("id");
+    }
+
+    if (!id) {
       return new Response(JSON.stringify({ error: "Missing log id" }), {
         status: 400,
         headers: {
@@ -99,7 +100,7 @@ export const DELETE: APIRoute = async ({ request }) => {
       });
     }
 
-    const deleted = await caloriesService.deleteLog(data.id, getCurrentUserId());
+    const deleted = await caloriesService.deleteLog(id, getCurrentUserId());
     if (!deleted) {
       return new Response(JSON.stringify({ error: "Log not found" }), {
         status: 404,
