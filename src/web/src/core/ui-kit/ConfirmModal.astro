@@ -67,7 +67,6 @@ const {
   const modal = document.getElementById(id);
   const confirmBtn = modal?.querySelector("[data-confirm-modal]");
   const closeBtns = modal?.querySelectorAll("[data-close-modal]");
-  const signedFetch = window.signedFetch || window.fetch;
 
   let pendingId = null;
 
@@ -110,6 +109,7 @@ const {
         requestInit.body = JSON.stringify({ [payloadKey]: pendingId });
       }
 
+      const signedFetch = window.signedFetch || window.fetch;
       const response = await signedFetch(endpoint, requestInit);
 
       if (response.ok) {
