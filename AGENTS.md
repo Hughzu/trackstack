@@ -1,44 +1,52 @@
-As **Trackstack's Lead Architect**, I've designed this `AGENTS.md` specifically to act as the "brain" for any AI agent (Cursor, Windsurf, GitHub Copilot) entering this codebase. It enforces our **Polylith** boundaries and the **Managed Core** philosophy we just established.
-
-Place this file at the root of your repository.
-
----
 
 # 🤖 AGENTS.md: Trackstack System Instructions
 
-**Context:** You are an expert Software Engineer and Platform Architect assisting in the development of **Trackstack**.
-**Core Philosophy:** "The Managed Polylith" — A single-binary Go application embedding an Astro frontend, deployable anywhere from Lambda to EKS.
+**Context:** You are an expert Software Engineer, Site Reliability Engineer (SRE), and Platform Architect assisting in the development of **Trackstack**.
+**Core Philosophy:** "The Infrastructure Matrix Monorepo" — A single Go application with an Astro frontend, purposely built to be deployed seamlessly across Serverless (Lambda), Containers (ECS Fargate), and Orchestration (EKS/K3s) with strictly $0/mo production costs and automated ephemeral labs.
 
 ---
 
 ## 🛠️ Technical Stack
 
 * **Backend:** Go (Golang) 1.22+ (Hexagonal Architecture).
-* **Frontend:** Astro (Static Output) + TailwindCSS.
-* **Database:** Turso (LibSQL over HTTP).
-* **Infra:** Terraform (AWS) managed via the `tstack` CLI.
-* **Deployment:** Docker (Universal Image with AWS Lambda Web Adapter).
+* **Frontend:** Astro (SSR & Static) + TailwindCSS in `apps/web/`.
+* **Database:** Turso (SQLite at the Edge via HTTP/WebSockets).
+* **Infra:** Terraform (AWS) structured by environment.
+* **Deployment Matrix:**
+  * **Prod (`serverless`):** AWS Lambda (Go) + CloudFront + S3 (Astro Static).
+  * **Lab (`ecs`/`eks`):** Docker Containers (AWS Fargate / Kubernetes).
 
 ---
 
 ## 🏗️ Architectural Rules (The Law)
 
-### 1. The Core vs. Module Boundary
+### 1. Strict Hexagonal Architecture (Ports and Adapters)
 
-* **`internal/core/`**: This is the "Managed Layer". AI agents should **never** modify files here unless explicitly asked to patch the framework itself.
-* **`internal/modules/`**: This is the "Business Layer". New features (Calories, Heat) go here.
-* **Dependency Rule**: Modules can import `core`. Core **MUST NEVER** import Modules.
+To run the exact same application in Lambda and ECS, the business logic must be completely isolated from the transport layer.
 
-### 2. The Polylith Pattern
+* **`apps/trackstack/internal/modules/`**: The Pure Business Logic.
+  * ⛔ **NEVER** import `net/http`, AWS Lambda SDKs, or web frameworks (Chi/Echo) here.
+  * ✅ Define core Domain models, input/output Ports (Interfaces), and business Adapters (e.g., Turso DB queries).
+* **`apps/trackstack/cmd/`**: The Transport Layer.
+  * `cmd/lambda/main.go`: Wraps the modules in `aws-lambda-go` for the Serverless environment.
+  * `cmd/server/main.go`: Wraps the modules in an HTTP server (Chi/Echo) for the Container/Orchestration environments.
 
-* All business logic must be encapsulated in its own component folder within `internal/modules/`.
-* Communication between modules must happen via **Interfaces** or **Events** defined in `internal/core/common`.
+### 2. The Infrastructure Matrix & FinOps Guardrails
 
-### 3. Frontend Embedding
+This project demonstrates scalable infrastructure mastery with strict cost control.
 
-* The frontend is a static Astro build located in `src/web`.
-* The Go backend embeds the `dist` folder using `go:embed`.
-* **Rule**: Always ensure `pnpm build` is run before compiling the Go binary to update the embedded UI.
+* **Serverless is Prod:** The `infra/environments/serverless` deployment is the baseline state. It must cost $0/mo (Scale-to-Zero).
+* **Labs are Ephemeral:** Any Terraform written for `ecs` or `eks` must be treated as a temporary "Lab".
+  * 🚨 **CRITICAL RULE:** Whenever working on Labs, you must prioritize creating/maintaining automated kill-switches (e.g., GitHub Actions that run `terraform destroy` on a schedule) to prevent surprise AWS bills.
+* **Stateless Compute:** All environments are ephemeral. State lives *only* in Turso or S3. Never rely on local disk storage in the Go backend.
+
+### 3. The Turso Connection Rule
+
+Turso behaves differently depending on the deployment matrix.
+
+* **Serverless:** Use Turso over **HTTP** to avoid connection pooling limits during rapid scale-up/cold-starts.
+* **Containers (ECS/EKS):** Use Turso over **WebSockets** for low-latency, long-lived connection pools.
+* **Implementation:** The Go backend must accept a `DB_CONNECTION_MODE` environment variable (injected by Terraform) to configure the client appropriately at boot.
 
 ---
 
@@ -46,49 +54,56 @@ Place this file at the root of your repository.
 
 ```text
 .
-├── cmd/                # Artifact Entrypoints (Assembly)
-│   └── monolith/       # The Universal Binary (Imports all modules)
-├── internal/           # Backend Logic
-│   ├── core/           # ⛔ MANAGED: Auth, DB Setup, Server Plumbing
-│   └── modules/        # ✅ PRODUCT: Business Logic (Hexagonal)
-├── src/web/            # 🎨 Frontend (Astro)
-│   ├── src/core/       # ⛔ MANAGED UI: Layouts, Design System
-│   └── src/modules/    # ✅ PRODUCT UI: Feature Pages
-├── iac/                # Infrastructure as Code
-│   ├── _vendor/        # ⛔ MANAGED: Base TF Modules
-│   └── environments/   # ✅ USER: Project-specific config
-└── tstack.yaml         # Project metadata for the CLI
-
+├── apps/
+│   ├── trackstack/             # The Go Backend
+│   │   ├── cmd/                # Transport Entrypoints (Lambda vs HTTP Server)
+│   │   └── internal/           # Backend Logic
+│   │       ├── core/           # DB Setup, Auth, Logger
+│   │       └── modules/        # ✅ PRODUCT: Pure Business Logic (Hexagonal)
+│   │
+│   └── web/                    # The Astro Frontend
+│       ├── src/                # Astro UI Components & Pages
+│       └── dist/               # Build output (Static files -> S3, Server -> Lambda)
+│
+├── infra/                      # Infrastructure as Code
+│   ├── modules/                # Shared, reusable Terraform (Network, IAM, ALB)
+│   └── environments/           # The Infrastructure Matrix
+│       ├── serverless/         # (PROD) $0 Lambda + CloudFront + S3
+│       ├── ecs/                # (LAB) Fargate Spot + ALB
+│       └── eks/                # (LAB) Kubernetes
+│
+└── .github/workflows/          # CI/CD and automated Lab destruction
 ```
 
 ---
 
 ## 🚀 Development Workflows
 
-### Adding a New Feature
+### 1. Adding a New Feature (e.g., "Expenses")
 
-1. Create a folder in `internal/modules/<feature_name>`.
-2. Implement the **Domain**, **Port**, and **Adapter** (Hexagonal).
-3. Register the module's routes in `cmd/monolith/main.go`.
-4. Create corresponding UI in `src/web/src/modules/<feature_name>`.
+1. Create the pure business logic in `apps/trackstack/internal/modules/expenses`.
+2. Define the input/output structs and the Service interface.
+3. Wire the feature into `cmd/lambda/main.go` and `cmd/server/main.go` using the appropriate transport wrappers (API Gateway events vs HTTP requests).
+4. Build the UI in `apps/web/src/pages/expenses`.
 
-### FinOps Guardrails
+### 2. Modifying Infrastructure
 
-* Assume all AWS infrastructure is **Stateless**.
-* Step 1 (Lambda) is the production target.
-* Steps 2 (Fargate) & 3 (EKS) are **Ephemeral Labs**. Always suggest `terraform destroy` logic for these.
+1. Identify if the change is global (e.g., VPC, IAM) or environment-specific.
+2. Put global changes in `infra/modules/`.
+3. Reference the shared module in the specific `infra/environments/*/main.tf`.
 
 ---
 
 ## 📝 Coding Standards for AI
 
-* **Go**: Prefer standard library. Use `slog` for structured logging. Use `chi` for routing.
-* **Astro**: Use Tailwind utility classes. Favor server-side components where possible, but remember the output is **Static** (Client-side fetching for dynamic data).
-* **Error Handling**: Wrap errors with context. No `panic()`.
-* **Documentation**: Every new Module must include a `README.md` explaining its domain.
+* **Go**: Prefer standard library. Use `slog` for structured logging. Return errors wrapped with context; never `panic()`.
+* **Astro**: Use Tailwind utility classes. Favor SSR for dynamic routes and Static for marketing/shell pages.
+* **Terraform**: Use Terraform `0.15+` syntax. Provide explicit `description` fields for all variables. Pin provider versions.
+* **Cost Awareness**: Before suggesting an AWS service, evaluate its minimum monthly cost. If it breaks the $0 Serverless rule without being in an ephemeral Lab, suggest a cheaper alternative.
 
 ---
 
 ## 🎯 Current Goal
 
-> **Phase 0: The Prototype.** End to finish the SSR base feature wise.
+> **Phase 1: The Go Backend Rewrite & Serverless Prod.**
+> Migrate the Astro SSR logic into a pure Go Hexagonal backend (`apps/trackstack`), deploy it to AWS Lambda, and route static Astro assets to S3 via CloudFront.

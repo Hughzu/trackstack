@@ -1,154 +1,105 @@
-# 🗺️ TrackStack & Platform Engineering: Master Plan v6
+# 🗺️ TrackStack & Platform Engineering: Master Plan v7
 
-**Date:** 2026-02-16
-**Strategy:** "The Managed Polylith" (Framework-based Approach)
-**Goal:** Build "TrackStack" while creating `tstack`, a CLI that generates and **maintains** the core infrastructure and boilerplate for future apps.
-
----
-
-## 1. The Dual Vision
-
-1. **The Product (TrackStack):** A "Lazy UX" personal tracking app.
-2. **The Platform (The Career Flex):** A custom CLI (`tstack`) that acts as a **Framework**. It injects a managed "Core" (Auth, DB, Infra) into apps so the developer only focuses on "Modules" (Business Logic).
+**Date:** 2026-02-20
+**Strategy:** "The Infrastructure Matrix Monorepo"
+**Goal:** Build "TrackStack" (a "Lazy UX" personal tracking app) while showcasing advanced Platform Engineering and SRE skills. The repo demonstrates how a single, well-architected application can be seamlessly deployed across multiple paradigms (Serverless, Containers, Kubernetes) while adhering to FinOps principles.
 
 ---
 
-## 2. Application Architecture: "The Managed Polylith"
+## 1. The Core Philosophy
 
-We split the application into two distinct zones.
+This is a Monorepo where the **Application Architecture (Hexagonal)** enables the **Infrastructure Matrix**.
 
-### Zone A: The "Core" (⛔ Managed by CLI)
-
-Technical plumbing that rarely changes between apps.
-
-* **Backend (Go):** `internal/core/` (Auth OIDC, Turso DB Setup, Logger, Server Config).
-* **Frontend (Astro):** `src/core/` (Base Layouts, UI Kit like Buttons/Cards, Global Hooks).
-* **Infrastructure:** `iac/_vendor/` (Complex Terraform Modules).
-
-### Zone B: The "Modules" (✅ Owned by User)
-
-The unique business value of the specific application.
-
-* **Backend (Go):** `internal/modules/` (e.g., Calories logic, Heat logic).
-* **Frontend (Astro):** `src/modules/` (Specific pages and components).
-* **Configuration:** `cmd/main.go` (Wires Core and Modules together via Dependency Injection).
+1. **The App:** A modular application written in Go (Backend) and Astro (Frontend).
+2. **The Flex:** The exact same core business logic is packaged into different computing environments to demonstrate mastery of the cloud ecosystem.
+3. **The FinOps Constraint:** The "Production" environment is Serverless ($0/mo scale-to-zero). The other environments (ECS, EKS) are ephemeral "Labs" spun up for weekend testing and automatically destroyed to prevent costs.
 
 ---
 
-## 3. The Platform Engine: `tstack` CLI
+## 2. Application Architecture: "The Hexagonal Monorepo"
 
-The CLI is a "Fat Binary" (Go Embed) containing the Golden Paths.
+To run the same application in AWS Lambda *and* an EKS cluster, the code must be strictly decoupled from the transport layer.
 
-### The Lifecycle
-
-1. **Init:** `tstack init --name budget-app`
-* Generates the repo structure.
-* Injects the **Core** (Read-Only recommendation).
-* Scaffolds the first **Module**.
-
-
-2. **Dev:** User writes code in `internal/modules` and `src/modules`.
-* *Rule:* Modules imports Core. Core **never** imports Modules.
-
-
-3. **Upgrade:** `tstack upgrade`
-* The CLI checks for updates in the "Core" layer (e.g., a security fix in Auth).
-* It overwrites `internal/core` and `src/core` (unless the user has explicitly "ejected").
-* It ensures all apps benefit from platform improvements without rewriting code.
-
-
-
----
-
-## 4. The 4 Golden Paths (Infrastructure)
-
-The CLI configures the infrastructure to support the Polylith at different scales.
-
-| Step | Path Name | Deployment Target | FinOps Strategy |
-| --- | --- | --- | --- |
-| **0** | `local` | **Localhost** | Free. SQLite/Turso. |
-| **1** | `serverless` | **Lambda + CloudFront** | **Production.** Scale-to-Zero. Cost: **~$0.60/mo**. |
-| **2** | `container` | **Fargate Spot** | **Lab.** Ephemeral testing of Networking. |
-| **3** | `cloud-native` | **EKS (Kubernetes)** | **Lab.** Distributed Polylith (Feature Flags). |
-
----
-
-## 5. Repository Structure (The Vendor Pattern)
-
-This structure enforces the separation between "Platform Code" and "Product Code".
+### Directory Structure
 
 ```text
-my-app/
-├── cmd/
-│   └── main.go                  # 🔌 WIRING (Injects Core into Modules)
+trackstack/
+├── apps/
+│   └── trackstack/
+│       ├── cmd/
+│       │   ├── lambda/          # Entrypoint 1: AWS Lambda API Gateway/Function URL adapter
+│       │   └── server/          # Entrypoint 2: Long-running HTTP Server (Chi/Echo) for ECS/EKS
+│       │
+│       ├── internal/
+│       │   ├── core/            # Database connections, Auth, Logger
+│       │   └── modules/         # Pure Business Logic (Calories, Expenses, Heat). No HTTP knowledge here.
+│       │
+│       └── web/                 # Astro Frontend (Builds to static /client and SSR /server)
 │
-├── internal/
-│   ├── core/                    # ⛔ MANAGED (Do not edit)
-│   │   ├── auth/                # OIDC/Session logic
-│   │   ├── db/                  # Turso connection
-│   │   └── server/              # HTTP Server (Chi/Echo)
-│   │
-│   └── modules/                 # ✅ USER LAND
-│       ├── calories/            # Hexagonal Module
-│       └── heat/                # Hexagonal Module
+├── infra/
+│   ├── modules/                 # Shared Terraform (Network, IAM, ALB)
+│   └── environments/
+│       ├── serverless/          # (PROD) Lambda + CloudFront + S3 ($0 FinOps)
+│       ├── ecs/                 # (LAB) Fargate Spot + ALB
+│       ├── eks/                 # (LAB) Kubernetes
+│       └── k3s/                 # (FUTURE) VPS Deployment
 │
-├── src/web/src/
-│   ├── core/                    # ⛔ MANAGED (Do not edit)
-│   │   ├── layouts/             # AppShell.astro, AuthLayout.astro
-│   │   └── ui/                  # Button.astro, Card.astro (Design System)
-│   │
-│   ├── modules/                 # ✅ USER LAND
-│   │   └── calories/            # Calorie Dashboard Components
-│   │
-│   └── pages/                   # ✅ ROUTING
-│
-├── iac/
-│   ├── _vendor/                 # ⛔ MANAGED Terraform Modules
-│   └── environments/            # ✅ USER Configuration
-│
-├── tstack.yaml                  # CLI Config (Version tracking)
-└── Dockerfile                   # 🐳 Universal Builder
-
+└── .github/workflows/           # CI/CD and automated Lab destruction
 ```
 
 ---
 
-## 6. Execution Roadmap
+## 3. The Infrastructure Matrix
 
-### 🏁 Phase 1: The Prototype (Manual Mode)
+This matrix is the core resume piece. It shows the evolution of compute from easiest/cheapest to most complex.
 
-* **Goal:** Build the first app manually to define the "Core" vs "Module" boundary.
-* **Tasks:**
-1. **Go:** Create `internal/core` (Auth/DB) and `internal/modules/calories`.
-2. **Astro:** Create `src/core` (Layouts) and `src/modules`.
-3. **Docker:** Write the Universal Dockerfile (Embed).
-4. **Deploy:** Ship to AWS Lambda (Step 1).
+| Level | Environment | Compute Type | Persistence | Cost Strategy | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **0** | `local` | `docker-compose` | Local SQLite / Turso | Free | Pending |
+| **1** | `serverless` | Lambda + CloudFront + S3 | Turso (HTTP) | **Production:** Scale-to-Zero ($0) | WIP |
+| **2** | `ecs` | Fargate + ALB | Turso (WebSocket) | **Lab:** Ephemeral. Destroyed after use. | Planned |
+| **3** | `eks` | Kubernetes | Turso (WebSocket) | **Lab:** Ephemeral. Destroyed after use. | Planned |
+| **4** | `k3s` | Self-hosted VPS | Turso | **Hacker:** Cheap fixed cost | Backlog |
 
-
-
-### 🛠️ Phase 2: The Tooling (The CLI)
-
-* **Goal:** Extract the "Core" into the CLI.
-* **Tasks:**
-1. Initialize `tstack` (Go Cobra).
-2. Implement `tstack init` (Embeds the Core files).
-3. Implement `tstack upgrade` (Overwrite logic for Core folders).
-
-
-
-### 🚀 Phase 3: The Scale (The Labs)
-
-* **Goal:** Add Infrastructure complexity.
-* **Tasks:**
-1. Add Step 2 (Fargate) and Step 3 (EKS) templates to the CLI.
-2. Demonstrate deploying the same App Artifact to K8s.
-
-
+### The Database Strategy (Turso)
+Turso (SQLite at the Edge) is the backbone.
+* **In `serverless`:** Connections use the HTTP API to avoid connection pooling limits on constant cold boots.
+* **In `ecs`/`eks`:** Connections use WebSockets for lower latentcy long-lived connection pools.
+* This difference is handled purely via Environment Variables passed by Terraform.
 
 ---
 
-## 7. Technical Guardrails
+## 4. Execution Roadmap
 
-1. **Dependency Rule:** `Core` -> `Modules` is **FORBIDDEN**. `Modules` -> `Core` is **REQUIRED**.
-2. **Eject Strategy:** If a user *must* modify a file in `core/`, they accept that `tstack upgrade` will no longer update that specific file (or they manage merge conflicts).
-3. **Stateless:** All state lives in Turso or S3. The app is ephemeral.
+### 🏁 Phase 1: The Go Backend & Serverless Prod (Current Focus)
+
+* **Goal:** Migrate the existing Astro SSR backend logic into a pure Go backend and deploy it to the $0 Serverless environment.
+* **Tasks:**
+  1. Initialize the `apps/trackstack` Go module.
+  2. Implement the Hexagonal Architecture: `internal/modules/` (business logic) and `cmd/lambda/main.go` (transport).
+  3. Clean up the `infra/environments/serverless` Terraform (CloudFront routing traffic to S3 for static assets, and Lambda for the Go API).
+  4. Deploy the hybrid Astro Static + Go Lambda architecture.
+
+### 🧪 Phase 2: The Container Lab (ECS Fargate)
+
+* **Goal:** Prove the code can run in a containerized environment without modification to the business logic.
+* **Tasks:**
+  1. Create `apps/trackstack/cmd/server/main.go` and a `Dockerfile`.
+  2. Write Terraform `infra/modules/network` (VPC) and `infra/environments/ecs`.
+  3. Implement a GitHub Action to deploy the Lab, run tests, and **automatically run `terraform destroy`** to enforce FinOps.
+
+### ☸️ Phase 3: The Orchestration Lab (EKS)
+
+* **Goal:** Demonstrate Kubernetes proficiency.
+* **Tasks:**
+  1. Write Helm charts or Kubernetes Manifests for the `trackstack` container.
+  2. Write Terraform for `infra/environments/eks`.
+  3. Integrate into the ephemeral Lab destruction CI/CD pipeline.
+
+---
+
+## 5. Technical Guardrails
+
+1. **Strict Hexagonal:** `internal/modules` cannot import `net/http` or AWS Lambda SDKs. They receive data, process it, and return data.
+2. **Stateless Compute:** All environments must assume disks are ephemeral. State lives only in Turso or S3.
+3. **FinOps First:** If it's not the `serverless` environment, it must have an automated kill-switch. No surprise AWS bills.
