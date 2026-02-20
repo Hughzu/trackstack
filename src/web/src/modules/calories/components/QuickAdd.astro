@@ -25,20 +25,23 @@ const { recentMeals } = Astro.props;
     <div class="flex gap-2 min-w-max pt-1 pb-0 px-1">
       {
         recentMeals.map((meal) => (
-          <PillButton
-            type="button"
-            data-calorie-quick-item
-            data-calorie-title={meal.title ?? ""}
-            data-calorie-kcal={meal.calories}
-            data-calorie-protein={meal.proteinG}
-            data-calorie-carbs={meal.carbsG ?? 0}
-            data-calorie-fat={meal.fatG ?? 0}
-            aria-label={`Quick add ${meal.title ?? "meal"}`}
-          >
-            <span class="text-sm text-text-main">
-              {meal.title ?? "Untitled"}
-            </span>
-          </PillButton>
+          <form data-api-form action="/api/calories/log" method="POST">
+            {meal.title && (
+              <input type="hidden" name="title" value={meal.title} />
+            )}
+            <input type="hidden" name="calories" value={meal.calories} />
+            <input type="hidden" name="protein" value={meal.proteinG} />
+            <input type="hidden" name="carbs" value={meal.carbsG ?? 0} />
+            <input type="hidden" name="fat" value={meal.fatG ?? 0} />
+            <PillButton
+              type="submit"
+              aria-label={`Quick add ${meal.title ?? "meal"}`}
+            >
+              <span class="text-sm text-text-main">
+                {meal.title ?? "Untitled"}
+              </span>
+            </PillButton>
+          </form>
         ))
       }
     </div>
@@ -52,60 +55,6 @@ const { recentMeals } = Astro.props;
     }
   </div>
 </section>
-
-<script>
-  const quickAddRoot = document.querySelector("[data-calorie-quick-add]");
-  const signedFetch = window.signedFetch || window.fetch;
-
-  if (quickAddRoot) {
-    quickAddRoot.addEventListener("click", async (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-
-      const button = target.closest("[data-calorie-quick-item]");
-      if (!button) return;
-
-      const title = button.getAttribute("data-calorie-title") || undefined;
-      const calories = Number(button.getAttribute("data-calorie-kcal"));
-      const protein = Number(button.getAttribute("data-calorie-protein"));
-      const carbs = Number(button.getAttribute("data-calorie-carbs"));
-      const fat = Number(button.getAttribute("data-calorie-fat"));
-
-      if (!Number.isFinite(calories) || !Number.isFinite(protein)) return;
-
-      button.setAttribute("disabled", "true");
-      const originalText = button.textContent;
-      button.textContent = "Adding...";
-
-      try {
-        const response = await signedFetch("/api/calories/log", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            calories,
-            protein,
-            carbs,
-            fat,
-            title,
-          }),
-        });
-
-        if (response.ok) {
-          window.location.reload();
-          return;
-        }
-      } catch {
-        // noop
-      }
-
-      button.removeAttribute("disabled");
-      button.textContent = originalText || "Quick add";
-      window.alert("Unable to add meal. Please try again.");
-    });
-  }
-</script>
 
 <style>
   .quick-add-scroll::-webkit-scrollbar {

@@ -50,22 +50,30 @@ const { pendingObligations } = Astro.props;
           pendingObligations.map((item) => (
             <ListRow data-checklist-row>
               <div slot="left" class="flex items-center gap-3">
-                <button
-                  class="w-5 h-5 rounded-md border border-gray-600 hover:border-emerald-500 hover:bg-emerald-500/20 flex items-center justify-center transition-all group/btn"
-                  data-checklist-complete
-                  data-checklist-id={item.id}
+                <form
+                  data-api-form
+                  action="/api/expenses/checklist/complete"
+                  method="POST"
                 >
-                  <svg
-                    class="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover/btn:opacity-100"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+                  <input type="hidden" name="id" value={item.id} />
+                  <button
+                    type="submit"
+                    class="w-5 h-5 rounded-md border border-gray-600 hover:border-emerald-500 hover:bg-emerald-500/20 flex items-center justify-center transition-all group/btn"
                   >
-                    <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
-                  </svg>
-                </button>
+                    <svg
+                      class="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover/btn:opacity-100"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
+                    </svg>
+                  </button>
+                </form>
                 <span>{item.title}</span>
               </div>
-              <div slot="right" class="font-mono text-sm">€{item.amount}</div>
+              <div slot="right" class="font-mono text-sm">
+                €{item.amount}
+              </div>
             </ListRow>
           ))
         }
@@ -73,42 +81,3 @@ const { pendingObligations } = Astro.props;
     </div>
   </details>
 </section>
-
-<script>
-  const checklistRoot = document.querySelector("[data-expense-checklist]");
-  const signedFetch = window.signedFetch || window.fetch;
-
-  if (checklistRoot) {
-    checklistRoot.addEventListener("click", async (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-
-      const button = target.closest("[data-checklist-complete]");
-      if (!button) return;
-
-      const itemId = button.getAttribute("data-checklist-id");
-      if (!itemId) return;
-
-      button.setAttribute("disabled", "true");
-      try {
-        const response = await signedFetch("/api/expenses/checklist/complete", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ id: itemId }),
-        });
-
-        if (response.ok) {
-          window.location.reload();
-          return;
-        }
-      } catch {
-        // noop
-      }
-
-      button.removeAttribute("disabled");
-      window.alert("Unable to complete checklist item.");
-    });
-  }
-</script>

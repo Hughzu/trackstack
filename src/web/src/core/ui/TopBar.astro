@@ -52,27 +52,20 @@ const initials = profile?.initials ?? fallbackInitials;
       }
     </button>
 
-    <button
-      type="button"
-      role="menuitem"
-      data-logout
-      class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-text-main hover:bg-panel transition-colors"
+    <form
+      data-api-form
+      action="/api/auth/logout"
+      method="POST"
+      data-redirect="/login"
+      class="w-full"
     >
-      <span class="text-sm">Logout</span>
-    </button>
+      <button
+        type="submit"
+        role="menuitem"
+        class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-text-main hover:bg-panel transition-colors"
+      >
+        <span class="text-sm">Logout</span>
+      </button>
+    </form>
   </DropdownMenu>
 </div>
-
-<script>
-  const logoutButton = document.querySelector("[data-logout]");
-  const signedFetch = window.signedFetch || window.fetch;
-
-  logoutButton?.addEventListener("click", async () => {
-    try {
-      await signedFetch("/api/auth/logout", { method: "POST" });
-    } catch {
-    } finally {
-      window.location.href = "/login";
-    }
-  });
-</script>

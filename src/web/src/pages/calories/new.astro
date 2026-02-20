@@ -8,7 +8,15 @@ const today = new Date().toISOString().split("T")[0];
 ---
 
 <Layout>
-  <FormShell title="Add Log" cancelHref="/calories" formId="calorie-form">
+  <FormShell
+    title="Add Log"
+    cancelHref="/calories"
+    formId="calorie-form"
+    data-api-form
+    action="/api/calories/log"
+    method="POST"
+    data-redirect="/calories"
+  >
     <div class="flex flex-col items-center gap-2 mt-4">
       <label
         for="calories"
@@ -137,34 +145,3 @@ const today = new Date().toISOString().split("T")[0];
     </FormCard>
   </FormShell>
 </Layout>
-
-<script>
-  const form = document.getElementById("calorie-form");
-  const signedFetch = window.signedFetch || window.fetch;
-
-  form?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const formData = new FormData(form);
-    const payload = Object.fromEntries(formData);
-
-    try {
-      const response = await signedFetch("/api/calories/log", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        window.location.href = "/calories";
-        return;
-      }
-    } catch {
-      // noop
-    }
-
-    window.alert("Failed to save log.");
-  });
-</script>

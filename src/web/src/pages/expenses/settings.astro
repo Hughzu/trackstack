@@ -30,6 +30,10 @@ const formatCategory = (category: string) => {
     cancelHref="/expenses"
     formId="expenses-settings-form"
     class="pb-20"
+    data-api-form
+    action="/api/expenses/settings"
+    method="POST"
+    data-redirect="/expenses"
   >
     <section class="flex flex-col gap-3">
       <SectionHeader title="Projected Income" size="xs" uppercase />
@@ -41,8 +45,7 @@ const formatCategory = (category: string) => {
           </span>
         </div>
         <div class="relative w-32">
-          <span
-            class="absolute left-0 top-1/2 -translate-y-1/2 text-text-muted"
+          <span class="absolute left-0 top-1/2 -translate-y-1/2 text-text-muted"
             >€</span
           >
           <input
@@ -75,8 +78,7 @@ const formatCategory = (category: string) => {
             </span>
             <span
               class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
-              data-ratio-label="fund"
-              >{config.ratioFund}%</span
+              data-ratio-label="fund">{config.ratioFund}%</span
             >
           </div>
           <input
@@ -97,8 +99,7 @@ const formatCategory = (category: string) => {
             </span>
             <span
               class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
-              data-ratio-label="fun"
-              >{config.ratioFun}%</span
+              data-ratio-label="fun">{config.ratioFun}%</span
             >
           </div>
           <input
@@ -119,8 +120,7 @@ const formatCategory = (category: string) => {
             </span>
             <span
               class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
-              data-ratio-label="future"
-              >{config.ratioFuture}%</span
+              data-ratio-label="future">{config.ratioFuture}%</span
             >
           </div>
           <input
@@ -190,32 +190,38 @@ const formatCategory = (category: string) => {
 
         <div
           class="p-3 bg-black/20 grid grid-cols-[1.6fr_0.8fr_0.7fr_auto] gap-3 items-center"
-          data-checklist-add
         >
           <input
+            form="expense-checklist-form"
+            name="title"
             type="text"
             placeholder="Name (e.g. Netflix)"
             class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 transition-colors text-text-main"
-            data-checklist-title
+            required
           />
           <input
+            form="expense-checklist-form"
+            name="amount"
             type="number"
+            step="0.01"
             placeholder="€"
             class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 text-right transition-colors text-text-main"
-            data-checklist-amount
+            required
           />
           <select
+            form="expense-checklist-form"
+            name="category"
             class="min-w-0 bg-surface border border-border rounded-lg px-2 py-1 text-xs text-text-main appearance-none focus:outline-none focus:border-primary"
-            data-checklist-category
+            required
           >
             <option value="fund">Fund.</option>
             <option value="fun">Fun</option>
             <option value="future">Future</option>
           </select>
           <button
-            type="button"
+            form="expense-checklist-form"
+            type="submit"
             class="text-primary hover:text-primary/80 font-bold text-xs bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 transition-all"
-            data-checklist-submit
           >
             Add
           </button>
@@ -277,32 +283,38 @@ const formatCategory = (category: string) => {
 
         <div
           class="p-3 bg-black/20 grid grid-cols-[1.6fr_0.8fr_0.7fr_auto] gap-3 items-center"
-          data-recurring-add
         >
           <input
+            form="expense-recurring-form"
+            name="title"
             type="text"
             placeholder="Name (e.g. Rent)"
             class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 transition-colors text-text-main"
-            data-recurring-title
+            required
           />
           <input
+            form="expense-recurring-form"
+            name="amount"
             type="number"
+            step="0.01"
             placeholder="€"
             class="min-w-0 bg-transparent border-b border-white/10 text-sm focus:border-primary focus:outline-none py-1 placeholder:text-text-muted/30 text-right transition-colors text-text-main"
-            data-recurring-amount
+            required
           />
           <select
+            form="expense-recurring-form"
+            name="category"
             class="min-w-0 bg-surface border border-border rounded-lg px-2 py-1 text-xs text-text-main appearance-none focus:outline-none focus:border-primary"
-            data-recurring-category
+            required
           >
             <option value="fund">Fund.</option>
             <option value="fun">Fun</option>
             <option value="future">Future</option>
           </select>
           <button
-            type="button"
+            form="expense-recurring-form"
+            type="submit"
             class="text-primary hover:text-primary/80 font-bold text-xs bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 transition-all"
-            data-recurring-submit
           >
             Add
           </button>
@@ -311,6 +323,21 @@ const formatCategory = (category: string) => {
     </section>
   </FormShell>
 </Layout>
+
+<form
+  id="expense-checklist-form"
+  data-api-form
+  action="/api/expenses/checklist"
+  method="POST"
+>
+</form>
+<form
+  id="expense-recurring-form"
+  data-api-form
+  action="/api/expenses/recurring"
+  method="POST"
+>
+</form>
 
 <ConfirmModal
   id="expense-checklist-delete-modal"
@@ -340,31 +367,25 @@ const formatCategory = (category: string) => {
 
 <script>
   const form = document.getElementById("expenses-settings-form");
-  const checklistAdd = document.querySelector("[data-checklist-add]");
-  const recurringAdd = document.querySelector("[data-recurring-add]");
   const ratioTotalEl = document.querySelector("[data-ratio-total]");
-  const signedFetch = window.signedFetch || window.fetch;
   const ratioLabels = {
     fund: document.querySelector('[data-ratio-label="fund"]'),
     fun: document.querySelector('[data-ratio-label="fun"]'),
     future: document.querySelector('[data-ratio-label="future"]'),
   };
 
-  const parseAmount = (value) => {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : undefined;
-  };
-
   const updateRatios = () => {
     if (!form) return;
     const fundValue = Number(
-      form.querySelector('[name="ratioFund"]')?.value || 0,
+      (form.querySelector('[name="ratioFund"]') as HTMLInputElement)?.value ||
+        0,
     );
     const funValue = Number(
-      form.querySelector('[name="ratioFun"]')?.value || 0,
+      (form.querySelector('[name="ratioFun"]') as HTMLInputElement)?.value || 0,
     );
     const futureValue = Number(
-      form.querySelector('[name="ratioFuture"]')?.value || 0,
+      (form.querySelector('[name="ratioFuture"]') as HTMLInputElement)?.value ||
+        0,
     );
     const total = fundValue + funValue + futureValue;
 
@@ -386,143 +407,6 @@ const formatCategory = (category: string) => {
     });
   };
 
-  form?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const payload = Object.fromEntries(new FormData(form));
-
-    try {
-      const response = await signedFetch("/api/expenses/settings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        window.location.href = "/expenses";
-        return;
-      }
-    } catch {
-      // noop
-    }
-
-    window.alert("Failed to save settings.");
-  });
-
   updateRatios();
   bindRatioUpdates();
-
-  const handleChecklistAdd = async () => {
-    if (!checklistAdd) return;
-    const titleInput = checklistAdd.querySelector("[data-checklist-title]");
-    const amountInput = checklistAdd.querySelector("[data-checklist-amount]");
-    const categoryInput = checklistAdd.querySelector(
-      "[data-checklist-category]",
-    );
-    const button = checklistAdd.querySelector("[data-checklist-submit]");
-    if (!(titleInput instanceof HTMLInputElement)) return;
-    if (!(amountInput instanceof HTMLInputElement)) return;
-    if (!(categoryInput instanceof HTMLSelectElement)) return;
-    if (!(button instanceof HTMLButtonElement)) return;
-
-    const title = titleInput.value.trim();
-    const amount = parseAmount(amountInput.value);
-    if (!title || amount === undefined) return;
-
-    button.setAttribute("disabled", "true");
-    try {
-      const response = await signedFetch("/api/expenses/checklist", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          amount,
-          category: categoryInput.value,
-        }),
-      });
-
-      if (response.ok) {
-        window.location.reload();
-        return;
-      }
-    } catch {
-      // noop
-    }
-
-    button.removeAttribute("disabled");
-    window.alert("Unable to add checklist item.");
-  };
-
-  if (checklistAdd) {
-    checklistAdd.addEventListener("click", async (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const button = target.closest("[data-checklist-submit]");
-      if (!button) return;
-      await handleChecklistAdd();
-    });
-
-    checklistAdd.addEventListener("keydown", async (event) => {
-      if (event.key !== "Enter") return;
-      event.preventDefault();
-      await handleChecklistAdd();
-    });
-  }
-
-  if (recurringAdd) {
-    recurringAdd.addEventListener("click", async (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const button = target.closest("[data-recurring-submit]");
-      if (!button) return;
-      const titleInput = recurringAdd.querySelector("[data-recurring-title]");
-      const amountInput = recurringAdd.querySelector("[data-recurring-amount]");
-      const categoryInput = recurringAdd.querySelector(
-        "[data-recurring-category]",
-      );
-      if (!(titleInput instanceof HTMLInputElement)) return;
-      if (!(amountInput instanceof HTMLInputElement)) return;
-      if (!(categoryInput instanceof HTMLSelectElement)) return;
-
-      const title = titleInput.value.trim();
-      const amount = parseAmount(amountInput.value);
-      if (!title || amount === undefined) return;
-
-      button.setAttribute("disabled", "true");
-      try {
-        const response = await signedFetch("/api/expenses/recurring", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title,
-            amount,
-            category: categoryInput.value,
-          }),
-        });
-
-        if (response.ok) {
-          window.location.reload();
-          return;
-        }
-      } catch {
-        // noop
-      }
-
-      button.removeAttribute("disabled");
-      window.alert("Unable to add recurring expense.");
-    });
-
-    recurringAdd.addEventListener("keydown", async (event) => {
-      if (event.key !== "Enter") return;
-      event.preventDefault();
-      const button = recurringAdd.querySelector("[data-recurring-submit]");
-      if (!(button instanceof HTMLButtonElement)) return;
-      button.click();
-    });
-  }
 </script>

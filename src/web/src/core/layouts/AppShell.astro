@@ -2,6 +2,7 @@
 import { ClientRouter } from "astro:transitions";
 import DomainNav from "@/core/ui/DomainNav.astro";
 import TopBar from "@/core/ui/TopBar.astro";
+import ApiFormHandler from "@/core/layouts/ApiFormHandler.astro";
 import "@/core/styles/global.css";
 
 type AppDomain = {
@@ -68,5 +69,7 @@ rounded-full p-1 bg-surface/5 backdrop-blur-sm"
         <slot name="actions" />
       </div>
     </div>
+
+    <ApiFormHandler />
   </body>
 </html>

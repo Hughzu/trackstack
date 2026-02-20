@@ -60,6 +60,7 @@ resource "aws_lambda_function" "ssr" {
   role          = aws_iam_role.lambda_exec.arn
   handler       = var.lambda_handler
   runtime       = var.lambda_runtime
+  architectures = ["arm64"]
 
   s3_bucket         = aws_s3_bucket.artifacts.bucket
   s3_key            = local.lambda_artifact_key

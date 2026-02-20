@@ -1,4 +1,6 @@
 ---
+import ApiFormHandler from "@/core/layouts/ApiFormHandler.astro";
+
 interface Props {
   title?: string;
 }
@@ -15,7 +17,7 @@ const { title = "App" } = Astro.props;
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
 
-	<link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="manifest" href="/manifest.webmanifest" />
 
     <!-- iOS Safari -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -32,56 +34,9 @@ const { title = "App" } = Astro.props;
   </head>
   <body>
     <slot />
+    <ApiFormHandler />
   </body>
 </html>
-
-<script is:inline>
-  window.signedFetch = async (input, init = {}) => {
-    const method = (init.method || "GET").toUpperCase();
-    if (method === "GET" || method === "HEAD") {
-      return fetch(input, init);
-    }
-
-    const headers = new Headers(init.headers || {});
-    let body = init.body;
-    let bodyString = "";
-
-    if (typeof body === "string") {
-      bodyString = body;
-    } else if (body instanceof URLSearchParams) {
-      bodyString = body.toString();
-      if (!headers.has("Content-Type")) {
-        headers.set("Content-Type", "application/x-www-form-urlencoded");
-      }
-      body = bodyString;
-    } else if (body instanceof FormData) {
-      bodyString = new URLSearchParams(body).toString();
-      if (!headers.has("Content-Type")) {
-        headers.set("Content-Type", "application/x-www-form-urlencoded");
-      }
-      body = bodyString;
-    } else if (body && typeof body === "object") {
-      bodyString = JSON.stringify(body);
-      if (!headers.has("Content-Type")) {
-        headers.set("Content-Type", "application/json");
-      }
-      body = bodyString;
-    }
-
-    if (window.crypto?.subtle) {
-      const digest = await window.crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(bodyString)
-      );
-      const hash = Array.from(new Uint8Array(digest))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-      headers.set("x-amz-content-sha256", hash);
-    }
-
-    return fetch(input, { ...init, headers, body });
-  };
-</script>
 
 <style>
   html,

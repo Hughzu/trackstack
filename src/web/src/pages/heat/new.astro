@@ -8,7 +8,15 @@ const today = new Date().toISOString().split("T")[0];
 ---
 
 <Layout>
-  <FormShell title="Log Refill" cancelHref="/heat" formId="refill-form">
+  <FormShell
+    title="Log Refill"
+    cancelHref="/heat"
+    formId="refill-form"
+    data-api-form
+    action="/api/heat/refill"
+    method="POST"
+    data-redirect="/heat"
+  >
     <div class="flex flex-col items-center gap-2 mt-4">
       <label
         for="bags"
@@ -78,43 +86,14 @@ const today = new Date().toISOString().split("T")[0];
 </Layout>
 
 <script>
-  // TODO - MESSY
-  const form = document.getElementById("refill-form") as HTMLFormElement;
   const bagsInput = document.getElementById("bags") as HTMLInputElement;
   const weightInput = document.getElementById("weightKg") as HTMLInputElement;
-  const signedFetch = window.signedFetch || window.fetch;
 
   // Auto-calculate weight when bags change (assuming 15kg/bag)
   bagsInput?.addEventListener("input", () => {
     const bags = parseInt(bagsInput.value) || 0;
     if (weightInput) {
       weightInput.value = (bags * 15).toString();
-    }
-  });
-
-  form?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
-
-    try {
-      const res = await signedFetch("/api/heat/refill", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (res.ok) {
-        window.location.href = "/heat";
-      } else {
-        alert("Failed to save refill");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error saving refill");
     }
   });
 </script>

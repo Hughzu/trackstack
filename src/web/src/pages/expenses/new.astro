@@ -32,12 +32,19 @@ const today = new Date().toISOString().split("T")[0];
 ---
 
 <Layout>
-  <FormShell title="New Expense" cancelHref="/expenses" formId="expense-form">
+  <FormShell
+    title="New Expense"
+    cancelHref="/expenses"
+    formId="expense-form"
+    data-api-form
+    data-redirect="/expenses"
+    action="/api/expenses/expense"
+    method="POST"
+  >
     <div class="flex flex-col items-center gap-2 mt-4">
       <label
         for="amount"
-        class="text-xs text-text-muted uppercase tracking-widest"
-        >Amount</label
+        class="text-xs text-text-muted uppercase tracking-widest">Amount</label
       >
       <div class="relative w-full max-w-[200px]">
         <span
@@ -133,33 +140,3 @@ const today = new Date().toISOString().split("T")[0];
     </FormCard>
   </FormShell>
 </Layout>
-
-<script>
-  const form = document.getElementById("expense-form");
-  const signedFetch = window.signedFetch || window.fetch;
-
-  form?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const formData = new FormData(form);
-    const payload = Object.fromEntries(formData);
-
-    try {
-      const response = await signedFetch("/api/expenses/expense", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        window.location.href = "/expenses";
-        return;
-      }
-    } catch {
-      // noop
-    }
-
-    window.alert("Failed to save expense.");
-  });
-</script>

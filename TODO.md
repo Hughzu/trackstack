@@ -1,8 +1,6 @@
-- Create another AWS account ? 
-- deploy the app on AWS 
-- document through the blog app, recreate it ? 
+- clean astro code
+- clean iac
+- clean cicd pipelines
+- document architecture etc etc
+- document through blog app ? 
 - first cli version for bootstrap / core etc etc
-
-
-- fix delete
-- fix add depuis liste dans calories

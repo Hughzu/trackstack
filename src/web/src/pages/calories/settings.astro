@@ -17,6 +17,10 @@ const target = await caloriesService.getTarget(currentUserId);
     cancelHref="/calories"
     formId="calorie-target-form"
     class="pb-20"
+    data-api-form
+    action="/api/calories/target"
+    method="POST"
+    data-redirect="/calories"
   >
     <FormCard class="flex items-center justify-between">
       <div class="flex flex-col">
@@ -60,7 +64,9 @@ const target = await caloriesService.getTarget(currentUserId);
               <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
               <span class="font-medium">Protein</span>
             </span>
-            <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border">
+            <span
+              class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
+            >
               {target.targetProteinG}g
             </span>
           </div>
@@ -82,7 +88,9 @@ const target = await caloriesService.getTarget(currentUserId);
               <span class="w-2 h-2 rounded-full bg-orange-400"></span>
               <span class="font-medium">Carbs</span>
             </span>
-            <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border">
+            <span
+              class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
+            >
               {target.targetCarbsG ?? 0}g
             </span>
           </div>
@@ -104,7 +112,9 @@ const target = await caloriesService.getTarget(currentUserId);
               <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
               <span class="font-medium">Fat</span>
             </span>
-            <span class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border">
+            <span
+              class="font-mono bg-background px-2 py-0.5 rounded text-xs border border-border"
+            >
               {target.targetFatG ?? 0}g
             </span>
           </div>
@@ -123,34 +133,3 @@ const target = await caloriesService.getTarget(currentUserId);
     </section>
   </FormShell>
 </Layout>
-
-<script>
-  const form = document.getElementById("calorie-target-form");
-  const signedFetch = window.signedFetch || window.fetch;
-
-  form?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const formData = new FormData(form);
-    const payload = Object.fromEntries(formData);
-
-    try {
-      const response = await signedFetch("/api/calories/target", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        window.location.href = "/calories";
-        return;
-      }
-    } catch {
-      // noop
-    }
-
-    window.alert("Failed to save target.");
-  });
-</script>

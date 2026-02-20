@@ -1,5 +1,5 @@
 ---
-interface Props {
+interface Props extends astroHTML.JSX.FormHTMLAttributes {
   title: string;
   cancelHref: string;
   submitLabel?: string;
@@ -12,7 +12,8 @@ const {
   cancelHref,
   submitLabel = "Save",
   formId,
-  class: className
+  class: className,
+  ...rest
 } = Astro.props;
 ---
 
@@ -20,8 +21,9 @@ const {
   id={formId}
   class:list={[
     "min-h-screen bg-background flex flex-col animate-fade-in relative max-w-lg mx-auto text-text-main font-sans",
-    className
+    className,
   ]}
+  {...rest}
 >
   <header
     class="flex justify-between items-center p-4 pt-6 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50"
