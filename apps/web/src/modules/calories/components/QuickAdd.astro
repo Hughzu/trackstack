@@ -25,7 +25,7 @@ const { recentMeals } = Astro.props;
     <div class="flex gap-2 min-w-max pt-1 pb-0 px-1">
       {
         recentMeals.map((meal) => (
-          <form action="/api/calories/log" method="POST">
+          <form data-api-form action="/api/calories/log" method="POST">
             {meal.title && (
               <input type="hidden" name="title" value={meal.title} />
             )}

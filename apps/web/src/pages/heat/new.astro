@@ -13,6 +13,8 @@ const error = Astro.url.searchParams.get("error");
     title="Log Refill"
     cancelHref="/heat"
     formId="refill-form"
+    data-api-form
+    data-redirect="/heat"
     action="/api/heat/refill"
     method="POST"
   >

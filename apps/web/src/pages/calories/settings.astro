@@ -18,6 +18,8 @@ const error = Astro.url.searchParams.get("error");
     cancelHref="/calories"
     formId="calorie-target-form"
     class="pb-20"
+    data-api-form
+    data-redirect="/calories"
     action="/api/calories/target"
     method="POST"
   >

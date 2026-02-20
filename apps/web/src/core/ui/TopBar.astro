@@ -55,6 +55,8 @@ const initials = profile?.initials ?? fallbackInitials;
     <form
       action="/api/auth/logout"
       method="POST"
+      data-api-form
+      data-redirect="/login"
       class="w-full"
     >
       <button

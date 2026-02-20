@@ -37,6 +37,8 @@ const error = Astro.url.searchParams.get("error");
     title="New Expense"
     cancelHref="/expenses"
     formId="expense-form"
+    data-api-form
+    data-redirect="/expenses"
     action="/api/expenses/expense"
     method="POST"
   >

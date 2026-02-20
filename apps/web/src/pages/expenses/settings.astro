@@ -31,6 +31,8 @@ const formatCategory = (category: string) => {
     cancelHref="/expenses"
     formId="expenses-settings-form"
     class="pb-20"
+    data-api-form
+    data-redirect="/expenses"
     action="/api/expenses/settings"
     method="POST"
   >
@@ -330,12 +332,14 @@ const formatCategory = (category: string) => {
 
 <form
   id="expense-checklist-form"
+  data-api-form
   action="/api/expenses/checklist"
   method="POST"
 >
 </form>
 <form
   id="expense-recurring-form"
+  data-api-form
   action="/api/expenses/recurring"
   method="POST"
 >

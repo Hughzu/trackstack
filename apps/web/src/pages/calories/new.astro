@@ -13,6 +13,8 @@ const error = Astro.url.searchParams.get("error");
     title="Add Log"
     cancelHref="/calories"
     formId="calorie-form"
+    data-api-form
+    data-redirect="/calories"
     action="/api/calories/log"
     method="POST"
   >
