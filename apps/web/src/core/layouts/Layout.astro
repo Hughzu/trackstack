@@ -1,6 +1,7 @@
 ---
 import Head from "@/core/layouts/Head.astro";
 import ClientRuntime from "@/core/layouts/ClientRuntime.astro";
+import ApiFormHandler from "@/core/layouts/ApiFormHandler.astro";
 
 interface Props {
   title?: string;
@@ -17,6 +18,7 @@ const { title = "App" } = Astro.props;
   <body>
     <slot />
     <ClientRuntime />
+    <ApiFormHandler />
   </body>
 </html>
 

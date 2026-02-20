@@ -4,6 +4,7 @@ import DomainNav from "@/core/ui/DomainNav.astro";
 import TopBar from "@/core/ui/TopBar.astro";
 import Head from "@/core/layouts/Head.astro";
 import ClientRuntime from "@/core/layouts/ClientRuntime.astro";
+import ApiFormHandler from "@/core/layouts/ApiFormHandler.astro";
 import "@/core/styles/global.css";
 
 type AppDomain = {
@@ -65,5 +66,6 @@ rounded-full p-1 bg-surface/5 backdrop-blur-sm"
     </div>
 
     <ClientRuntime />
+    <ApiFormHandler />
   </body>
 </html>

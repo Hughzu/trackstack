@@ -1,127 +1,8 @@
-type SignedFetchInit = RequestInit & { body?: BodyInit | Record<string, unknown> | null };
-
 declare global {
   interface Window {
-    signedFetch?: (input: RequestInfo | URL, init?: SignedFetchInit) => Promise<Response>;
+    signedFetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
   }
 }
-
-const ensureSignedFetch = () => {
-  if (window.signedFetch) return;
-
-  window.signedFetch = async (input: RequestInfo | URL, init: SignedFetchInit = {}) => {
-    const method = (init.method || "GET").toUpperCase();
-    if (method === "GET" || method === "HEAD") {
-      return fetch(input, init);
-    }
-
-    const headers = new Headers(init.headers || {});
-    let body = init.body ?? null;
-    let bodyString = "";
-
-    if (typeof body === "string") {
-      bodyString = body;
-    } else if (body instanceof URLSearchParams) {
-      bodyString = body.toString();
-      if (!headers.has("Content-Type")) {
-        headers.set("Content-Type", "application/x-www-form-urlencoded");
-      }
-      body = bodyString;
-    } else if (body instanceof FormData) {
-      bodyString = new URLSearchParams(body).toString();
-      if (!headers.has("Content-Type")) {
-        headers.set("Content-Type", "application/x-www-form-urlencoded");
-      }
-      body = bodyString;
-    } else if (body && typeof body === "object") {
-      bodyString = JSON.stringify(body);
-      if (!headers.has("Content-Type")) {
-        headers.set("Content-Type", "application/json");
-      }
-      body = bodyString;
-    }
-
-    if (window.crypto?.subtle) {
-      const digest = await window.crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(bodyString)
-      );
-      const hash = Array.from(new Uint8Array(digest))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-      headers.set("x-amz-content-sha256", hash);
-    }
-
-    return fetch(input, { ...init, headers, body });
-  };
-};
-
-const initApiForms = () => {
-  const forms = Array.from(document.querySelectorAll<HTMLFormElement>("form[data-api-form]"));
-
-  forms.forEach((form) => {
-    if (form.dataset.apiFormBound === "true") return;
-    form.dataset.apiFormBound = "true";
-
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-
-      const formData = new FormData(form);
-      const payload = Object.fromEntries(formData);
-      const action = form.getAttribute("action") || window.location.href;
-      const method = form.getAttribute("method")?.toUpperCase() || "POST";
-      const redirectUrl = form.dataset.redirect;
-
-      try {
-        const fetcher = window.signedFetch || window.fetch;
-        const response = await fetcher(action, {
-          method,
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-          if (redirectUrl) window.location.href = redirectUrl;
-          else window.location.reload();
-          return;
-        }
-
-        const errorTargetId = form.dataset.errorTarget;
-        if (errorTargetId) {
-          const errEl = document.getElementById(errorTargetId);
-          if (errEl) {
-            let msg = "Request failed.";
-            try {
-              const data = await response.json();
-              if (data?.error) msg = data.error;
-            } catch {
-              // noop
-            }
-            errEl.textContent = msg;
-            errEl.classList.remove("hidden");
-            return;
-          }
-        }
-      } catch (error) {
-        console.error("SigV4 signing or network error:", error);
-      }
-
-      const errorTargetId = form.dataset.errorTarget;
-      if (errorTargetId) {
-        const errEl = document.getElementById(errorTargetId);
-        if (errEl) {
-          errEl.textContent = "Network error occurred.";
-          errEl.classList.remove("hidden");
-          return;
-        }
-      }
-
-      window.alert("Failed to process request.");
-    });
-  });
-};
 
 const dropdownState = {
   roots: new Set<HTMLElement>(),
@@ -345,8 +226,6 @@ const initDialogBackdropClose = () => {
 };
 
 const initUi = () => {
-  ensureSignedFetch();
-  initApiForms();
   initDropdownMenus();
   initConfirmModals();
   initDialogBackdropClose();
