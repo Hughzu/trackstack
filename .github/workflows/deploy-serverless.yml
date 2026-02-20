@@ -6,7 +6,7 @@ on:
     branches: [main]
     paths:
       - 'apps/web/**'
-      - '.github/workflows/astro-ssr-deploy.yml'
+      - '.github/workflows/deploy-serverless.yml'
 
 permissions:
   id-token: write
