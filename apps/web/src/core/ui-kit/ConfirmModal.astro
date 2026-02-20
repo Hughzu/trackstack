@@ -37,7 +37,20 @@ const {
 } = Astro.props;
 ---
 
-<Modal id={id} title={title}>
+<Modal
+  id={id}
+  title={title}
+  data-confirm-dialog="true"
+  data-trigger-attribute={triggerAttribute}
+  data-id-attribute={idAttribute}
+  data-endpoint={endpoint}
+  data-method={method}
+  data-payload-key={payloadKey}
+  data-send-payload={sendPayload ? "true" : "false"}
+  data-error-message={errorMessage}
+  data-success-redirect={successRedirect}
+  data-confirm-loading-label={confirmLoadingLabel}
+>
   {description && <p class="text-sm text-text-muted mb-6">{description}</p>}
 
   <div class="flex gap-3">
@@ -49,93 +62,3 @@ const {
     </Button>
   </div>
 </Modal>
-
-<script
-  define:vars={{
-    id,
-    triggerAttribute,
-    idAttribute,
-    endpoint,
-    method,
-    payloadKey,
-    sendPayload,
-    errorMessage,
-    successRedirect,
-    confirmLoadingLabel
-  }}
->
-  const modal = document.getElementById(id);
-  const confirmBtn = modal?.querySelector("[data-confirm-modal]");
-  const closeBtns = modal?.querySelectorAll("[data-close-modal]");
-
-  let pendingId = null;
-
-  closeBtns?.forEach((btn) => {
-    btn.addEventListener("click", () => modal?.close());
-  });
-
-  document.addEventListener("click", (event) => {
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-
-    const trigger = target.closest(`[${triggerAttribute}]`);
-    if (!trigger) return;
-
-    if (sendPayload) {
-      if (!idAttribute) return;
-      pendingId = trigger.getAttribute(idAttribute);
-      if (!pendingId) return;
-    } else {
-      pendingId = "__no_payload__";
-    }
-
-    modal?.showModal();
-  });
-
-  confirmBtn?.addEventListener("click", async () => {
-    if (!pendingId) return;
-
-    const originalText = confirmBtn.textContent;
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = confirmLoadingLabel;
-
-    try {
-      let resolvedEndpoint = endpoint;
-      const requestInit = {
-        method,
-        headers: { "Content-Type": "application/json" }
-      };
-
-      if (sendPayload) {
-        if (method === "DELETE") {
-          const url = new URL(endpoint, window.location.origin);
-          url.searchParams.set(payloadKey, pendingId);
-          resolvedEndpoint = url.toString();
-        } else {
-          requestInit.body = JSON.stringify({ [payloadKey]: pendingId });
-        }
-      }
-
-      const signedFetch = window.signedFetch || window.fetch;
-      const response = await signedFetch(resolvedEndpoint, requestInit);
-
-      if (response.ok) {
-        if (successRedirect) {
-          window.location.href = successRedirect;
-          return;
-        }
-        window.location.reload();
-        return;
-      }
-
-      throw new Error("Request failed");
-    } catch (err) {
-      console.error(err);
-      window.alert(errorMessage);
-    } finally {
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = originalText;
-      modal?.close();
-    }
-  });
-</script>

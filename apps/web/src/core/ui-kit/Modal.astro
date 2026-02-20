@@ -3,17 +3,20 @@ interface Props {
     id: string;
     title?: string;
     class?: string;
+    [key: string]: any;
 }
 
-const { id, title, class: className } = Astro.props;
+const { id, title, class: className, ...rest } = Astro.props;
 ---
 
 <dialog
     id={id}
+    data-modal-root="true"
     class:list={[
         "backdrop:bg-black/60 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto open:animate-fade-in focus:outline-none",
         className,
     ]}
+    {...rest}
 >
     <div
         class="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 shadow-2xl shadow-black/50 mx-auto"
@@ -27,18 +30,7 @@ const { id, title, class: className } = Astro.props;
     </div>
 </dialog>
 
-<script define:vars={{ id }}>
-    const dialog = document.getElementById(id);
-
-    if (dialog) {
-        dialog.addEventListener("click", (event) => {
-            if (event.target === dialog) {
-                dialog.close();
-            }
-        });
-    }
-</script>
-
+// TODO should be tailwind
 <style>
     dialog {
         max-width: 100vw;
