@@ -41,7 +41,7 @@ variable "users_token" {
 env "calories" {
   url = "${var.calories_url}?authToken=${var.calories_token}"
   migration {
-    dir = "file://migrations/calories"
+    dir = "file://calories"
   }
   exclude = ["_litestream*"]
 }
@@ -49,7 +49,7 @@ env "calories" {
 env "expenses" {
   url = "${var.expenses_url}?authToken=${var.expenses_token}"
   migration {
-    dir = "file://migrations/expenses"
+    dir = "file://expenses"
   }
   exclude = ["_litestream*"]
 }
@@ -57,7 +57,7 @@ env "expenses" {
 env "heat" {
   url = "${var.heat_url}?authToken=${var.heat_token}"
   migration {
-    dir = "file://migrations/heat"
+    dir = "file://heat"
   }
   exclude = ["_litestream*"]
 }
@@ -65,7 +65,7 @@ env "heat" {
 env "users" {
   url = "${var.users_url}?authToken=${var.users_token}"
   migration {
-    dir = "file://migrations/users"
+    dir = "file://users"
   }
   exclude = ["_litestream*"]
 }
