@@ -55,3 +55,34 @@ resource "aws_s3_bucket_public_access_block" "artifacts" {
   block_public_policy     = true
   restrict_public_buckets = true
 }
+
+resource "aws_s3_bucket_ownership_controls" "assets" {
+  bucket = aws_s3_bucket.assets.id
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_ownership_controls" "artifacts" {
+  bucket = aws_s3_bucket.artifacts.id
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "artifacts" {
+  bucket = aws_s3_bucket.artifacts.id
+
+  rule {
+    id     = "expire-old-artifacts"
+    status = "Enabled"
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = 7
+    }
+  }
+}

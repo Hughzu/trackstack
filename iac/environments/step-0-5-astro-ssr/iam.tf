@@ -19,11 +19,10 @@ data "aws_iam_policy_document" "lambda_exec" {
   statement {
     effect = "Allow"
     actions = [
-      "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents"
     ]
-    resources = ["arn:aws:logs:${var.aws_region}:${local.account_id}:*"]
+    resources = ["arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.lambda_function_name}:*"]
   }
 }
 

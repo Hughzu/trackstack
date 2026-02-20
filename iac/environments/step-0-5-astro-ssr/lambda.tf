@@ -55,6 +55,12 @@ data "aws_ssm_parameter" "turso_heat_token" {
   with_decryption = true
 }
 
+resource "aws_cloudwatch_log_group" "ssr" {
+  name              = "/aws/lambda/${var.lambda_function_name}"
+  retention_in_days = 14
+  tags              = var.tags
+}
+
 resource "aws_lambda_function" "ssr" {
   function_name = var.lambda_function_name
   role          = aws_iam_role.lambda_exec.arn
