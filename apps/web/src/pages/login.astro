@@ -6,6 +6,8 @@ import AuthShell from "@/core/ui-kit/AuthShell.astro";
 import Button from "@/core/ui-kit/Button.astro";
 
 export const prerender = false;
+
+const error = Astro.url.searchParams.get("error");
 ---
 
 <Layout title="Sign in">
@@ -14,9 +16,6 @@ export const prerender = false;
       method="POST"
       action="/api/auth/login"
       class="flex flex-col gap-6"
-      data-api-form
-      data-redirect="/"
-      data-error-target="login-error"
     >
       <div class="flex flex-col gap-1">
         <label for="email" class="text-xs text-text-muted ml-1"> Email </label>
@@ -45,12 +44,14 @@ export const prerender = false;
       </div>
 
       <Button type="submit" class="w-full">Sign in</Button>
-      <p
-        id="login-error"
-        class="text-xs text-red-200 hidden"
-        aria-live="polite"
-      >
-      </p>
+      {error && (
+        <p
+          class="text-xs text-red-200"
+          aria-live="polite"
+        >
+          Invalid email or password.
+        </p>
+      )}
     </form>
   </AuthShell>
 </Layout>

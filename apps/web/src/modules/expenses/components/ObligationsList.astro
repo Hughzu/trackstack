@@ -51,7 +51,6 @@ const { pendingObligations } = Astro.props;
             <ListRow data-checklist-row>
               <div slot="left" class="flex items-center gap-3">
                 <form
-                  data-api-form
                   action="/api/expenses/checklist/complete"
                   method="POST"
                 >

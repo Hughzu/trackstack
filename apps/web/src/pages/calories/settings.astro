@@ -9,6 +9,7 @@ import { getCurrentUserId } from "@/core/auth/currentUser";
 
 const currentUserId = getCurrentUserId();
 const target = await caloriesService.getTarget(currentUserId);
+const error = Astro.url.searchParams.get("error");
 ---
 
 <Layout>
@@ -17,11 +18,14 @@ const target = await caloriesService.getTarget(currentUserId);
     cancelHref="/calories"
     formId="calorie-target-form"
     class="pb-20"
-    data-api-form
     action="/api/calories/target"
     method="POST"
-    data-redirect="/calories"
   >
+    {error && (
+      <p class="text-xs text-red-200" role="alert">
+        Unable to save settings. Check the fields and try again.
+      </p>
+    )}
     <FormCard class="flex items-center justify-between">
       <div class="flex flex-col">
         <span class="text-sm font-medium">Calories</span>

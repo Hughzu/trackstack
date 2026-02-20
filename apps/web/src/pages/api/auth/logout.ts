@@ -5,7 +5,7 @@ import { hashToken } from "@/core/auth/session";
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ cookies }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   const rawToken = cookies.get(authConfig.cookie.name)?.value;
   if (rawToken) {
     const tokenId = hashToken(rawToken);
@@ -13,5 +13,9 @@ export const POST: APIRoute = async ({ cookies }) => {
   }
 
   cookies.delete(authConfig.cookie.name, { path: authConfig.cookie.path });
+  const contentType = request.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return new Response(null, { status: 303, headers: { Location: "/login" } });
+  }
   return new Response(null, { status: 204 });
 };

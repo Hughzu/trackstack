@@ -16,6 +16,7 @@ const config = await expensesService.getSettings(currentUserId);
 const obligations = await expensesService.getChecklistTemplates(currentUserId);
 const recurring = await expensesService.getRecurringTemplates(currentUserId);
 const ratioTotal = config.ratioFund + config.ratioFun + config.ratioFuture;
+const error = Astro.url.searchParams.get("error");
 
 const formatCategory = (category: string) => {
   if (category === "fun") return "Fun";
@@ -30,11 +31,14 @@ const formatCategory = (category: string) => {
     cancelHref="/expenses"
     formId="expenses-settings-form"
     class="pb-20"
-    data-api-form
     action="/api/expenses/settings"
     method="POST"
-    data-redirect="/expenses"
   >
+    {error && (
+      <p class="text-xs text-red-200" role="alert">
+        Unable to save settings. Check the fields and try again.
+      </p>
+    )}
     <section class="flex flex-col gap-3">
       <SectionHeader title="Projected Income" size="xs" uppercase />
       <FormCard class="flex items-center justify-between">
@@ -326,14 +330,12 @@ const formatCategory = (category: string) => {
 
 <form
   id="expense-checklist-form"
-  data-api-form
   action="/api/expenses/checklist"
   method="POST"
 >
 </form>
 <form
   id="expense-recurring-form"
-  data-api-form
   action="/api/expenses/recurring"
   method="POST"
 >

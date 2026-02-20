@@ -1,29 +1,50 @@
 import type { APIRoute } from "astro";
 import { caloriesService } from "@/modules/calories/services/caloriesService";
 import { getCurrentUserId } from "@/core/auth/currentUser";
+import { withErrorParam } from "@/core/http/redirects";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     let data: {
-      calories?: number;
-      protein?: number;
-      carbs?: number;
-      fat?: number;
+      calories?: number | string;
+      protein?: number | string;
+      carbs?: number | string;
+      fat?: number | string;
       title?: string;
       date?: string;
     } = {};
 
-    try {
-      data = await request.json();
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
+    const contentType = request.headers.get("content-type") ?? "";
+    const isJson = contentType.includes("application/json");
+    if (isJson) {
+      try {
+        data = await request.json();
+      } catch {
+        return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+      }
+    } else {
+      const form = await request.formData();
+      const calories = form.get("calories");
+      const protein = form.get("protein");
+      const carbs = form.get("carbs");
+      const fat = form.get("fat");
+      const title = form.get("title");
+      const date = form.get("date");
+      data = {
+        calories: typeof calories === "string" ? calories : undefined,
+        protein: typeof protein === "string" ? protein : undefined,
+        carbs: typeof carbs === "string" ? carbs : undefined,
+        fat: typeof fat === "string" ? fat : undefined,
+        title: typeof title === "string" ? title : undefined,
+        date: typeof date === "string" ? date : undefined
+      };
     }
 
     const parseOptionalNumber = (value?: number | string) => {
@@ -39,6 +60,10 @@ export const POST: APIRoute = async ({ request }) => {
     const fat = parseOptionalNumber(data.fat);
 
     if (calories === undefined || protein === undefined) {
+      if (!isJson) {
+        const fallback = request.headers.get("referer") ?? "/calories";
+        return new Response(null, { status: 303, headers: { Location: withErrorParam(fallback) } });
+      }
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: {
@@ -58,6 +83,10 @@ export const POST: APIRoute = async ({ request }) => {
       fatG: fat,
       title: data.title?.trim() ? data.title.trim() : undefined
     });
+
+    if (!isJson) {
+      return new Response(null, { status: 303, headers: { Location: "/calories" } });
+    }
 
     return new Response(JSON.stringify(log), {
       status: 201,

@@ -1,24 +1,42 @@
 import type { APIRoute } from "astro";
 import { expensesService } from "@/modules/expenses/services/expensesService";
 import { getCurrentUserId } from "@/core/auth/currentUser";
+import { withErrorParam } from "@/core/http/redirects";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     let data: { id?: string; date?: string } = {};
-    try {
-      data = await request.json();
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
+
+    const contentType = request.headers.get("content-type") ?? "";
+    const isJson = contentType.includes("application/json");
+    if (isJson) {
+      try {
+        data = await request.json();
+      } catch {
+        return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+      }
+    } else {
+      const form = await request.formData();
+      const id = form.get("id");
+      const date = form.get("date");
+      data = {
+        id: typeof id === "string" ? id : undefined,
+        date: typeof date === "string" ? date : undefined
+      };
     }
 
     if (!data.id) {
+      if (!isJson) {
+        const fallback = request.headers.get("referer") ?? "/expenses";
+        return new Response(null, { status: 303, headers: { Location: withErrorParam(fallback) } });
+      }
       return new Response(JSON.stringify({ error: "Missing checklist item id" }), {
         status: 400,
         headers: {
@@ -40,6 +58,10 @@ export const POST: APIRoute = async ({ request }) => {
           "Content-Type": "application/json"
         }
       });
+    }
+
+    if (!isJson) {
+      return new Response(null, { status: 303, headers: { Location: "/expenses" } });
     }
 
     return new Response(JSON.stringify(entry), {

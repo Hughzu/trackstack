@@ -29,6 +29,7 @@ const categories = [
 ];
 
 const today = new Date().toISOString().split("T")[0];
+const error = Astro.url.searchParams.get("error");
 ---
 
 <Layout>
@@ -36,11 +37,14 @@ const today = new Date().toISOString().split("T")[0];
     title="New Expense"
     cancelHref="/expenses"
     formId="expense-form"
-    data-api-form
-    data-redirect="/expenses"
     action="/api/expenses/expense"
     method="POST"
   >
+    {error && (
+      <p class="text-xs text-red-200" role="alert">
+        Unable to save expense. Check the fields and try again.
+      </p>
+    )}
     <div class="flex flex-col items-center gap-2 mt-4">
       <label
         for="amount"

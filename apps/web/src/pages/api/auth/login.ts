@@ -4,14 +4,16 @@ import { authConfig } from "@/core/auth/config";
 import { getClientContext } from "@/core/auth/client";
 import { createSession, getCookieOptions } from "@/core/auth/session";
 import { verifyPassword } from "@/core/auth/password";
+import { withErrorParam } from "@/core/http/redirects";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   let payload: { email?: string; password?: string } = {};
   const contentType = request.headers.get("content-type") ?? "";
+  const isJson = contentType.includes("application/json");
 
-  if (contentType.includes("application/json")) {
+  if (isJson) {
     try {
       payload = await request.json();
     } catch {
@@ -33,6 +35,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const email = payload.email?.trim().toLowerCase();
   const password = payload.password ?? "";
   if (!email || !password) {
+    if (!isJson) {
+      return new Response(null, { status: 303, headers: { Location: withErrorParam(request.url, "/login") } });
+    }
     return new Response(JSON.stringify({ error: "Missing credentials" }), {
       status: 400,
       headers: { "Content-Type": "application/json" }
@@ -41,6 +46,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   const user = await authDb.findUserByEmail(email);
   if (!user) {
+    if (!isJson) {
+      return new Response(null, { status: 303, headers: { Location: withErrorParam(request.url, "/login") } });
+    }
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" }
@@ -49,6 +57,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) {
+    if (!isJson) {
+      return new Response(null, { status: 303, headers: { Location: withErrorParam(request.url, "/login") } });
+    }
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" }
@@ -63,7 +74,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   await authDb.updateUserLastLogin(user.id, now.toISOString());
 
-  if (!contentType.includes("application/json")) {
+  if (!isJson) {
     return new Response(null, { status: 303, headers: { Location: "/" } });
   }
 

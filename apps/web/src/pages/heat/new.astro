@@ -5,6 +5,7 @@ import FormShell from "@/core/ui-kit/FormShell.astro";
 import FormCard from "@/core/ui-kit/FormCard.astro";
 
 const today = new Date().toISOString().split("T")[0];
+const error = Astro.url.searchParams.get("error");
 ---
 
 <Layout>
@@ -12,11 +13,14 @@ const today = new Date().toISOString().split("T")[0];
     title="Log Refill"
     cancelHref="/heat"
     formId="refill-form"
-    data-api-form
     action="/api/heat/refill"
     method="POST"
-    data-redirect="/heat"
   >
+    {error && (
+      <p class="text-xs text-red-200" role="alert">
+        Unable to save refill. Check the fields and try again.
+      </p>
+    )}
     <div class="flex flex-col items-center gap-2 mt-4">
       <label
         for="bags"

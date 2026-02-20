@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { expensesService } from "@/modules/expenses/services/expensesService";
 import { getCurrentUserId } from "@/core/auth/currentUser";
+import { withErrorParam } from "@/core/http/redirects";
 
 export const prerender = false;
 
@@ -13,19 +14,37 @@ export const POST: APIRoute = async ({ request }) => {
       category?: string;
     } = {};
 
-    try {
-      data = await request.json();
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
+    const contentType = request.headers.get("content-type") ?? "";
+    const isJson = contentType.includes("application/json");
+    if (isJson) {
+      try {
+        data = await request.json();
+      } catch {
+        return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+      }
+    } else {
+      const form = await request.formData();
+      const title = form.get("title");
+      const amount = form.get("amount");
+      const category = form.get("category");
+      data = {
+        title: typeof title === "string" ? title : undefined,
+        amount: typeof amount === "string" ? amount : undefined,
+        category: typeof category === "string" ? category : undefined
+      };
     }
 
     const amount = typeof data.amount === "string" ? Number(data.amount) : data.amount;
     if (!data.title?.trim() || !Number.isFinite(amount)) {
+      if (!isJson) {
+        const fallback = request.headers.get("referer") ?? "/expenses/settings";
+        return new Response(null, { status: 303, headers: { Location: withErrorParam(fallback) } });
+      }
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: {
@@ -41,6 +60,10 @@ export const POST: APIRoute = async ({ request }) => {
       amount: Number(amount),
       category: data.category
     });
+
+    if (!isJson) {
+      return new Response(null, { status: 303, headers: { Location: "/expenses/settings" } });
+    }
 
     return new Response(JSON.stringify(template), {
       status: 200,
