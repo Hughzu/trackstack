@@ -100,26 +100,33 @@ const confirmModalState = {
 const initConfirmModals = () => {
   confirmModalState.modals = confirmModalState.modals.filter((modal) => modal.dialog.isConnected);
 
-  const dialogs = Array.from(document.querySelectorAll<HTMLDialogElement>("dialog[data-confirm-dialog]"));
+  const dialogs = Array.from(
+    document.querySelectorAll<HTMLDialogElement>("dialog[data-confirm-dialog], dialog[dataConfirmDialog]")
+  );
 
   dialogs.forEach((dialog) => {
     if (dialog.dataset.confirmBound === "true") return;
     dialog.dataset.confirmBound = "true";
 
-    const triggerAttribute = dialog.dataset.triggerAttribute || "";
+    const getAttr = (kebab: string, camel: string) =>
+      dialog.getAttribute(kebab) ?? dialog.getAttribute(camel) ?? "";
+    const getOptionalAttr = (kebab: string, camel: string) =>
+      dialog.getAttribute(kebab) ?? dialog.getAttribute(camel) ?? undefined;
+
+    const triggerAttribute = getAttr("data-trigger-attribute", "dataTriggerAttribute");
     if (!triggerAttribute) return;
 
     const config: ConfirmModalConfig = {
       dialog,
       triggerAttribute,
-      idAttribute: dialog.dataset.idAttribute,
-      endpoint: dialog.dataset.endpoint || "",
-      method: (dialog.dataset.method || "DELETE").toUpperCase(),
-      payloadKey: dialog.dataset.payloadKey || "id",
-      sendPayload: dialog.dataset.sendPayload !== "false",
-      errorMessage: dialog.dataset.errorMessage || "Something went wrong. Please try again.",
-      successRedirect: dialog.dataset.successRedirect || undefined,
-      confirmLoadingLabel: dialog.dataset.confirmLoadingLabel || "Working...",
+      idAttribute: getOptionalAttr("data-id-attribute", "dataIdAttribute"),
+      endpoint: getAttr("data-endpoint", "dataEndpoint"),
+      method: (getAttr("data-method", "dataMethod") || "DELETE").toUpperCase(),
+      payloadKey: getAttr("data-payload-key", "dataPayloadKey") || "id",
+      sendPayload: getAttr("data-send-payload", "dataSendPayload") !== "false",
+      errorMessage: getAttr("data-error-message", "dataErrorMessage") || "Something went wrong. Please try again.",
+      successRedirect: getOptionalAttr("data-success-redirect", "dataSuccessRedirect"),
+      confirmLoadingLabel: getAttr("data-confirm-loading-label", "dataConfirmLoadingLabel") || "Working...",
       confirmBtn: dialog.querySelector<HTMLButtonElement>("[data-confirm-modal]"),
       closeBtns: dialog.querySelectorAll<HTMLElement>("[data-close-modal]"),
       pendingId: null
