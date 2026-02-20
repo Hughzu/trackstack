@@ -1,5 +1,6 @@
 ---
 import ApiFormHandler from "@/core/layouts/ApiFormHandler.astro";
+import Head from "@/core/layouts/Head.astro";
 
 interface Props {
   title?: string;
@@ -11,26 +12,7 @@ const { title = "App" } = Astro.props;
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
-
-    <link rel="manifest" href="/manifest.webmanifest" />
-
-    <!-- iOS Safari -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content={title} />
-    <link rel="apple-touch-icon" href="/ios/180.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/ios/152.png" />
-    <link rel="apple-touch-icon" sizes="120x120" href="/ios/120.png" />
-
-    <!-- General -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/ios/32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/ios/16.png" />
-    <meta name="theme-color" content="#ffffff" />
+    <Head title={title} viewport="width=device-width" />
   </head>
   <body>
     <slot />

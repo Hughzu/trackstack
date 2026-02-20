@@ -3,6 +3,7 @@ import { ClientRouter } from "astro:transitions";
 import DomainNav from "@/core/ui/DomainNav.astro";
 import TopBar from "@/core/ui/TopBar.astro";
 import ApiFormHandler from "@/core/layouts/ApiFormHandler.astro";
+import Head from "@/core/layouts/Head.astro";
 import "@/core/styles/global.css";
 
 type AppDomain = {
@@ -35,14 +36,7 @@ const resolvedDomain = currentDomain ?? navDomains[0]?.id ?? "home";
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1"
-    />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="generator" content={Astro.generator} />
-    <title>{resolvedTitle}</title>
+    <Head title={resolvedTitle} />
     <ClientRouter />
   </head>
   <body
