@@ -15,46 +15,6 @@ data "aws_ssm_parameter" "origin_secret" {
   with_decryption = true
 }
 
-data "aws_ssm_parameter" "turso_users_url" {
-  name            = "/${local.ssm_prefix}/runtime/TURSO_USERS_URL"
-  with_decryption = true
-}
-
-data "aws_ssm_parameter" "turso_users_token" {
-  name            = "/${local.ssm_prefix}/runtime/TURSO_USERS_TOKEN"
-  with_decryption = true
-}
-
-data "aws_ssm_parameter" "turso_calories_url" {
-  name            = "/${local.ssm_prefix}/runtime/TURSO_CALORIES_URL"
-  with_decryption = true
-}
-
-data "aws_ssm_parameter" "turso_calories_token" {
-  name            = "/${local.ssm_prefix}/runtime/TURSO_CALORIES_TOKEN"
-  with_decryption = true
-}
-
-data "aws_ssm_parameter" "turso_expenses_url" {
-  name            = "/${local.ssm_prefix}/runtime/TURSO_EXPENSES_URL"
-  with_decryption = true
-}
-
-data "aws_ssm_parameter" "turso_expenses_token" {
-  name            = "/${local.ssm_prefix}/runtime/TURSO_EXPENSES_TOKEN"
-  with_decryption = true
-}
-
-data "aws_ssm_parameter" "turso_heat_url" {
-  name            = "/${local.ssm_prefix}/runtime/TURSO_HEAT_URL"
-  with_decryption = true
-}
-
-data "aws_ssm_parameter" "turso_heat_token" {
-  name            = "/${local.ssm_prefix}/runtime/TURSO_HEAT_TOKEN"
-  with_decryption = true
-}
-
 resource "aws_cloudwatch_log_group" "ssr" {
   name              = "/aws/lambda/${var.lambda_function_name}"
   retention_in_days = 14
@@ -79,14 +39,14 @@ resource "aws_lambda_function" "ssr" {
     variables = merge(var.lambda_env, {
       ORIGIN_VERIFY_HEADER = var.origin_header_name
       ORIGIN_VERIFY_VALUE  = data.aws_ssm_parameter.origin_secret.value
-      TURSO_USERS_URL      = data.aws_ssm_parameter.turso_users_url.value
-      TURSO_USERS_TOKEN    = data.aws_ssm_parameter.turso_users_token.value
-      TURSO_CALORIES_URL   = data.aws_ssm_parameter.turso_calories_url.value
-      TURSO_CALORIES_TOKEN = data.aws_ssm_parameter.turso_calories_token.value
-      TURSO_EXPENSES_URL   = data.aws_ssm_parameter.turso_expenses_url.value
-      TURSO_EXPENSES_TOKEN = data.aws_ssm_parameter.turso_expenses_token.value
-      TURSO_HEAT_URL       = data.aws_ssm_parameter.turso_heat_url.value
-      TURSO_HEAT_TOKEN     = data.aws_ssm_parameter.turso_heat_token.value
+      TURSO_USERS_URL      = "/${local.ssm_prefix}/runtime/TURSO_USERS_URL"
+      TURSO_USERS_TOKEN    = "/${local.ssm_prefix}/runtime/TURSO_USERS_TOKEN"
+      TURSO_CALORIES_URL   = "/${local.ssm_prefix}/runtime/TURSO_CALORIES_URL"
+      TURSO_CALORIES_TOKEN = "/${local.ssm_prefix}/runtime/TURSO_CALORIES_TOKEN"
+      TURSO_EXPENSES_URL   = "/${local.ssm_prefix}/runtime/TURSO_EXPENSES_URL"
+      TURSO_EXPENSES_TOKEN = "/${local.ssm_prefix}/runtime/TURSO_EXPENSES_TOKEN"
+      TURSO_HEAT_URL       = "/${local.ssm_prefix}/runtime/TURSO_HEAT_URL"
+      TURSO_HEAT_TOKEN     = "/${local.ssm_prefix}/runtime/TURSO_HEAT_TOKEN"
       AUTH_COOKIE_SECURE   = "true"
       AUTH_COOKIE_SAMESITE = "lax"
       AUTH_COOKIE_NAME     = "session"
