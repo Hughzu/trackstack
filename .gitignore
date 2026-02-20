@@ -21,6 +21,7 @@ vendor/
 # IDEs and editors
 .vscode/
 .idea/
+.opencode/
 *.swp
 *.swo
 *~
