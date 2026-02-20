@@ -1,9 +1,9 @@
 import type { MiddlewareHandler } from "astro";
-import { authDb } from "@/core/auth/db";
-import { authConfig } from "@/core/auth/config";
-import { getClientContext } from "@/core/auth/client";
-import { evaluateSession, getCookieOptions, hashToken, rotateSession, touchSession } from "@/core/auth/session";
-import { runWithAuthContext } from "@/core/auth/currentUser";
+import { authDb } from "@/server/auth/db";
+import { authConfig } from "@/server/auth/config";
+import { getClientContext } from "@/server/auth/client";
+import { evaluateSession, getCookieOptions, hashToken, rotateSession, touchSession } from "@/server/auth/session";
+import { runWithAuthContext } from "@/server/auth/currentUser";
 
 const isAllowedApiPath = (pathname: string) => {
   if (pathname === "/api/health") return true;

@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { expensesService } from "@/modules/expenses/services/expensesService";
-import { getCurrentUserId } from "@/core/auth/currentUser";
-import { withErrorParam } from "@/core/http/redirects";
+import { getCurrentUserId } from "@/server/auth/currentUser";
+import { withErrorParam } from "@/server/http/redirects";
 
 export const prerender = false;
 

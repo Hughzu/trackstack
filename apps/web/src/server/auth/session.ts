@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
-import { authConfig } from "@/core/auth/config";
-import { authDb, type SessionRecord } from "@/core/auth/db";
+import { authConfig } from "@/server/auth/config";
+import { authDb, type SessionRecord } from "@/server/auth/db";
 
 type SessionEvaluation = {
   valid: boolean;

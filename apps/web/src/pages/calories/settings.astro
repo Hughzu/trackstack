@@ -1,11 +1,11 @@
 ---
-import Layout from "@/app/layouts/Layout.astro";
-import "@/core/styles/global.css";
-import FormShell from "@/core/ui-kit/FormShell.astro";
-import FormCard from "@/core/ui-kit/FormCard.astro";
-import SectionHeader from "@/core/ui-kit/SectionHeader.astro";
+import Layout from "@/layouts/Layout.astro";
+import "@/styles/global.css";
+import FormShell from "@/components/FormShell.astro";
+import FormCard from "@/components/FormCard.astro";
+import SectionHeader from "@/components/SectionHeader.astro";
 import { caloriesService } from "@/modules/calories/services/caloriesService";
-import { getCurrentUserId } from "@/core/auth/currentUser";
+import { getCurrentUserId } from "@/server/auth/currentUser";
 
 const currentUserId = getCurrentUserId();
 const target = await caloriesService.getTarget(currentUserId);

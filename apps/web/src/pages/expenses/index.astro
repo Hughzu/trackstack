@@ -1,12 +1,12 @@
 ---
-import AppShell from "@/app/layouts/AppShell.astro";
-import Fab from "@/core/ui-kit/Fab.astro";
-import ConfirmModal from "@/core/ui-kit/ConfirmModal.astro";
+import AppShell from "@/layouts/AppShell.astro";
+import Fab from "@/components/Fab.astro";
+import ConfirmModal from "@/components/ConfirmModal.astro";
 import DashboardSummary from "@/modules/expenses/components/DashboardSummary.astro";
 import ObligationsList from "@/modules/expenses/components/ObligationsList.astro";
 import ExpenseHistoryList from "@/modules/expenses/components/ExpenseHistoryList.astro";
 import { expensesService } from "@/modules/expenses/services/expensesService";
-import { getCurrentUserId } from "@/core/auth/currentUser";
+import { getCurrentUserId } from "@/server/auth/currentUser";
 
 const currentUserId = getCurrentUserId();
 const viewModel = await expensesService.getDashboardViewModel(currentUserId);

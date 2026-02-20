@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
-import { authDb } from "@/core/auth/db";
-import { authConfig } from "@/core/auth/config";
-import { hashToken } from "@/core/auth/session";
+import { authDb } from "@/server/auth/db";
+import { authConfig } from "@/server/auth/config";
+import { hashToken } from "@/server/auth/session";
 
 export const prerender = false;
 

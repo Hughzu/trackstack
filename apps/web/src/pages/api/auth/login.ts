@@ -1,10 +1,10 @@
 import type { APIRoute } from "astro";
-import { authDb } from "@/core/auth/db";
-import { authConfig } from "@/core/auth/config";
-import { getClientContext } from "@/core/auth/client";
-import { createSession, getCookieOptions } from "@/core/auth/session";
-import { verifyPassword } from "@/core/auth/password";
-import { withErrorParam } from "@/core/http/redirects";
+import { authDb } from "@/server/auth/db";
+import { authConfig } from "@/server/auth/config";
+import { getClientContext } from "@/server/auth/client";
+import { createSession, getCookieOptions } from "@/server/auth/session";
+import { verifyPassword } from "@/server/auth/password";
+import { withErrorParam } from "@/server/http/redirects";
 
 export const prerender = false;
 

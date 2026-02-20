@@ -1,13 +1,13 @@
 ---
-import AppShell from "@/app/layouts/AppShell.astro";
-import Fab from "@/core/ui-kit/Fab.astro";
+import AppShell from "@/layouts/AppShell.astro";
+import Fab from "@/components/Fab.astro";
 import DailySummary from "@/modules/calories/components/DailySummary.astro";
 import QuickAdd from "@/modules/calories/components/QuickAdd.astro";
 import LogList from "@/modules/calories/components/LogList.astro";
 import DeleteLogModal from "@/modules/calories/components/DeleteLogModal.astro";
 
 import { caloriesService } from "@/modules/calories/services/caloriesService";
-import { getCurrentUserId } from "@/core/auth/currentUser";
+import { getCurrentUserId } from "@/server/auth/currentUser";
 
 const currentUserId = getCurrentUserId();
 const viewModel = await caloriesService.getDashboardViewModel(currentUserId, 8);

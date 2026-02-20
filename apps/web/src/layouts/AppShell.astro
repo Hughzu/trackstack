@@ -1,34 +1,28 @@
 ---
 import { ClientRouter } from "astro:transitions";
-import DomainNav from "@/core/ui/DomainNav.astro";
-import TopBar from "@/core/ui/TopBar.astro";
-import Head from "@/core/layouts/Head.astro";
-import ClientRuntime from "@/core/layouts/ClientRuntime.astro";
-import ApiFormHandler from "@/core/layouts/ApiFormHandler.astro";
-import "@/core/styles/global.css";
-
-type AppDomain = {
-  id: string;
-  label: string;
-  href: string;
-};
-
-type AppProfile = {
-  initials?: string;
-  imageUrl?: string;
-  href?: string;
-  ariaLabel?: string;
-};
+import DomainNav from "@/components/DomainNav.astro";
+import TopBar from "@/components/TopBar.astro";
+import Head from "@/layouts/Head.astro";
+import ClientRuntime from "@/layouts/ClientRuntime.astro";
+import ApiFormHandler from "@/layouts/ApiFormHandler.astro";
+import { appConfig, type AppDomain, type AppProfile } from "@/config/app";
+import "@/styles/global.css";
 
 interface Props {
   title?: string;
   currentDomain?: string;
-  domains: AppDomain[];
-  appName: string;
+  domains?: AppDomain[];
+  appName?: string;
   profile?: AppProfile;
 }
 
-const { title, currentDomain, domains, appName, profile } = Astro.props;
+const {
+  title,
+  currentDomain,
+  domains = appConfig.domains,
+  appName = appConfig.appName,
+  profile = appConfig.profile
+} = Astro.props;
 const navDomains = domains ?? [];
 const resolvedTitle = title ?? appName ?? "";
 const resolvedDomain = currentDomain ?? navDomains[0]?.id ?? "home";

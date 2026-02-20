@@ -1,4 +1,4 @@
-import { getDb } from "@/core/db/sqlite";
+import { getDb } from "@/server/db/sqlite";
 
 const DOMAIN = "heat";
 

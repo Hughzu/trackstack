@@ -1,6 +1,6 @@
 export const prerender = false;
 
-import { healthService } from "@/core/services/healthService";
+import { healthService } from "@/server/services/healthService";
 import type { APIRoute } from "astro";
 
 export const GET: APIRoute = async () => {

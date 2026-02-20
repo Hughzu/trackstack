@@ -1,15 +1,15 @@
 ---
-import Layout from "@/app/layouts/Layout.astro";
-import "@/core/styles/global.css";
-import FormShell from "@/core/ui-kit/FormShell.astro";
-import FormCard from "@/core/ui-kit/FormCard.astro";
-import SectionHeader from "@/core/ui-kit/SectionHeader.astro";
-import List from "@/core/ui-kit/List.astro";
-import ListRow from "@/core/ui-kit/ListRow.astro";
-import IconButton from "@/core/ui-kit/IconButton.astro";
-import ConfirmModal from "@/core/ui-kit/ConfirmModal.astro";
+import Layout from "@/layouts/Layout.astro";
+import "@/styles/global.css";
+import FormShell from "@/components/FormShell.astro";
+import FormCard from "@/components/FormCard.astro";
+import SectionHeader from "@/components/SectionHeader.astro";
+import List from "@/components/List.astro";
+import ListRow from "@/components/ListRow.astro";
+import IconButton from "@/components/IconButton.astro";
+import ConfirmModal from "@/components/ConfirmModal.astro";
 import { expensesService } from "@/modules/expenses/services/expensesService";
-import { getCurrentUserId } from "@/core/auth/currentUser";
+import { getCurrentUserId } from "@/server/auth/currentUser";
 
 const currentUserId = getCurrentUserId();
 const config = await expensesService.getSettings(currentUserId);

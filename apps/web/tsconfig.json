@@ -16,8 +16,17 @@
       "@app/*": [
         "src/app/*"
       ],
-      "@/core/*": [
-        "src/core/*"
+      "@config/*": [
+        "src/config/*"
+      ],
+      "@layouts/*": [
+        "src/layouts/*"
+      ],
+      "@components/*": [
+        "src/components/*"
+      ],
+      "@server/*": [
+        "src/server/*"
       ]
     }
   }

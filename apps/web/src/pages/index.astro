@@ -1,10 +1,10 @@
 ---
-import AppShell from "@/app/layouts/AppShell.astro";
+import AppShell from "@/layouts/AppShell.astro";
 import ExpensesSummaryCard from "@/modules/dashboard/components/ExpensesSummaryCard.astro";
 import CaloriesSummaryCard from "@/modules/dashboard/components/CaloriesSummaryCard.astro";
 import HeatSummaryCard from "@/modules/dashboard/components/HeatSummaryCard.astro";
 import { dashboardService } from "@/modules/dashboard/services/dashboardService";
-import { getCurrentUserId } from "@/core/auth/currentUser";
+import { getCurrentUserId } from "@/server/auth/currentUser";
 
 const currentUserId = getCurrentUserId();
 const dashboard = await dashboardService.getDashboardViewModel(currentUserId);
