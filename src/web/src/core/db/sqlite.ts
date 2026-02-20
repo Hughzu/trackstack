@@ -1,4 +1,5 @@
 import { createClient, type Client, type ResultSet } from "@libsql/client/web";
+import { SSMClient, GetParametersCommand } from "@aws-sdk/client-ssm";
 
 type StatementArgs = Array<string | number | boolean | null>;
 
@@ -10,6 +11,51 @@ export type DbClient = {
 };
 
 const dbCache = new Map<string, DbClient>();
+const clientCache = new Map<string, Client>();
+
+let envResolved = false;
+
+const resolveEnvVars = async () => {
+  if (envResolved) return;
+  const ssmParamsToFetch: string[] = [];
+  const keysToUpdate: string[] = [];
+
+  const metaEnv = (import.meta as { env?: Record<string, string | undefined> }).env || {};
+  const allEnv = { ...process.env, ...metaEnv };
+
+  for (const [key, val] of Object.entries(allEnv)) {
+    if (val && typeof val === "string" && val.startsWith("/trackstack/")) {
+      ssmParamsToFetch.push(val);
+      keysToUpdate.push(key);
+    }
+  }
+
+  if (ssmParamsToFetch.length > 0) {
+    try {
+      const client = new SSMClient({});
+      const cmd = new GetParametersCommand({ Names: ssmParamsToFetch, WithDecryption: true });
+      const res = await client.send(cmd);
+      const paramMap = new Map<string, string>();
+      for (const p of res.Parameters || []) {
+        if (p.Name && p.Value) paramMap.set(p.Name, p.Value);
+      }
+      for (let i = 0; i < keysToUpdate.length; i++) {
+        const key = keysToUpdate[i];
+        const path = ssmParamsToFetch[i];
+        const resolvedValue = paramMap.get(path);
+        if (resolvedValue) {
+          process.env[key] = resolvedValue;
+          if (metaEnv[key] !== undefined) {
+            metaEnv[key] = resolvedValue;
+          }
+        }
+      }
+    } catch (e) {
+      logError("ssm_fetch_error", { error: String(e) });
+    }
+  }
+  envResolved = true;
+};
 
 const readEnv = (key: string) => {
   const metaEnv = (import.meta as { env?: Record<string, string | undefined> }).env;
@@ -30,7 +76,12 @@ const resolveDomainToken = (domain: string) => {
   return token && token.trim().length > 0 ? token.trim() : undefined;
 };
 
-const createDbClient = (domain: string): DbClient => {
+const getLazyClient = async (domain: string): Promise<Client> => {
+  let client = clientCache.get(domain);
+  if (client) return client;
+
+  await resolveEnvVars();
+
   const url = resolveDomainUrl(domain);
   const authToken = url.startsWith("libsql://") ? resolveDomainToken(domain) : undefined;
 
@@ -40,10 +91,15 @@ const createDbClient = (domain: string): DbClient => {
 
   logInfo("db_connect", { domain, url: url.replace(authToken || "", "***") });
 
-  const client: Client = createClient({ url, authToken });
+  client = createClient({ url, authToken });
+  clientCache.set(domain, client);
+  return client;
+};
 
+const createDbClient = (domain: string): DbClient => {
   return {
     execute: async (sql: string, args?: StatementArgs) => {
+      const client = await getLazyClient(domain);
       const start = performance.now();
       try {
         const result = await client.execute({ sql, args: args ?? [] });
@@ -55,6 +111,7 @@ const createDbClient = (domain: string): DbClient => {
       }
     },
     get: async <T>(sql: string, args?: StatementArgs) => {
+      const client = await getLazyClient(domain);
       const start = performance.now();
       try {
         const result = await client.execute({ sql, args: args ?? [] });
@@ -66,6 +123,7 @@ const createDbClient = (domain: string): DbClient => {
       }
     },
     all: async <T>(sql: string, args?: StatementArgs) => {
+      const client = await getLazyClient(domain);
       const start = performance.now();
       try {
         const result = await client.execute({ sql, args: args ?? [] });
@@ -77,6 +135,7 @@ const createDbClient = (domain: string): DbClient => {
       }
     },
     run: async (sql: string, args?: StatementArgs) => {
+      const client = await getLazyClient(domain);
       const start = performance.now();
       try {
         const result = await client.execute({ sql, args: args ?? [] });
