@@ -10,4 +10,7 @@
     - focus on understanding what all files are doing
     - have better dx
 - document architecture
+- new docs
+- new agents.md
+- one readme per environment and app 
 - go backend ? 

@@ -56,11 +56,18 @@ jobs:
 
       - name: Load infra config from SSM
         run: |
-          echo "ASTRO_ASSETS_BUCKET=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/assets_bucket" --query Parameter.Value --output text)" >> $GITHUB_ENV
-          echo "ASTRO_ARTIFACTS_BUCKET=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/artifacts_bucket" --query Parameter.Value --output text)" >> $GITHUB_ENV
-          echo "ASTRO_LAMBDA_KEY=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/lambda_key" --query Parameter.Value --output text)" >> $GITHUB_ENV
-          echo "ASTRO_LAMBDA_FUNCTION_NAME=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/lambda_function_name" --query Parameter.Value --output text)" >> $GITHUB_ENV
-          echo "ASTRO_CLOUDFRONT_DISTRIBUTION_ID=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/cloudfront_distribution_id" --query Parameter.Value --output text)" >> $GITHUB_ENV
+          set -e
+          ASTRO_ASSETS_BUCKET=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/assets_bucket" --query Parameter.Value --output text)
+          ASTRO_ARTIFACTS_BUCKET=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/artifacts_bucket" --query Parameter.Value --output text)
+          ASTRO_LAMBDA_KEY=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/lambda_key" --query Parameter.Value --output text)
+          ASTRO_LAMBDA_FUNCTION_NAME=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/lambda_function_name" --query Parameter.Value --output text)
+          ASTRO_CLOUDFRONT_DISTRIBUTION_ID=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/cloudfront_distribution_id" --query Parameter.Value --output text)
+
+          echo "ASTRO_ASSETS_BUCKET=$ASTRO_ASSETS_BUCKET" >> $GITHUB_ENV
+          echo "ASTRO_ARTIFACTS_BUCKET=$ASTRO_ARTIFACTS_BUCKET" >> $GITHUB_ENV
+          echo "ASTRO_LAMBDA_KEY=$ASTRO_LAMBDA_KEY" >> $GITHUB_ENV
+          echo "ASTRO_LAMBDA_FUNCTION_NAME=$ASTRO_LAMBDA_FUNCTION_NAME" >> $GITHUB_ENV
+          echo "ASTRO_CLOUDFRONT_DISTRIBUTION_ID=$ASTRO_CLOUDFRONT_DISTRIBUTION_ID" >> $GITHUB_ENV
 
       - name: Upload Lambda artifact
         run: |
