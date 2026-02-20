@@ -65,7 +65,7 @@ variable "origin_header_ssm_name" {
 
 variable "ssm_prefix" {
   type    = string
-  default = "/trackstack/step-0-5"
+  default = "/trackstack/serverless"
 }
 
 variable "lambda_env" {

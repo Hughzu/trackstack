@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    key            = "environments/step-0-5-astro-ssr/terraform.tfstate"
+    key            = "environments/serverless/terraform.tfstate"
     encrypt        = true
     dynamodb_table = "terraform-lock"
   }

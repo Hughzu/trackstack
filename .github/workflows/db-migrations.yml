@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "migrations/**"
+      - "packages/db/migrations/**"
   workflow_dispatch: {}
 
 jobs:
@@ -28,17 +28,17 @@ jobs:
         uses: ariga/setup-atlas@v0
 
       - name: Apply migrations (calories)
-        working-directory: migrations
+        working-directory: packages/db/migrations
         run: atlas migrate apply --env calories
 
       - name: Apply migrations (expenses)
-        working-directory: migrations
+        working-directory: packages/db/migrations
         run: atlas migrate apply --env expenses
 
       - name: Apply migrations (heat)
-        working-directory: migrations
+        working-directory: packages/db/migrations
         run: atlas migrate apply --env heat
 
       - name: Apply migrations (users)
-        working-directory: migrations
+        working-directory: packages/db/migrations
         run: atlas migrate apply --env users

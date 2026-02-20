@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../../bootstrap/config.sh"
 
-SSM_PREFIX="${SSM_PREFIX:-/trackstack/step-0-5}"
+SSM_PREFIX="${SSM_PREFIX:-/trackstack/serverless}"
 
 if ! command -v aws >/dev/null 2>&1; then
     echo "ERROR: aws CLI is not installed."
@@ -12,7 +12,7 @@ if ! command -v aws >/dev/null 2>&1; then
 fi
 
 echo "=========================================="
-echo " STEP 0.5: Set Runtime Secrets (SSM)"
+echo " SERVERLESS: Set Runtime Secrets (SSM)"
 echo "=========================================="
 echo ""
 echo "Profile: $AWS_PROFILE"

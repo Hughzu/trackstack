@@ -102,7 +102,7 @@ aws configure
 unset AWS_PROFILE
 
 # Navigate to the bootstrap directory
-cd iac/bootstrap
+cd infra/core/bootstrap
 
 # Run the admin user creation script
 ./01-create-admin-user.sh
@@ -183,14 +183,14 @@ aws sts get-caller-identity
 The bootstrap scripts create the OIDC trust and the IAM role, but **permissions are managed by Terraform** so you can evolve them without re-running bootstrap scripts.
 
 ```bash
-cd iac/bootstrap
+cd infra/core/bootstrap
 ./06-sync-iam-bootstrap.sh
 ```
 
 For non-interactive runs:
 
 ```bash
-cd iac/bootstrap
+cd infra/core/bootstrap
 ./06-sync-iam-bootstrap.sh --auto-approve
 ```
 
@@ -199,18 +199,18 @@ cd iac/bootstrap
 If you need to tear down the IAM policy managed by Terraform:
 
 ```bash
-cd iac/bootstrap
+cd infra/core/bootstrap
 ./07-destroy-iam-bootstrap.sh
 ```
 
 ---
 
-## Step 0.5: Astro SSR (Terraform)
+## Serverless: Astro SSR (Terraform)
 
 After IAM bootstrap is synced, provision the Astro SSR stack:
 
 ```bash
-cd iac/environments/step-0-5-astro-ssr
+cd infra/environments/serverless
 terraform init \
   -backend-config="bucket=${TFSTATE_BUCKET}" \
   -backend-config="dynamodb_table=${TFSTATE_LOCK_TABLE}" \
@@ -223,7 +223,7 @@ terraform apply \
 Before first deploy, set runtime secrets in SSM:
 
 ```bash
-cd iac/environments/step-0-5-astro-ssr
+cd infra/environments/serverless
 ./01-set-runtime-ssm.sh
 ```
 
@@ -302,7 +302,7 @@ jobs:
 If you need to rerun bootstrap from scratch, use the cleanup script:
 
 ```bash
-cd iac/bootstrap
+cd infra/core/bootstrap
 ./90-destroy-iam-bootstrap.sh
 ./91-cleanup-bootstrap.sh --force-empty-buckets
 ```

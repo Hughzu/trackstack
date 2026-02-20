@@ -1,6 +1,13 @@
 - clean astro code
+    - focus on front side and data flows within the front and write doc about it
+    - focus on db schema and write doc about it
+    - backend - meh will be rewritten in go
 - clean iac
+    - focus on understanding what all files are doing
+    - try to extract bricks
+    - write docs about it
 - clean cicd pipelines
-- document architecture etc etc
-- document through blog app ? 
-- first cli version for bootstrap / core etc etc
+    - focus on understanding what all files are doing
+    - have better dx
+- document architecture
+- go backend ? 

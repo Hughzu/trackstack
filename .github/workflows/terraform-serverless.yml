@@ -1,11 +1,11 @@
-name: Terraform Step 0.5 Astro SSR
+name: Terraform Serverless
 
 on:
   push:
     branches: [main]
     paths:
-      - 'iac/environments/step-0-5-astro-ssr/**'
-      - '.github/workflows/terraform-step-0-5-astro-ssr.yml'
+      - 'infra/environments/serverless/**'
+      - '.github/workflows/terraform-serverless.yml'
   workflow_dispatch:
     inputs:
       action:
@@ -36,7 +36,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: iac/environments/step-0-5-astro-ssr
+        working-directory: infra/environments/serverless
 
 
     steps:
@@ -69,7 +69,7 @@ jobs:
           pnpm build
           cd dist/server
           zip -r /tmp/astro-ssr.zip .
-        working-directory: src/web
+        working-directory: apps/web
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
