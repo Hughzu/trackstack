@@ -53,6 +53,13 @@ resource "aws_lambda_function" "ssr" {
     })
   }
 
+  lifecycle {
+    ignore_changes = [
+      s3_key,
+      s3_object_version,
+    ]
+  }
+
   tags = var.tags
 }
 
