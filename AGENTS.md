@@ -81,16 +81,49 @@ Turso behaves differently depending on the deployment matrix.
 
 ### 1. Adding a New Feature (e.g., "Expenses")
 
+**CRITICAL: Run tests after implementing any feature.**
+
 1. Create the pure business logic in `apps/trackstack/internal/modules/expenses`.
 2. Define the input/output structs and the Service interface.
 3. Wire the feature into `cmd/lambda/main.go` and `cmd/server/main.go` using the appropriate transport wrappers (API Gateway events vs HTTP requests).
 4. Build the UI in `apps/web/src/pages/expenses`.
+5. **Run tests to prevent regressions:**
+   ```bash
+   cd apps/web
+   pnpm test           # Fast unit tests (< 300ms)
+   pnpm test:e2e       # E2E tests (requires dev server)
+   ```
+   See `docs/TESTING.md` for detailed testing guidelines.
 
 ### 2. Modifying Infrastructure
 
 1. Identify if the change is global (e.g., VPC, IAM) or environment-specific.
 2. Put global changes in `infra/modules/`.
 3. Reference the shared module in the specific `infra/environments/*/main.tf`.
+
+### 3. Testing Guidelines
+
+**Before every commit:**
+```bash
+cd apps/web && pnpm test        # Verify form attributes
+```
+
+**Before pushing to main:**
+```bash
+# Terminal 1
+cd apps/web && pnpm dev
+
+# Terminal 2
+cd apps/web && pnpm test:e2e    # Verify SigV4 integration
+```
+
+**Test coverage priorities:**
+- ✅ Unit tests: All forms must have `data-api-form` attribute
+- ✅ E2E tests: SigV4 headers present on all mutations
+- ⏭️ Future: Heavy Go backend testing (Phase 1)
+- ⏭️ Future: Contract tests between SSG frontend and Go API
+
+See `docs/TESTING.md` for complete testing documentation.
 
 ---
 
