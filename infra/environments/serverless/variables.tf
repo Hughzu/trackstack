@@ -73,6 +73,21 @@ variable "lambda_env" {
   default = {}
 }
 
+variable "lambda_reserved_concurrency" {
+  type    = number
+  default = 10
+}
+
+variable "billing_alarm_email" {
+  type    = string
+  default = null
+}
+
+variable "billing_budget_limit" {
+  type    = number
+  default = 3
+}
+
 variable "tags" {
   type = map(string)
   default = {

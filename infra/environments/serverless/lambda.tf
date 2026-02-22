@@ -17,7 +17,7 @@ data "aws_ssm_parameter" "origin_secret" {
 
 resource "aws_cloudwatch_log_group" "ssr" {
   name              = "/aws/lambda/${var.lambda_function_name}"
-  retention_in_days = 14
+  retention_in_days = 3
   tags              = var.tags
 }
 
@@ -32,8 +32,9 @@ resource "aws_lambda_function" "ssr" {
   s3_key            = local.lambda_artifact_key
   s3_object_version = var.lambda_artifact_path != null ? aws_s3_object.lambda_artifact[0].version_id : var.lambda_artifact_version
 
-  memory_size = 1024
-  timeout     = 30
+  memory_size                    = 512
+  timeout                        = 30
+  reserved_concurrent_executions = var.lambda_reserved_concurrency
 
   environment {
     variables = merge(var.lambda_env, {

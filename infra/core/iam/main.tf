@@ -34,18 +34,97 @@ resource "aws_iam_policy" "terraform_deploy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "ServiceAdmin"
+        Sid    = "S3Scoped"
         Effect = "Allow"
         Action = [
-          "s3:*",
-          "cloudfront:*",
-          "lambda:*",
-          "iam:*",
-          "ssm:*",
-          "route53:*",
-          "acm:*",
-          "logs:*",
+          "s3:*"
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.resource_prefix}*",
+          "arn:aws:s3:::${var.resource_prefix}*/*"
+        ]
+      },
+      {
+        Sid    = "LambdaScoped"
+        Effect = "Allow"
+        Action = [
+          "lambda:*"
+        ]
+        Resource = [
+          "arn:aws:lambda:${var.aws_region}:${local.account_id}:function:${var.resource_prefix}*"
+        ]
+      },
+      {
+        Sid    = "SSMScoped"
+        Effect = "Allow"
+        Action = [
+          "ssm:*"
+        ]
+        Resource = [
+          "arn:aws:ssm:${var.aws_region}:${local.account_id}:parameter/${trim(var.ssm_parameter_prefix, "/")}*"
+        ]
+      },
+      {
+        Sid    = "LogsScoped"
+        Effect = "Allow"
+        Action = [
+          "logs:*"
+        ]
+        Resource = [
+          "arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.resource_prefix}*:*"
+        ]
+      },
+      {
+        Sid    = "DynamoDbScoped"
+        Effect = "Allow"
+        Action = [
           "dynamodb:*"
+        ]
+        Resource = [
+          "arn:aws:dynamodb:${var.aws_region}:${local.account_id}:table/${var.resource_prefix}*"
+        ]
+      },
+      {
+        Sid    = "IamScoped"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateRole",
+          "iam:DeleteRole",
+          "iam:UpdateRole",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:CreatePolicy",
+          "iam:DeletePolicy",
+          "iam:CreatePolicyVersion",
+          "iam:DeletePolicyVersion",
+          "iam:SetDefaultPolicyVersion",
+          "iam:PassRole",
+          "iam:TagRole",
+          "iam:UntagRole",
+          "iam:TagPolicy",
+          "iam:UntagPolicy"
+        ]
+        Resource = [
+          "arn:aws:iam::${local.account_id}:role/${var.resource_prefix}*",
+          "arn:aws:iam::${local.account_id}:policy/${var.resource_prefix}*"
+        ]
+      },
+      {
+        Sid    = "IamReadOnly"
+        Effect = "Allow"
+        Action = [
+          "iam:Get*",
+          "iam:List*"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "CloudFrontAll"
+        Effect = "Allow"
+        Action = [
+          "cloudfront:*"
         ]
         Resource = "*"
       },

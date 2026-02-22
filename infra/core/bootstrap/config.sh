@@ -8,6 +8,7 @@ export AWS_PROFILE="${AWS_PROFILE:-trackstack}"
 # GitHub Configuration
 export GITHUB_REPO="Hughzu/trackstack"
 export GITHUB_ORG="Hughzu"
+export GITHUB_OIDC_SUBJECT="repo:${GITHUB_REPO}:ref:refs/heads/main"
 
 # Resource Names
 export ADMIN_USER_NAME="trackstack-admin"

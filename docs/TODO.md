@@ -1,7 +1,3 @@
-- clean astro code
-    - focus on front side and data flows within the front and write doc about it
-    - focus on db schema and write doc about it
-    - backend - meh will be rewritten in go
 - clean iac
     - focus on understanding what all files are doing
     - try to extract bricks

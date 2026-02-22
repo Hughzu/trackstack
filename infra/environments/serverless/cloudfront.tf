@@ -73,6 +73,7 @@ resource "aws_cloudfront_distribution" "ssr" {
   enabled         = true
   is_ipv6_enabled = true
   comment         = "Trackstack Astro SSR"
+  price_class     = "PriceClass_100"
   origin {
     domain_name              = aws_s3_bucket.assets.bucket_regional_domain_name
     origin_id                = local.assets_origin_id
