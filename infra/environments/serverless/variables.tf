@@ -75,7 +75,7 @@ variable "lambda_env" {
 
 variable "billing_alarm_email" {
   type    = string
-  default = null
+  default = "hughesstiernon@gmail.com"
 }
 
 variable "billing_budget_limit" {
