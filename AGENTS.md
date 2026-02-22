@@ -90,8 +90,7 @@ Turso behaves differently depending on the deployment matrix.
 5. **Run tests to prevent regressions:**
    ```bash
    cd apps/web
-   pnpm test           # Fast unit tests (< 300ms)
-   pnpm test:e2e       # E2E tests (requires dev server)
+   pnpm test           # Fast unit tests (< 300ms) - verifies form attributes
    ```
    See `docs/TESTING.md` for detailed testing guidelines.
 
@@ -105,23 +104,15 @@ Turso behaves differently depending on the deployment matrix.
 
 **Before every commit:**
 ```bash
-cd apps/web && pnpm test        # Verify form attributes
-```
-
-**Before pushing to main:**
-```bash
-# Terminal 1
-cd apps/web && pnpm dev
-
-# Terminal 2
-cd apps/web && pnpm test:e2e    # Verify SigV4 integration
+cd apps/web && pnpm test        # Verify form attributes (fast feedback)
 ```
 
 **Test coverage priorities:**
 - ✅ Unit tests: All forms must have `data-api-form` attribute
-- ✅ E2E tests: SigV4 headers present on all mutations
 - ⏭️ Future: Heavy Go backend testing (Phase 1)
 - ⏭️ Future: Contract tests between SSG frontend and Go API
+
+**Note:** E2E tests were removed during the transition phase (3-6 weeks to SSG + Go backend). Rely on unit tests for fast feedback; full SigV4 validation will be tested when backend stabilizes.
 
 See `docs/TESTING.md` for complete testing documentation.
 
