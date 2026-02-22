@@ -73,11 +73,6 @@ variable "lambda_env" {
   default = {}
 }
 
-variable "lambda_reserved_concurrency" {
-  type    = number
-  default = 10
-}
-
 variable "billing_alarm_email" {
   type    = string
   default = null
