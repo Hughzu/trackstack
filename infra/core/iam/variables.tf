@@ -13,14 +13,6 @@ variable "policy_name" {
   default = "trackstack-terraform-deploy-policy"
 }
 
-variable "tfstate_bucket" {
-  type = string
-}
-
-variable "tfstate_lock_table" {
-  type = string
-}
-
 variable "resource_prefix" {
   type    = string
   default = "trackstack-"
