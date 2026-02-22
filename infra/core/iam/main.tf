@@ -129,6 +129,21 @@ resource "aws_iam_policy" "terraform_deploy" {
         Resource = "*"
       },
       {
+        Sid    = "BudgetsAll"
+        Effect = "Allow"
+        Action = [
+          "budgets:CreateBudget",
+          "budgets:ModifyBudget",
+          "budgets:DeleteBudget",
+          "budgets:DescribeBudgets",
+          "budgets:DescribeBudget",
+          "budgets:DescribeNotificationsForBudget",
+          "budgets:DescribeSubscribersForBudget",
+          "budgets:ViewBudget"
+        ]
+        Resource = "*"
+      },
+      {
         Sid      = "STS"
         Effect   = "Allow"
         Action   = "sts:GetCallerIdentity"

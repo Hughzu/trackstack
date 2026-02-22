@@ -5,8 +5,5 @@
 - clean cicd pipelines
     - focus on understanding what all files are doing
     - have better dx
-- document architecture
-- new docs
-- new agents.md
-- one readme per environment and app 
+- document architecture and other docs in TODO2
 - go backend ? 
