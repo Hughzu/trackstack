@@ -65,6 +65,14 @@ resource "aws_iam_policy" "terraform_deploy" {
         ]
       },
       {
+        Sid    = "SSMDescribe"
+        Effect = "Allow"
+        Action = [
+          "ssm:DescribeParameters"
+        ]
+        Resource = "*"
+      },
+      {
         Sid    = "LogsScoped"
         Effect = "Allow"
         Action = [
@@ -73,6 +81,15 @@ resource "aws_iam_policy" "terraform_deploy" {
         Resource = [
           "arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.resource_prefix}*:*"
         ]
+      },
+      {
+        Sid    = "LogsDescribe"
+        Effect = "Allow"
+        Action = [
+          "logs:DescribeLogGroups",
+          "logs:ListTagsForResource"
+        ]
+        Resource = "*"
       },
       {
         Sid    = "DynamoDbScoped"
@@ -121,6 +138,31 @@ resource "aws_iam_policy" "terraform_deploy" {
         Resource = "*"
       },
       {
+        Sid    = "TerraformReadOnly"
+        Effect = "Allow"
+        Action = [
+          "s3:Get*",
+          "s3:List*",
+          "lambda:Get*",
+          "lambda:List*",
+          "cloudfront:Get*",
+          "cloudfront:List*",
+          "logs:Describe*",
+          "logs:Get*",
+          "logs:List*",
+          "ssm:Describe*",
+          "ssm:Get*",
+          "ssm:List*",
+          "dynamodb:Describe*",
+          "dynamodb:Get*",
+          "dynamodb:List*",
+          "budgets:Describe*",
+          "budgets:List*",
+          "budgets:ViewBudget"
+        ]
+        Resource = "*"
+      },
+      {
         Sid    = "CloudFrontAll"
         Effect = "Allow"
         Action = [
@@ -139,6 +181,7 @@ resource "aws_iam_policy" "terraform_deploy" {
           "budgets:DescribeBudget",
           "budgets:DescribeNotificationsForBudget",
           "budgets:DescribeSubscribersForBudget",
+          "budgets:ListTagsForResource",
           "budgets:ViewBudget"
         ]
         Resource = "*"
