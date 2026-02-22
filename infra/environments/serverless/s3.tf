@@ -11,7 +11,7 @@ resource "aws_s3_bucket" "artifacts" {
 resource "aws_s3_bucket_versioning" "assets" {
   bucket = aws_s3_bucket.assets.id
   versioning_configuration {
-    status = "Disabled"
+    status = "Suspended"
   }
 }
 
@@ -76,6 +76,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "artifacts" {
   rule {
     id     = "expire-old-artifacts"
     status = "Enabled"
+
+    filter {}
 
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
