@@ -25,7 +25,7 @@ To run the same application in AWS Lambda *and* an EKS cluster, the code must be
 ```text
 trackstack/
 ├── apps/
-│   └── trackstack/
+│   └── server/
 │       ├── cmd/
 │       │   ├── lambda/          # Entrypoint 1: AWS Lambda API Gateway/Function URL adapter
 │       │   └── server/          # Entrypoint 2: Long-running HTTP Server (Chi/Echo) for ECS/EKS
@@ -76,7 +76,7 @@ Turso (SQLite at the Edge) is the backbone.
 
 * **Goal:** Migrate the existing Astro SSR backend logic into a pure Go backend and deploy it to the $0 Serverless environment.
 * **Tasks:**
-  1. Initialize the `apps/trackstack` Go module.
+  1. Initialize the `apps/server` Go module.
   2. Implement the Hexagonal Architecture: `internal/modules/` (business logic) and `cmd/lambda/main.go` (transport).
   3. Clean up the `infra/environments/serverless` Terraform using modules (`lambda-api`, `static-hosting`, `cost-guardrails`).
   4. Deploy the hybrid Astro Static + Go Lambda architecture.
@@ -85,7 +85,7 @@ Turso (SQLite at the Edge) is the backbone.
 
 * **Goal:** Prove the code can run in a containerized environment without modification to the business logic.
 * **Tasks:**
-  1. Create `apps/trackstack/cmd/server/main.go` and a `Dockerfile`.
+  1. Create `apps/server/cmd/server/main.go` and a `Dockerfile`.
   2. Write Terraform `infra/modules/network` (VPC) and `infra/environments/ecs`.
   3. Implement a GitHub Action to deploy the Lab, run tests, and **automatically run `terraform destroy`** to enforce FinOps.
 

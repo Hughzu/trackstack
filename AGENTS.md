@@ -8,7 +8,7 @@
 
 ## 🛠️ Technical Stack
 
-* **Backend:** Go (Golang) 1.22+ (Hexagonal Architecture).
+* **Backend:** Go (Golang) 1.26+ (Hexagonal Architecture).
 * **Frontend:** Astro (SSR & Static) + TailwindCSS in `apps/web/`.
 * **Database:** Turso (SQLite at the Edge via HTTP/WebSockets).
 * **Infra:** Terraform (AWS) structured by environment.
@@ -24,10 +24,10 @@
 
 To run the exact same application in Lambda and ECS, the business logic must be completely isolated from the transport layer.
 
-* **`apps/trackstack/internal/modules/`**: The Pure Business Logic.
+* **`apps/server/internal/modules/`**: The Pure Business Logic.
   * ⛔ **NEVER** import `net/http`, AWS Lambda SDKs, or web frameworks (Chi/Echo) here.
   * ✅ Define core Domain models, input/output Ports (Interfaces), and business Adapters (e.g., Turso DB queries).
-* **`apps/trackstack/cmd/`**: The Transport Layer.
+* **`apps/server/cmd/`**: The Transport Layer.
   * `cmd/lambda/main.go`: Wraps the modules in `aws-lambda-go` for the Serverless environment.
   * `cmd/server/main.go`: Wraps the modules in an HTTP server (Chi/Echo) for the Container/Orchestration environments.
 
@@ -55,7 +55,7 @@ Turso behaves differently depending on the deployment matrix.
 ```text
 .
 ├── apps/
-│   ├── trackstack/             # The Go Backend
+│   ├── server/                 # The Go Backend
 │   │   ├── cmd/                # Transport Entrypoints (Lambda vs HTTP Server)
 │   │   └── internal/           # Backend Logic
 │   │       ├── core/           # DB Setup, Auth, Logger
@@ -84,7 +84,7 @@ Turso behaves differently depending on the deployment matrix.
 
 **CRITICAL: Run tests after implementing any feature.**
 
-1. Create the pure business logic in `apps/trackstack/internal/modules/expenses`.
+1. Create the pure business logic in `apps/server/internal/modules/expenses`.
 2. Define the input/output structs and the Service interface.
 3. Wire the feature into `cmd/lambda/main.go` and `cmd/server/main.go` using the appropriate transport wrappers (API Gateway events vs HTTP requests).
 4. Build the UI in `apps/web/src/pages/expenses`.
@@ -143,4 +143,4 @@ See `docs/TESTING.md` for complete testing documentation.
 ## 🎯 Current Goal
 
 > **Phase 1: The Go Backend Rewrite & Serverless Prod.**
-> Migrate the Astro SSR logic into a pure Go Hexagonal backend (`apps/trackstack`), deploy it to AWS Lambda, and route static Astro assets to S3 via CloudFront.
+> Migrate the Astro SSR logic into a pure Go Hexagonal backend (`apps/server`), deploy it to AWS Lambda, and route static Astro assets to S3 via CloudFront.

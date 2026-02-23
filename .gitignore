@@ -1,5 +1,8 @@
 # Binaries
 bin/
+/apps/*/main
+/apps/*/server
+apps/server/server
 *.exe
 *.exe~
 *.dll
@@ -14,6 +17,7 @@ bin/
 
 # Go workspace file
 go.work
+go.work.sum
 
 # Dependency directories
 vendor/
@@ -66,3 +70,4 @@ apps/web/static/css/output.css
 **/backend.hcl
 apps/web/test-results/.last-run.json
 apps/web/test-results/sigv4-SigV4-Form-Submissio-2dbd1-uest-includes-SigV4-headers-chromium/error-context.md
+

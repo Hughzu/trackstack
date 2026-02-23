@@ -25,7 +25,7 @@ Roadmap and implementation walkthrough: `docs/WIP/GO_BACKEND_ROADMAP.md`.
 ## 3) Repository layout (new backend)
 
 ```
-apps/trackstack/
+apps/server/
 ├── cmd/
 │   ├── lambda/          # AWS Lambda entrypoint (serverless prod)
 │   ├── server/          # HTTP server entrypoint (docker monolith)
