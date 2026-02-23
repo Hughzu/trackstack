@@ -1,0 +1,141 @@
+openapi: 3.0.3
+info:
+  title: Trackstack API
+  version: 0.1.0
+  description: Initial Go backend API for Trackstack (heat module).
+servers:
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+  /api/heat/refills:
+    get:
+      summary: List heat refills
+      parameters:
+        - in: query
+          name: from
+          description: Start date (YYYY-MM-DD or RFC3339)
+          schema:
+            type: string
+        - in: query
+          name: to
+          description: End date (YYYY-MM-DD or RFC3339)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of refills
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListRefillsResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      summary: Create a heat refill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRefillRequest"
+      responses:
+        "201":
+          description: Refill created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateRefillResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Refill:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        date:
+          type: string
+          format: date-time
+        weightKg:
+          type: number
+          format: float
+        bags:
+          type: integer
+        temperature:
+          type: number
+          format: float
+          nullable: true
+        season:
+          type: string
+          nullable: true
+      required:
+        - id
+        - userId
+        - date
+        - weightKg
+        - bags
+    ListRefillsResponse:
+      type: object
+      properties:
+        refills:
+          type: array
+          items:
+            $ref: "#/components/schemas/Refill"
+      required:
+        - refills
+    CreateRefillRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          description: RFC3339 or YYYY-MM-DD
+        weightKg:
+          type: number
+          format: float
+        bags:
+          type: integer
+        temperature:
+          type: number
+          format: float
+          nullable: true
+      required:
+        - date
+        - weightKg
+        - bags
+    CreateRefillResponse:
+      type: object
+      properties:
+        refill:
+          $ref: "#/components/schemas/Refill"
+      required:
+        - refill
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

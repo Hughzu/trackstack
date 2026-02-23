@@ -12,6 +12,7 @@ import (
 	"github.com/Hughzu/trackstack/apps/server/internal/core/config"
 	"github.com/Hughzu/trackstack/apps/server/internal/core/logging"
 	httptransport "github.com/Hughzu/trackstack/apps/server/internal/transport/http"
+	heatwiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/heat"
 )
 
 func main() {
@@ -22,7 +23,23 @@ func main() {
 	}
 
 	logger := logging.New(cfg.LogLevel)
-	router := httptransport.NewRouter()
+
+	heatDeps, err := heatwiring.BuildHeat(cfg)
+	if err != nil {
+		logger.Error("heat db error", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		if err := heatDeps.Close(); err != nil {
+			logger.Error("heat db close error", "error", err)
+		}
+	}()
+	handlers := httptransport.NewHandlers(httptransport.Deps{
+		HeatService:     heatDeps.Service,
+		HardcodedUserID: cfg.HardcodedUserID,
+	})
+
+	router := httptransport.NewRouter(handlers)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,

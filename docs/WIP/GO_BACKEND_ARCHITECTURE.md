@@ -37,6 +37,7 @@ apps/server/
 ├── internal/
 │   ├── core/            # config, logger, db, auth primitives
 │   ├── modules/         # domain modules (ports + services + adapters)
+│   ├── wiring/          # composition root helpers (per-domain wiring)
 │   └── transport/       # shared transport wiring
 │       ├── http/        # router, middleware, error mapping
 │       └── lambda/      # lambda request adapters
@@ -139,6 +140,11 @@ func (s *UsersServer) GetPlanTier(ctx context.Context, req *pb.GetPlanTierReques
 type Config struct {
   Env                string // local|serverless|ecs|eks
   DBConnectionMode   string // HTTP|WS
+  TursoHeatURL        string
+  TursoHeatURLHTTP    string
+  TursoHeatURLWS      string
+  TursoHeatToken      string
+  HardcodedUserID     string
   OriginVerifyHeader string
   OriginVerifyValue  string
   AuthCookieName     string
@@ -202,6 +208,7 @@ func (h *ExpensesHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
 
 - Base path: `/api` for JSON endpoints
 - JSON only, no HTML
+- OpenAPI spec: `GET /openapi.yaml`
 
 Chi routing (transport only):
 

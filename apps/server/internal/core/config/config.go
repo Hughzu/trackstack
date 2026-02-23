@@ -12,6 +12,11 @@ type Config struct {
 	Port                            string
 	LogLevel                        string
 	DBConnectionMode                string
+	TursoHeatURL                    string
+	TursoHeatURLHTTP                string
+	TursoHeatURLWS                  string
+	TursoHeatToken                  string
+	HardcodedUserID                 string
 	OriginVerifyHeader              string
 	OriginVerifyValue               string
 	AuthCookieName                  string
@@ -30,6 +35,11 @@ func Load() (Config, error) {
 	cfg.Port = getEnv("PORT", "8080")
 	cfg.LogLevel = getEnv("LOG_LEVEL", "info")
 	cfg.DBConnectionMode = getEnv("DB_CONNECTION_MODE", "HTTP")
+	cfg.TursoHeatURL = getEnv("TURSO_HEAT_URL", "")
+	cfg.TursoHeatURLHTTP = getEnv("TURSO_HEAT_URL_HTTP", "")
+	cfg.TursoHeatURLWS = getEnv("TURSO_HEAT_URL_WS", "")
+	cfg.TursoHeatToken = getEnv("TURSO_HEAT_TOKEN", "")
+	cfg.HardcodedUserID = getEnv("HARD_CODED_USER_ID", "")
 	cfg.OriginVerifyHeader = getEnv("ORIGIN_VERIFY_HEADER", "")
 	cfg.OriginVerifyValue = getEnv("ORIGIN_VERIFY_VALUE", "")
 	cfg.AuthCookieName = getEnv("AUTH_COOKIE_NAME", "trackstack_session")
