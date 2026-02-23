@@ -1,3 +1,4 @@
+- expenses filters does not work anymore in expenses pages
 - go backend   
     - calories
     - expenses
