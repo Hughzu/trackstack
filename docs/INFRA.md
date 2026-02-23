@@ -9,6 +9,17 @@ This document explains the infrastructure layout, intent, and operational bounda
 - Environments compose modules with minimal glue.
 - Serverless is the production baseline with scale-to-zero and tight cost controls.
 
+## Infrastructure Rules
+
+- Bootstrap changes live in `infra/bootstrap/` (account-level, one-time setup).
+- Shared infrastructure components live in `infra/modules/`.
+- Environment wiring lives in `infra/environments/*/` and should stay thin.
+- CI/CD must use OIDC only; no long-lived AWS keys in GitHub secrets.
+- Serverless is production and must keep scale-to-zero and low-cost defaults.
+- Lab environments must include automated destroy/kill-switches.
+- Runtime secrets come from SSM; do not hardcode or inline secrets in Terraform.
+- Cost guardrails (budget alert) must remain enabled for production.
+
 ## Directory Overview
 
 ```

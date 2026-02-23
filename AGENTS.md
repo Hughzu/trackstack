@@ -102,7 +102,7 @@ Turso behaves differently depending on the deployment matrix.
 3. Shared changes live in `infra/modules/`.
 4. Environment wiring lives in `infra/environments/*/`.
 
-### 4. Documentation Contract (Update When You Change)
+### 3. Documentation Contract (Update When You Change)
 
 When you change a contract or boundary, update the corresponding doc:
 
@@ -111,8 +111,9 @@ When you change a contract or boundary, update the corresponding doc:
 - Schema or migrations: update `docs/SCHEMA.md`.
 - Frontend/backend behavior and feature map: update `docs/APPLICATION.md`.
 - Architecture decisions: update `docs/DECISIONS.md`.
+- Testing strategy, test commands, or CI test changes: update `docs/TESTING.md`.
 
-### 3. Testing Guidelines
+### 4. Testing Guidelines
 
 **Before every commit:**
 ```bash

@@ -37,7 +37,8 @@ trackstack/
 │       └── web/                 # Astro Frontend (Builds to static /client and SSR /server)
 │
 ├── infra/
-│   ├── modules/                 # Shared Terraform (Network, IAM, ALB)
+│   ├── bootstrap/               # One-time account setup (OIDC, state, deploy role)
+│   ├── modules/                 # Shared Terraform modules (lambda-api, static-hosting, cost-guardrails)
 │   └── environments/
 │       ├── serverless/          # (PROD) Lambda + CloudFront + S3 ($0 FinOps)
 │       ├── ecs/                 # (LAB) Fargate Spot + ALB
@@ -77,7 +78,7 @@ Turso (SQLite at the Edge) is the backbone.
 * **Tasks:**
   1. Initialize the `apps/trackstack` Go module.
   2. Implement the Hexagonal Architecture: `internal/modules/` (business logic) and `cmd/lambda/main.go` (transport).
-  3. Clean up the `infra/environments/serverless` Terraform (CloudFront routing traffic to S3 for static assets, and Lambda for the Go API).
+  3. Clean up the `infra/environments/serverless` Terraform using modules (`lambda-api`, `static-hosting`, `cost-guardrails`).
   4. Deploy the hybrid Astro Static + Go Lambda architecture.
 
 ### 🧪 Phase 2: The Container Lab (ECS Fargate)
