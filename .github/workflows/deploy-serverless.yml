@@ -4,10 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'apps/web/**'
-      - 'packages/db/migrations/**'
-      - '.github/workflows/deploy-serverless.yml'
 
 permissions:
   id-token: write
