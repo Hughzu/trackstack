@@ -35,35 +35,44 @@ This roadmap is designed to help you learn Go while building the Trackstack back
 
 Use this checklist for every new domain module.
 
-1. **Define ports**
+1. **Define ports (domain boundary)**
    - `internal/modules/<domain>/ports.go`
    - Keep interfaces minimal and domain-focused.
 
-2. **Define DTOs**
+2. **Define DTOs (API + persistence)**
    - `internal/modules/<domain>/types.go`
-   - Request/response structs and domain types.
+   - Use RFC3339 for API time values; keep nullable fields explicit.
 
-3. **Implement service**
+3. **Implement service (pure logic)**
    - `internal/modules/<domain>/service.go`
-   - Pure business logic, depends only on ports.
+   - Validate input, normalize dates, map domain errors.
 
-4. **DB adapter**
+4. **DB adapter (Turso)**
    - `internal/modules/<domain>/adapters/db/`
-   - Implements persistence port using Turso.
+   - Use `database/sql` with `QueryContext` / `ExecContext` and explicit scan mapping.
 
-5. **Transport handler**
+5. **Transport handlers (JSON‑only)**
    - `internal/transport/http/<domain>.go`
-   - Parse input → call service → map errors.
+   - Parse JSON → call service → map errors → JSON response.
+   - **No redirects, no HTML** (UI handles navigation).
 
 6. **Routes**
    - `internal/transport/http/router.go`
-   - Register routes under `/api/<domain>`.
+   - Register under `/api/<domain>` with plural noun paths.
+   - Add transition aliases only if needed (remove later).
 
-7. **Wiring**
-   - `cmd/server/main.go` (and later `cmd/lambda/main.go`)
-   - Build adapters, services, handlers.
+7. **Wiring (composition root)**
+   - `internal/wiring/<domain>/` builds DSN → DB → adapter → service.
+   - `cmd/server/main.go` only wires handlers/router and lifecycle.
 
-8. **Test the boundary**
+8. **OpenAPI**
+   - Update `internal/transport/http/openapi.yaml` to match routes + response shapes.
+
+9. **Compatibility check (Astro parity)**
+   - Ensure status codes + JSON shape align with existing Astro API behavior.
+   - Keep API behavior clean; update Astro UI instead of adding redirects.
+
+10. **Test the boundary**
    - Handler test or service unit test for a core use-case.
 
 ## 3) First module walkthrough (minimal example)

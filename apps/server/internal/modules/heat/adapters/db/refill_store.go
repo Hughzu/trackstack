@@ -106,3 +106,22 @@ VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		Season:      input.Season,
 	}, nil
 }
+
+func (s *RefillStore) Delete(ctx context.Context, userID string, id string) (bool, error) {
+	result, err := s.db.ExecContext(
+		ctx,
+		"DELETE FROM refills WHERE id = ? AND user_id = ?",
+		id,
+		userID,
+	)
+	if err != nil {
+		return false, fmt.Errorf("delete refill: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("delete refill rows: %w", err)
+	}
+
+	return rows > 0, nil
+}

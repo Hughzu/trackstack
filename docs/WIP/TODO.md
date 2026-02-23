@@ -1,1 +1,12 @@
-- go backend ? 
+- go backend   
+    - calories
+    - expenses
+    - auth
+    - lambda ? 
+    - deploy
+    - quid migration up/down -> right now we need to pay to use migration down with atlas
+- blog post ? about features idea project into architecutre into infra/cicd into next steps
+- SRL module ?
+- Fargate infra ? 
+- EKS infra ? 
+- VPS infra ? 

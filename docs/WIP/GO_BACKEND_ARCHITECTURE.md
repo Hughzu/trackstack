@@ -362,6 +362,7 @@ These are the first JSON endpoints the SSG frontend will consume.
 
 - `GET /api/heat/refills?from=YYYY-MM-DD&to=YYYY-MM-DD`
 - `POST /api/heat/refills`
+- `DELETE /api/heat/refills?id=<id>`
 
 Each endpoint maps to a module service method with a corresponding DTO.
 

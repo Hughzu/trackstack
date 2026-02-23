@@ -28,7 +28,7 @@ func (h *HeatHandler) ListRefills(w http.ResponseWriter, r *http.Request) {
 	from := r.URL.Query().Get("from")
 	to := r.URL.Query().Get("to")
 
-	resp, err := h.svc.ListRefills(r.Context(), heat.ListRefillsRequest{
+	refills, err := h.svc.ListRefills(r.Context(), heat.ListRefillsRequest{
 		UserID: h.userID,
 		From:   from,
 		To:     to,
@@ -38,7 +38,7 @@ func (h *HeatHandler) ListRefills(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, resp)
+	writeJSON(w, http.StatusOK, refills)
 }
 
 func (h *HeatHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +50,7 @@ func (h *HeatHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.svc.CreateRefill(r.Context(), heat.CreateRefillRequest{
+	refill, err := h.svc.CreateRefill(r.Context(), heat.CreateRefillRequest{
 		UserID:      h.userID,
 		Date:        payload.Date,
 		WeightKg:    payload.WeightKg,
@@ -62,7 +62,41 @@ func (h *HeatHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, resp)
+	writeJSON(w, http.StatusCreated, refill)
+}
+
+func (h *HeatHandler) DeleteRefill(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		var payload struct {
+			ID string `json:"id"`
+		}
+		decoder := json.NewDecoder(r.Body)
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&payload); err == nil {
+			id = payload.ID
+		}
+	}
+
+	if id == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing refill id"})
+		return
+	}
+
+	deleted, err := h.svc.DeleteRefill(r.Context(), heat.DeleteRefillRequest{
+		UserID: h.userID,
+		ID:     id,
+	})
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if !deleted {
+		writeJSON(w, http.StatusNotFound, errorResponse{Error: "Refill not found"})
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func writeError(w http.ResponseWriter, err error) {

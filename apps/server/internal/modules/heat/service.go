@@ -18,35 +18,35 @@ func NewService(store RefillStore) *Service {
 	return &Service{store: store}
 }
 
-func (s *Service) ListRefills(ctx context.Context, req ListRefillsRequest) (ListRefillsResponse, error) {
+func (s *Service) ListRefills(ctx context.Context, req ListRefillsRequest) ([]Refill, error) {
 	if strings.TrimSpace(req.UserID) == "" {
-		return ListRefillsResponse{}, ErrInvalidInput
+		return nil, ErrInvalidInput
 	}
 
 	from, to, err := normalizeRange(req.From, req.To)
 	if err != nil {
-		return ListRefillsResponse{}, err
+		return nil, err
 	}
 
 	refills, err := s.store.ListByRange(ctx, req.UserID, from, to)
 	if err != nil {
-		return ListRefillsResponse{}, err
+		return nil, err
 	}
 
-	return ListRefillsResponse{Refills: refills}, nil
+	return refills, nil
 }
 
-func (s *Service) CreateRefill(ctx context.Context, req CreateRefillRequest) (CreateRefillResponse, error) {
+func (s *Service) CreateRefill(ctx context.Context, req CreateRefillRequest) (Refill, error) {
 	if strings.TrimSpace(req.UserID) == "" {
-		return CreateRefillResponse{}, ErrInvalidInput
+		return Refill{}, ErrInvalidInput
 	}
 	if strings.TrimSpace(req.Date) == "" || req.WeightKg <= 0 || req.Bags <= 0 {
-		return CreateRefillResponse{}, ErrInvalidInput
+		return Refill{}, ErrInvalidInput
 	}
 
 	refillDate, err := parseDate(req.Date)
 	if err != nil {
-		return CreateRefillResponse{}, err
+		return Refill{}, err
 	}
 
 	seasonLabel := seasonLabelFor(refillDate)
@@ -60,10 +60,18 @@ func (s *Service) CreateRefill(ctx context.Context, req CreateRefillRequest) (Cr
 
 	refill, err := s.store.Create(ctx, req.UserID, input)
 	if err != nil {
-		return CreateRefillResponse{}, err
+		return Refill{}, err
 	}
 
-	return CreateRefillResponse{Refill: refill}, nil
+	return refill, nil
+}
+
+func (s *Service) DeleteRefill(ctx context.Context, req DeleteRefillRequest) (bool, error) {
+	if strings.TrimSpace(req.UserID) == "" || strings.TrimSpace(req.ID) == "" {
+		return false, ErrInvalidInput
+	}
+
+	return s.store.Delete(ctx, req.UserID, req.ID)
 }
 
 func normalizeRange(from string, to string) (string, string, error) {

@@ -16,10 +16,6 @@ type ListRefillsRequest struct {
 	To     string
 }
 
-type ListRefillsResponse struct {
-	Refills []Refill `json:"refills"`
-}
-
 type CreateRefillRequest struct {
 	UserID      string
 	Date        string
@@ -28,14 +24,15 @@ type CreateRefillRequest struct {
 	Temperature *float64
 }
 
-type CreateRefillResponse struct {
-	Refill Refill `json:"refill"`
-}
-
 type CreateRefillInput struct {
 	Date        string
 	WeightKg    float64
 	Bags        int
 	Temperature *float64
 	Season      *string
+}
+
+type DeleteRefillRequest struct {
+	UserID string
+	ID     string
 }

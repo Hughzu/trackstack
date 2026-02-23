@@ -39,7 +39,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListRefillsResponse"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Refill"
         "400":
           description: Invalid input
           content:
@@ -60,9 +62,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateRefillResponse"
+                $ref: "#/components/schemas/Refill"
         "400":
           description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Delete a heat refill
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Refill not found
           content:
             application/json:
               schema:
@@ -97,15 +116,6 @@ components:
         - date
         - weightKg
         - bags
-    ListRefillsResponse:
-      type: object
-      properties:
-        refills:
-          type: array
-          items:
-            $ref: "#/components/schemas/Refill"
-      required:
-        - refills
     CreateRefillRequest:
       type: object
       properties:
@@ -125,13 +135,6 @@ components:
         - date
         - weightKg
         - bags
-    CreateRefillResponse:
-      type: object
-      properties:
-        refill:
-          $ref: "#/components/schemas/Refill"
-      required:
-        - refill
     ErrorResponse:
       type: object
       properties:

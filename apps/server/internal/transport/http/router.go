@@ -18,6 +18,7 @@ func NewRouter(handlers Handlers) http.Handler {
 	r.Route("/api/heat", func(r chi.Router) {
 		r.Get("/refills", handlers.Heat.ListRefills)
 		r.Post("/refills", handlers.Heat.CreateRefill)
+		r.Delete("/refills", handlers.Heat.DeleteRefill)
 	})
 
 	return r
