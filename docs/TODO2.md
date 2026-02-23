@@ -14,7 +14,7 @@
 
 To take back ownership of the codebase and guide the AI, create the following 6 documents (use the AI to generate the first drafts based on your existing code).
 
-### 1. `ARCHITECTURE.md` (The Macro View)
+### 1. `ARCHITECTURE.md` (The Macro View) - DONE
 * **Goal:** Understand how a user request travels to the data layer.
 * **Content:**
   * Mermaid.js diagram of the complete flow (Astro -> CloudFront -> S3/Lambda -> Turso).
@@ -42,7 +42,7 @@ To take back ownership of the codebase and guide the AI, create the following 6 
   * **Folder Organization:** Strict rules for `src/pages/` (SSR routing) vs. `src/components/ui/` (Dumb/Presentational) vs. `src/lib/` (Turso/DB logic).
   * **Philosophy:** Strict separation between data fetching (Astro Frontmatter) and UI rendering (Template).
 
-### 6. `DECISIONS.md` (The Architecture Decision Log / ADR)
+### 5. `DECISIONS.md` (The Architecture Decision Log / ADR)
 * **Goal:** Record architectural choices to prevent repeating the same debates.
 * **Content:**
   * Why Turso? (Distributed SQLite, Serverless-friendly, cost-effective).

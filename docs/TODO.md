@@ -1,5 +1,2 @@
-- clean cicd pipelines
-    - focus on understanding what all files are doing
-    - have better dx
 - document architecture and other docs in TODO2
 - go backend ? 
