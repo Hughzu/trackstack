@@ -62,26 +62,30 @@ jobs:
         run: |
           set -e
           if ! atlas migrate apply --env users; then
-            echo "Migration failed for users. Rolling back users."
-            atlas migrate down --env users --step 1 || true
+            echo "Migration failed for users."
+            # Rollback disabled in community Atlas.
+            # atlas migrate down --env users 1 || true
             exit 1
           fi
 
           if ! atlas migrate apply --env expenses; then
-            echo "Migration failed for expenses. Rolling back expenses."
-            atlas migrate down --env expenses --step 1 || true
+            echo "Migration failed for expenses."
+            # Rollback disabled in community Atlas.
+            # atlas migrate down --env expenses 1 || true
             exit 1
           fi
 
           if ! atlas migrate apply --env heat; then
-            echo "Migration failed for heat. Rolling back heat."
-            atlas migrate down --env heat --step 1 || true
+            echo "Migration failed for heat."
+            # Rollback disabled in community Atlas.
+            # atlas migrate down --env heat 1 || true
             exit 1
           fi
 
           if ! atlas migrate apply --env calories; then
-            echo "Migration failed for calories. Rolling back calories."
-            atlas migrate down --env calories --step 1 || true
+            echo "Migration failed for calories."
+            # Rollback disabled in community Atlas.
+            # atlas migrate down --env calories 1 || true
             exit 1
           fi
 

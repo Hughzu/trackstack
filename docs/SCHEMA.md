@@ -147,8 +147,8 @@ Current order:
 - users → expenses → heat → calories
 
 Rollback policy:
-- Roll back **only** the failed domain using `atlas migrate down --step 1`.
-- **Every migration must include a down script** (`*.down.sql`).
+- Rollback is currently disabled in CI because the community Atlas CLI does not support `migrate down`.
+- Down scripts (`*.down.sql`) are still required so rollback can be re-enabled later.
 
 ## Database Schemas
 
