@@ -1,7 +1,3 @@
-- clean iac
-    - focus on understanding what all files are doing
-    - try to extract bricks
-    - write docs about it
 - clean cicd pipelines
     - focus on understanding what all files are doing
     - have better dx

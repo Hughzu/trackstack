@@ -21,7 +21,7 @@ To take back ownership of the codebase and guide the AI, create the following 6 
   * List of required environment variables and their scope (Frontend vs. Server-side).
   * High-level deployment process.
 
-### 2. `INFRASTRUCTURE.md` (The IaC Vault)
+### 2. `INFRASTRUCTURE.md` (The IaC Vault) - DONE
 * **Goal:** Audit and freeze Terraform/AWS resources.
 * **Content:**
   * Inventory of active resources (e.g., 1 CDN, 1 S3 Bucket, 1 Lambda).
@@ -35,19 +35,12 @@ To take back ownership of the codebase and guide the AI, create the following 6 
   * Location of TypeScript / Zod types (e.g., `src/types/...`).
   * Mutation rules (e.g., "Only API Routes inside `src/pages/api/` are allowed to mutate the database").
 
-### 4. `APPLICATION.md` (Business Logic & Astro)
+### 4. `APPLICATION.md` (Business Logic & Astro) - DONE
 * **Goal:** Prevent the AI from reinventing your frontend architecture with every new feature.
 * **Content:**
   * **Feature Map:** The main business domains (Auth, Dashboard, User Profile, etc.).
   * **Folder Organization:** Strict rules for `src/pages/` (SSR routing) vs. `src/components/ui/` (Dumb/Presentational) vs. `src/lib/` (Turso/DB logic).
   * **Philosophy:** Strict separation between data fetching (Astro Frontmatter) and UI rendering (Template).
-
-### 5. `.cursorrules` or `RULES.md` (The AI Straitjacket)
-* **Goal:** Strict, non-negotiable instructions passed to the AI agent during every session.
-* **Content:**
-  * "Always use Tailwind; never use inline CSS."
-  * "Never modify `.tf` (Terraform) files without explicit permission."
-  * "Keep UI components under 100 lines of code."
 
 ### 6. `DECISIONS.md` (The Architecture Decision Log / ADR)
 * **Goal:** Record architectural choices to prevent repeating the same debates.

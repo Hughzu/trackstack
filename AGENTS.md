@@ -66,7 +66,8 @@ Turso behaves differently depending on the deployment matrix.
 │       └── dist/               # Build output (Static files -> S3, Server -> Lambda)
 │
 ├── infra/                      # Infrastructure as Code
-│   ├── modules/                # Shared, reusable Terraform (Network, IAM, ALB)
+│   ├── bootstrap/              # One-time account setup (OIDC, state, deploy role)
+│   ├── modules/                # Shared, reusable Terraform modules
 │   └── environments/           # The Infrastructure Matrix
 │       ├── serverless/         # (PROD) $0 Lambda + CloudFront + S3
 │       ├── ecs/                # (LAB) Fargate Spot + ALB
@@ -97,8 +98,19 @@ Turso behaves differently depending on the deployment matrix.
 ### 2. Modifying Infrastructure
 
 1. Identify if the change is global (e.g., VPC, IAM) or environment-specific.
-2. Put global changes in `infra/modules/`.
-3. Reference the shared module in the specific `infra/environments/*/main.tf`.
+2. Bootstrap changes live in `infra/bootstrap/`.
+3. Shared changes live in `infra/modules/`.
+4. Environment wiring lives in `infra/environments/*/`.
+
+### 4. Documentation Contract (Update When You Change)
+
+When you change a contract or boundary, update the corresponding doc:
+
+- Infra changes (Terraform, AWS resources, IAM, CI/CD): update `docs/INFRA.md`.
+- App architecture or routes: update `docs/ARCHITECTURE.md`.
+- Schema or migrations: update `docs/SCHEMA.md`.
+- Frontend/backend behavior and feature map: update `docs/APPLICATION.md`.
+- Architecture decisions: update `docs/DECISIONS.md`.
 
 ### 3. Testing Guidelines
 
