@@ -14,6 +14,7 @@ const { id, title, class: className, ...rest } = Astro.props;
     data-modal-root="true"
     class:list={[
         "backdrop:bg-black/60 backdrop:backdrop-blur-sm bg-transparent p-0 m-auto open:animate-fade-in focus:outline-none",
+        "max-w-[100vw] max-h-[100vh] backdrop:animate-[fade-in_0.2s_ease-out]",
         className,
     ]}
     {...rest}
@@ -29,24 +30,3 @@ const { id, title, class: className, ...rest } = Astro.props;
         <slot />
     </div>
 </dialog>
-
-// TODO should be tailwind
-<style>
-    dialog {
-        max-width: 100vw;
-        max-height: 100vh;
-    }
-
-    dialog::backdrop {
-        animation: fade-in 0.2s ease-out;
-    }
-
-    @keyframes fade-in {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-</style>
