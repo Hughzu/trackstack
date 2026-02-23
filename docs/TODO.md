@@ -1,2 +1,0 @@
-- document architecture and other docs in TODO2
-- go backend ? 

@@ -1,0 +1,26 @@
+# Decisions (ADR Timeline)
+
+Accepted architectural decisions for Trackstack. Date-stamped to prevent re-litigating the same choices.
+
+Update guidelines:
+- Add a new line for each durable architectural decision or reversal.
+- Use the decision date (or the merge date if uncertain).
+- Never delete old entries; if reversed, add a new entry that supersedes it.
+- Keep each line to one sentence: decision + short rationale or constraint.
+
+2026-02-23 — Use Turso (LibSQL) as the only persistent store to get distributed SQLite with low ops overhead and serverless-friendly access.
+2026-02-23 — Split data into four Turso databases (users, calories, expenses, heat) to isolate domains and migrations per feature area.
+2026-02-23 — Treat AWS serverless as production baseline (Lambda + CloudFront + S3) to enforce scale-to-zero and cost control.
+2026-02-23 — Make CloudFront the only public ingress; route assets to S3 and all other paths to a Lambda Function URL secured with IAM and an origin verification header.
+2026-02-23 — Store runtime secrets and connection strings in SSM Parameter Store and resolve at runtime; never inline secrets in code or Terraform.
+2026-02-23 — Require GitHub Actions to use OIDC for AWS access; prohibit long-lived AWS keys in CI/CD.
+2026-02-23 — Keep cost guardrails enabled (Budgets, price class 100, short log retention, artifacts lifecycle) to maintain $0/mo serverless posture.
+2026-02-23 — Use Astro SSR for dynamic routes and API endpoints; ship static assets to S3 with long-lived caching.
+2026-02-23 — Enforce Astro boundaries: pages handle routing and request context, modules handle domain logic, components/layouts are presentational only.
+2026-02-23 — Use a global vanilla JS runtime (ClientRuntime) for UI interactivity; avoid React/Vue and other heavy client frameworks.
+2026-02-23 — Standardize serverless mutations via SigV4 form interception using `data-api-form` and ApiFormHandler to avoid unsigned POSTs.
+2026-02-23 — Centralize DB access through `sqlite.ts` and prohibit direct LibSQL client instantiation anywhere else.
+2026-02-23 — Follow strict hexagonal architecture in the Go backend: business logic isolated in modules, transport concerns in cmd.
+2026-02-23 — Make Turso connection mode configurable via `DB_CONNECTION_MODE` (HTTP for serverless, WebSockets for containers).
+2026-02-23 — Gate deploys with migrations-first CI/CD; no rollback in CI until Atlas supports down migrations in community CLI.
+2026-02-23 — Keep testing lightweight in the Astro phase: fast unit tests for form contracts, defer heavy backend testing until Go migration.
