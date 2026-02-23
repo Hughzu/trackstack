@@ -102,7 +102,7 @@ aws configure
 unset AWS_PROFILE
 
 # Navigate to the bootstrap directory
-cd infra/core/bootstrap
+cd infra/bootstrap/bootstrap
 
 # Run the admin user creation script
 ./01-create-admin-user.sh
@@ -183,14 +183,14 @@ aws sts get-caller-identity
 The bootstrap scripts create the OIDC trust and the IAM role, but **permissions are managed by Terraform** so you can evolve them without re-running bootstrap scripts.
 
 ```bash
-cd infra/core/bootstrap
+cd infra/bootstrap/bootstrap
 ./06-sync-iam-bootstrap.sh
 ```
 
 For non-interactive runs:
 
 ```bash
-cd infra/core/bootstrap
+cd infra/bootstrap/bootstrap
 ./06-sync-iam-bootstrap.sh --auto-approve
 ```
 
@@ -199,7 +199,7 @@ cd infra/core/bootstrap
 If you need to tear down the IAM policy managed by Terraform:
 
 ```bash
-cd infra/core/bootstrap
+cd infra/bootstrap/bootstrap
 ./07-destroy-iam-bootstrap.sh
 ```
 
@@ -302,7 +302,7 @@ jobs:
 If you need to rerun bootstrap from scratch, use the cleanup script:
 
 ```bash
-cd infra/core/bootstrap
+cd infra/bootstrap/bootstrap
 ./90-destroy-iam-bootstrap.sh
 ./91-cleanup-bootstrap.sh --force-empty-buckets
 ```

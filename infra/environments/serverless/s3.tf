@@ -1,33 +1,12 @@
-resource "aws_s3_bucket" "assets" {
-  bucket = local.assets_bucket_name
-  tags   = var.tags
-}
-
 resource "aws_s3_bucket" "artifacts" {
   bucket = local.artifacts_bucket_name
   tags   = var.tags
-}
-
-resource "aws_s3_bucket_versioning" "assets" {
-  bucket = aws_s3_bucket.assets.id
-  versioning_configuration {
-    status = "Suspended"
-  }
 }
 
 resource "aws_s3_bucket_versioning" "artifacts" {
   bucket = aws_s3_bucket.artifacts.id
   versioning_configuration {
     status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "assets" {
-  bucket = aws_s3_bucket.assets.id
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
   }
 }
 
@@ -40,27 +19,12 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "artifacts" {
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "assets" {
-  bucket                  = aws_s3_bucket.assets.id
-  block_public_acls       = true
-  ignore_public_acls      = true
-  block_public_policy     = true
-  restrict_public_buckets = true
-}
-
 resource "aws_s3_bucket_public_access_block" "artifacts" {
   bucket                  = aws_s3_bucket.artifacts.id
   block_public_acls       = true
   ignore_public_acls      = true
   block_public_policy     = true
   restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_ownership_controls" "assets" {
-  bucket = aws_s3_bucket.assets.id
-  rule {
-    object_ownership = "BucketOwnerEnforced"
-  }
 }
 
 resource "aws_s3_bucket_ownership_controls" "artifacts" {

@@ -24,7 +24,7 @@ The current infrastructure is **functional but has critical gaps** in both secur
 ## 🔒 Security Findings
 
 ### 1. IAM Bootstrap Policy Too Broad
-**Location:** `infra/core/iam/main.tf:39-50`
+**Location:** `infra/bootstrap/iam/main.tf:39-50`
 
 **Issue:** The Terraform deployment policy grants wildcard access to critical services:
 ```hcl
@@ -287,7 +287,7 @@ environment {
   ```
 
 - [ ] **Scope IAM Policy** - Reduce blast radius
-  - Edit `infra/core/iam/main.tf`
+  - Edit `infra/bootstrap/iam/main.tf`
   - Replace wildcard resources with specific ARNs
 
 - [ ] **Add WAF** - Basic DDoS/injection protection

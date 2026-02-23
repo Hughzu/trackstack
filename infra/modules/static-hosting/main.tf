@@ -2,10 +2,46 @@ locals {
   lambda_origin_id = "lambda-ssr"
   assets_origin_id = "s3-assets"
   lambda_origin_domain = replace(
-    replace(aws_lambda_function_url.ssr.function_url, "https://", ""),
+    replace(var.lambda_function_url, "https://", ""),
     "/",
     ""
   )
+}
+
+resource "aws_s3_bucket" "assets" {
+  bucket = var.assets_bucket_name
+  tags   = var.tags
+}
+
+resource "aws_s3_bucket_versioning" "assets" {
+  bucket = aws_s3_bucket.assets.id
+  versioning_configuration {
+    status = "Suspended"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "assets" {
+  bucket = aws_s3_bucket.assets.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "assets" {
+  bucket                  = aws_s3_bucket.assets.id
+  block_public_acls       = true
+  ignore_public_acls      = true
+  block_public_policy     = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_ownership_controls" "assets" {
+  bucket = aws_s3_bucket.assets.id
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
 }
 
 data "aws_cloudfront_cache_policy" "caching_disabled" {
@@ -73,7 +109,8 @@ resource "aws_cloudfront_distribution" "ssr" {
   enabled         = true
   is_ipv6_enabled = true
   comment         = "Trackstack Astro SSR"
-  price_class     = "PriceClass_100"
+  price_class     = var.price_class
+
   origin {
     domain_name              = aws_s3_bucket.assets.bucket_regional_domain_name
     origin_id                = local.assets_origin_id
@@ -94,7 +131,7 @@ resource "aws_cloudfront_distribution" "ssr" {
 
     custom_header {
       name  = var.origin_header_name
-      value = data.aws_ssm_parameter.origin_secret.value
+      value = var.origin_header_value
     }
   }
 
@@ -166,4 +203,21 @@ data "aws_iam_policy_document" "assets_bucket" {
 resource "aws_s3_bucket_policy" "assets" {
   bucket = aws_s3_bucket.assets.id
   policy = data.aws_iam_policy_document.assets_bucket.json
+}
+
+resource "aws_lambda_permission" "allow_cloudfront" {
+  statement_id           = "AllowCloudFrontInvokeUrl"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = var.lambda_function_name
+  principal              = "cloudfront.amazonaws.com"
+  source_arn             = aws_cloudfront_distribution.ssr.arn
+  function_url_auth_type = "AWS_IAM"
+}
+
+resource "aws_lambda_permission" "allow_cloudfront_invoke" {
+  statement_id  = "AllowCloudFrontInvokeFunction"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_function_name
+  principal     = "cloudfront.amazonaws.com"
+  source_arn    = aws_cloudfront_distribution.ssr.arn
 }

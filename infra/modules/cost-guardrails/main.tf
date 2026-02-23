@@ -5,7 +5,6 @@ locals {
 resource "aws_budgets_budget" "monthly_cost" {
   count = local.billing_alarm_enabled ? 1 : 0
 
-  provider     = aws.us_east_1
   name         = "${var.resource_prefix}-monthly-budget"
   budget_type  = "COST"
   limit_amount = tostring(var.billing_budget_limit)
