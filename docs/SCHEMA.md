@@ -140,26 +140,15 @@ Notes:
 
 ## CI/CD Migrations
 
-The workflow `.github/workflows/db-migrations.yml` runs Atlas migrations on pushes that change `packages/db/migrations/**`.
-It applies migrations for all four domains in order: calories → expenses → heat → users.
+The workflow `.github/workflows/deploy-serverless.yml` runs Atlas migrations on pushes that change `packages/db/migrations/**`.
+It applies migrations sequentially and only deploys the app if migrations succeed (or were skipped).
 
-### Deployment Safety
+Current order:
+- users → expenses → heat → calories
 
-`deploy-serverless.yml` and `db-migrations.yml` can run independently. This means:
-
-- If app code deploys before migrations, the app may query columns/tables that do not exist yet (runtime errors).
-- If migrations run before code deploys, the app is usually safe **if** migrations are additive (new tables/columns, no breaking changes).
-
-Current expectation:
-- Migrations should be **backward compatible** (additive) unless you are doing a coordinated deploy.
-- Avoid destructive changes (drop/rename) without a rollout plan.
-
-If you introduce a breaking schema change, manually sequence:
-
-1) Apply migrations.
-2) Deploy serverless.
-
-For safety, consider adding a manual gate or a combined workflow that runs migrations before deploy on main.
+Rollback policy:
+- Roll back **only** the failed domain using `atlas migrate down --step 1`.
+- **Every migration must include a down script** (`*.down.sql`).
 
 ## Database Schemas
 

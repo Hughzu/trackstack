@@ -1,0 +1,11 @@
+DROP INDEX IF EXISTS idx_expense_entries_sheet_date;
+DROP INDEX IF EXISTS idx_expense_checklist_items_sheet;
+DROP INDEX IF EXISTS idx_expense_sheets_user_open;
+DROP INDEX IF EXISTS idx_expense_recurring_templates_user;
+DROP INDEX IF EXISTS idx_expense_checklist_templates_user;
+DROP TABLE IF EXISTS expense_entries;
+DROP TABLE IF EXISTS expense_checklist_items;
+DROP TABLE IF EXISTS expense_sheets;
+DROP TABLE IF EXISTS expense_recurring_templates;
+DROP TABLE IF EXISTS expense_checklist_templates;
+DROP TABLE IF EXISTS expense_settings;

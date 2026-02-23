@@ -28,7 +28,7 @@ To take back ownership of the codebase and guide the AI, create the following 6 
   * **Security Boundaries (CRITICAL):** Strict definition of IAM roles (e.g., "The Lambda can only read from S3 and execute code; no admin rights").
   * Manual infrastructure steps not covered by IaC.
 
-### 3. `SCHEMA.md` (The Single Source of Truth)
+### 3. `SCHEMA.md` (The Single Source of Truth) - DONE
 * **Goal:** Safeguard the Turso database structure.
 * **Content:**
   * Schema of core tables and their relationships.
