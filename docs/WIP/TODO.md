@@ -7,6 +7,8 @@
     - deploy
     - quid migration up/down -> right now we need to pay to use migration down with atlas
     - dependabot ? How can I make sure my dependencies are not too hold (npm, go, terraform)
+    - checkmarx free alternatives ? 
+    - loki / grafana ? 
 - blog post ? about features idea project into architecutre into infra/cicd into next steps
 - SRL module ?
 - Fargate infra ? 
