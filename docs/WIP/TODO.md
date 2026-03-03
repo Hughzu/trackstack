@@ -1,6 +1,4 @@
-- expenses filters does not work anymore in expenses pages
 - go backend  
-    - expenses 
     - calories
     - auth
     - remove hardcoded user
