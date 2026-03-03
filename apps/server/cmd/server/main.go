@@ -13,6 +13,7 @@ import (
 	"github.com/Hughzu/trackstack/apps/server/internal/core/logging"
 	httptransport "github.com/Hughzu/trackstack/apps/server/internal/transport/http"
 	authwiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/auth"
+	calorieswiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/calories"
 	expenseswiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/expenses"
 	heatwiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/heat"
 	userswiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/users"
@@ -55,6 +56,17 @@ func main() {
 		}
 	}()
 
+	caloriesDeps, err := calorieswiring.BuildCalories(cfg)
+	if err != nil {
+		logger.Error("calories db error", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		if err := caloriesDeps.Close(); err != nil {
+			logger.Error("calories db close error", "error", err)
+		}
+	}()
+
 	usersDeps, err := userswiring.BuildUsers(cfg)
 	if err != nil {
 		logger.Error("users db error", "error", err)
@@ -80,6 +92,7 @@ func main() {
 	handlers := httptransport.NewHandlers(httptransport.Deps{
 		HeatService:        heatDeps.Service,
 		ExpensesService:    expensesDeps.Service,
+		CaloriesService:    caloriesDeps.Service,
 		UsersService:       usersDeps.Service,
 		AuthService:        authDeps.Service,
 		AuthCookieName:     cfg.AuthCookieName,

@@ -28,11 +28,13 @@ paths:
           description: Start date (YYYY-MM-DD or RFC3339)
           schema:
             type: string
+            example: "2026-01-01"
         - in: query
           name: to
           description: End date (YYYY-MM-DD or RFC3339)
           schema:
             type: string
+            example: "2026-03-01"
       responses:
         "200":
           description: List of refills
@@ -296,15 +298,19 @@ components:
         date:
           type: string
           description: RFC3339 or YYYY-MM-DD
+          example: "2026-02-15"
         weightKg:
           type: number
           format: float
+          example: 15.0
         bags:
           type: integer
+          example: 6
         temperature:
           type: number
           format: float
           nullable: true
+          example: 8.5
       required:
         - date
         - weightKg
@@ -380,20 +386,26 @@ components:
       properties:
         calories:
           type: integer
+          example: 650
         protein:
           type: integer
+          example: 45
         carbs:
           type: integer
           nullable: true
+          example: 70
         fat:
           type: integer
           nullable: true
+          example: 20
         title:
           type: string
           nullable: true
+          example: "Chicken rice bowl"
         date:
           type: string
           description: YYYY-MM-DD
+          example: "2026-03-03"
       required:
         - calories
         - protein
@@ -402,14 +414,18 @@ components:
       properties:
         targetKcal:
           type: integer
+          example: 2300
         targetProtein:
           type: integer
+          example: 120
         targetCarbs:
           type: integer
           nullable: true
+          example: 250
         targetFat:
           type: integer
           nullable: true
+          example: 70
       required:
         - targetKcal
         - targetProtein
@@ -419,8 +435,10 @@ components:
         email:
           type: string
           format: email
+          example: "user@example.com"
         password:
           type: string
+          example: "correct-horse-battery-staple"
       required:
         - email
         - password
