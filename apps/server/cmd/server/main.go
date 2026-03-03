@@ -100,7 +100,7 @@ func main() {
 		AuthCookieSameSite: cfg.AuthCookieSameSite,
 	})
 
-	router := httptransport.NewRouter(handlers)
+	router := httptransport.NewRouter(handlers, cfg.CORSAllowedOrigin)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,

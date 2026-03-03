@@ -1,19 +1,34 @@
 ---
 // Global API Form Interceptor & SigV4 Content Hash
+const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
 ---
 
 <script is:inline>
+  const API_BASE_URL = {JSON.stringify(apiBaseUrl)};
+
+  const resolveApiUrl = (input) => {
+    if (!input || typeof input !== "string") return input;
+    if (!API_BASE_URL) return input;
+    if (input.startsWith("http://") || input.startsWith("https://")) return input;
+
+    const base = API_BASE_URL.replace(/\/+$/, "");
+    if (input.startsWith("/")) return `${base}${input}`;
+    return `${base}/${input}`;
+  };
+
   const ensureSignedFetch = () => {
     if (window.signedFetch) return;
 
     window.signedFetch = async (input, init = {}) => {
       const method = (init.method || "GET").toUpperCase();
+      const requestInput = resolveApiUrl(input);
+      const requestInit = { credentials: "include", ...init };
       if (method === "GET" || method === "HEAD") {
-        return fetch(input, init);
+        return fetch(requestInput, requestInit);
       }
 
-      const headers = new Headers(init.headers || {});
-      let body = init.body;
+      const headers = new Headers(requestInit.headers || {});
+      let body = requestInit.body;
       let bodyString = "";
 
       if (typeof body === "string") {
@@ -49,7 +64,7 @@
         headers.set("x-amz-content-sha256", hash);
       }
 
-      return fetch(input, { ...init, headers, body });
+      return fetch(requestInput, { ...requestInit, headers, body });
     };
   };
 
@@ -72,12 +87,13 @@
 
         try {
           const fetcher = window.signedFetch || window.fetch;
-          const response = await fetcher(action, {
+          const response = await fetcher(resolveApiUrl(action), {
             method: method,
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(payload),
+            credentials: "include",
           });
 
           if (response.ok) {

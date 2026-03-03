@@ -30,6 +30,7 @@ type Config struct {
 	TursoUsersToken                 string
 	OriginVerifyHeader              string
 	OriginVerifyValue               string
+	CORSAllowedOrigin               string
 	AuthCookieName                  string
 	AuthCookieSecure                bool
 	AuthCookieSameSite              string
@@ -64,6 +65,7 @@ func Load() (Config, error) {
 	cfg.TursoUsersToken = getEnv("TURSO_USERS_TOKEN", "")
 	cfg.OriginVerifyHeader = getEnv("ORIGIN_VERIFY_HEADER", "")
 	cfg.OriginVerifyValue = getEnv("ORIGIN_VERIFY_VALUE", "")
+	cfg.CORSAllowedOrigin = getEnv("CORS_ALLOWED_ORIGIN", "")
 	cfg.AuthCookieName = getEnv("AUTH_COOKIE_NAME", "trackstack_session")
 	cfg.AuthCookieSecure = getEnvBool("AUTH_COOKIE_SECURE", false)
 	cfg.AuthCookieSameSite = getEnv("AUTH_COOKIE_SAMESITE", "lax")

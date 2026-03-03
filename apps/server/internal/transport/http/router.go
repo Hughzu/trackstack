@@ -7,10 +7,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(handlers Handlers) http.Handler {
+func NewRouter(handlers Handlers, corsAllowedOrigin string) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
+	r.Use(corsMiddleware(corsAllowedOrigin))
 	r.Use(authMiddleware(handlers.Auth))
 
 	r.Get("/health", Health)

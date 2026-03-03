@@ -1,4 +1,20 @@
+---
+const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
+---
+
 <script is:inline>
+  const API_BASE_URL = {JSON.stringify(apiBaseUrl)};
+
+  const resolveApiUrl = (input) => {
+    if (!input || typeof input !== "string") return input;
+    if (!API_BASE_URL) return input;
+    if (input.startsWith("http://") || input.startsWith("https://")) return input;
+
+    const base = API_BASE_URL.replace(/\/+$/, "");
+    if (input.startsWith("/")) return `${base}${input}`;
+    return `${base}/${input}`;
+  };
+
   const dropdownState = {
     roots: new Set(),
     globalBound: false
@@ -131,7 +147,7 @@
 
           if (config.sendPayload) {
             if (config.method === "DELETE") {
-              const url = new URL(config.endpoint, window.location.origin);
+              const url = new URL(resolveApiUrl(config.endpoint), window.location.origin);
               url.searchParams.set(config.payloadKey, config.pendingId);
               resolvedEndpoint = url.toString();
             } else {
@@ -140,7 +156,10 @@
           }
 
           const signedFetch = window.signedFetch || window.fetch;
-          const response = await signedFetch(resolvedEndpoint, requestInit);
+          const response = await signedFetch(resolveApiUrl(resolvedEndpoint), {
+            ...requestInit,
+            credentials: "include"
+          });
 
           if (response.ok) {
             if (config.successRedirect) {
