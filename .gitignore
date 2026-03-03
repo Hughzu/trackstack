@@ -39,6 +39,8 @@ Thumbs.db
 .env.local
 apps/web/.env
 apps/web/.env.*
+apps/server/.env
+apps/server/.env.*
 
 # SQLite databases
 *.db

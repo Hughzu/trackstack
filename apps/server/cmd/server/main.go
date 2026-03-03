@@ -13,7 +13,13 @@ import (
 	"github.com/Hughzu/trackstack/apps/server/internal/core/logging"
 	httptransport "github.com/Hughzu/trackstack/apps/server/internal/transport/http"
 	heatwiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/heat"
+
+	"github.com/joho/godotenv"
 )
+
+func init() {
+	_ = godotenv.Load()
+}
 
 func main() {
 	cfg, err := config.Load()
