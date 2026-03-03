@@ -140,10 +140,22 @@ func (s *UsersServer) GetPlanTier(ctx context.Context, req *pb.GetPlanTierReques
 type Config struct {
   Env                string // local|serverless|ecs|eks
   DBConnectionMode   string // HTTP|WS
+  TursoCaloriesURL    string
+  TursoCaloriesURLHTTP string
+  TursoCaloriesURLWS  string
+  TursoCaloriesToken  string
+  TursoExpensesURL    string
+  TursoExpensesURLHTTP string
+  TursoExpensesURLWS  string
+  TursoExpensesToken  string
   TursoHeatURL        string
   TursoHeatURLHTTP    string
   TursoHeatURLWS      string
   TursoHeatToken      string
+  TursoUsersURL       string
+  TursoUsersURLHTTP   string
+  TursoUsersURLWS     string
+  TursoUsersToken     string
   OriginVerifyHeader string
   OriginVerifyValue  string
   AuthCookieName     string

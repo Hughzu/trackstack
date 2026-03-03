@@ -18,10 +18,10 @@ type CaloriesDependencies struct {
 func BuildCalories(cfg config.Config) (CaloriesDependencies, error) {
 	dsn, err := common.BuildTursoDSN(common.TursoConfig{
 		Mode:    cfg.DBConnectionMode,
-		URL:     cfg.TursoHeatURL,
-		URLHTTP: cfg.TursoHeatURLHTTP,
-		URLWS:   cfg.TursoHeatURLWS,
-		Token:   cfg.TursoHeatToken,
+		URL:     cfg.TursoCaloriesURL,
+		URLHTTP: cfg.TursoCaloriesURLHTTP,
+		URLWS:   cfg.TursoCaloriesURLWS,
+		Token:   cfg.TursoCaloriesToken,
 	})
 	if err != nil {
 		return CaloriesDependencies{}, fmt.Errorf("calories dsn: %w", err)

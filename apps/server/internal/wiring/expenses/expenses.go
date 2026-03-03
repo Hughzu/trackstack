@@ -18,10 +18,10 @@ type ExpensesDependencies struct {
 func BuildExpenses(cfg config.Config) (ExpensesDependencies, error) {
 	dsn, err := common.BuildTursoDSN(common.TursoConfig{
 		Mode:    cfg.DBConnectionMode,
-		URL:     cfg.TursoHeatURL, // TODO: Wait, is there a separate DB for expenses/heat? The config only specifies TursoHeatURL.
-		URLHTTP: cfg.TursoHeatURLHTTP,
-		URLWS:   cfg.TursoHeatURLWS,
-		Token:   cfg.TursoHeatToken,
+		URL:     cfg.TursoExpensesURL,
+		URLHTTP: cfg.TursoExpensesURLHTTP,
+		URLWS:   cfg.TursoExpensesURLWS,
+		Token:   cfg.TursoExpensesToken,
 	})
 	if err != nil {
 		return ExpensesDependencies{}, fmt.Errorf("expenses dsn: %w", err)

@@ -18,10 +18,10 @@ type AuthDependencies struct {
 func BuildAuth(cfg config.Config) (AuthDependencies, error) {
 	dsn, err := common.BuildTursoDSN(common.TursoConfig{
 		Mode:    cfg.DBConnectionMode,
-		URL:     cfg.TursoHeatURL,
-		URLHTTP: cfg.TursoHeatURLHTTP,
-		URLWS:   cfg.TursoHeatURLWS,
-		Token:   cfg.TursoHeatToken,
+		URL:     cfg.TursoUsersURL,
+		URLHTTP: cfg.TursoUsersURLHTTP,
+		URLWS:   cfg.TursoUsersURLWS,
+		Token:   cfg.TursoUsersToken,
 	})
 	if err != nil {
 		return AuthDependencies{}, fmt.Errorf("auth dsn: %w", err)

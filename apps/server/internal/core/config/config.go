@@ -12,10 +12,22 @@ type Config struct {
 	Port                            string
 	LogLevel                        string
 	DBConnectionMode                string
+	TursoCaloriesURL                string
+	TursoCaloriesURLHTTP            string
+	TursoCaloriesURLWS              string
+	TursoCaloriesToken              string
+	TursoExpensesURL                string
+	TursoExpensesURLHTTP            string
+	TursoExpensesURLWS              string
+	TursoExpensesToken              string
 	TursoHeatURL                    string
 	TursoHeatURLHTTP                string
 	TursoHeatURLWS                  string
 	TursoHeatToken                  string
+	TursoUsersURL                   string
+	TursoUsersURLHTTP               string
+	TursoUsersURLWS                 string
+	TursoUsersToken                 string
 	OriginVerifyHeader              string
 	OriginVerifyValue               string
 	AuthCookieName                  string
@@ -34,10 +46,22 @@ func Load() (Config, error) {
 	cfg.Port = getEnv("PORT", "8080")
 	cfg.LogLevel = getEnv("LOG_LEVEL", "info")
 	cfg.DBConnectionMode = getEnv("DB_CONNECTION_MODE", "HTTP")
+	cfg.TursoCaloriesURL = getEnv("TURSO_CALORIES_URL", "")
+	cfg.TursoCaloriesURLHTTP = getEnv("TURSO_CALORIES_URL_HTTP", "")
+	cfg.TursoCaloriesURLWS = getEnv("TURSO_CALORIES_URL_WS", "")
+	cfg.TursoCaloriesToken = getEnv("TURSO_CALORIES_TOKEN", "")
+	cfg.TursoExpensesURL = getEnv("TURSO_EXPENSES_URL", "")
+	cfg.TursoExpensesURLHTTP = getEnv("TURSO_EXPENSES_URL_HTTP", "")
+	cfg.TursoExpensesURLWS = getEnv("TURSO_EXPENSES_URL_WS", "")
+	cfg.TursoExpensesToken = getEnv("TURSO_EXPENSES_TOKEN", "")
 	cfg.TursoHeatURL = getEnv("TURSO_HEAT_URL", "")
 	cfg.TursoHeatURLHTTP = getEnv("TURSO_HEAT_URL_HTTP", "")
 	cfg.TursoHeatURLWS = getEnv("TURSO_HEAT_URL_WS", "")
 	cfg.TursoHeatToken = getEnv("TURSO_HEAT_TOKEN", "")
+	cfg.TursoUsersURL = getEnv("TURSO_USERS_URL", "")
+	cfg.TursoUsersURLHTTP = getEnv("TURSO_USERS_URL_HTTP", "")
+	cfg.TursoUsersURLWS = getEnv("TURSO_USERS_URL_WS", "")
+	cfg.TursoUsersToken = getEnv("TURSO_USERS_TOKEN", "")
 	cfg.OriginVerifyHeader = getEnv("ORIGIN_VERIFY_HEADER", "")
 	cfg.OriginVerifyValue = getEnv("ORIGIN_VERIFY_VALUE", "")
 	cfg.AuthCookieName = getEnv("AUTH_COOKIE_NAME", "trackstack_session")
