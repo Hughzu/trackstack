@@ -1,6 +1,7 @@
 package httptransport
 
 import (
+	"github.com/Hughzu/trackstack/apps/server/internal/modules/calories"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/expenses"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/heat"
 )
@@ -8,11 +9,13 @@ import (
 type Handlers struct {
 	Heat     *HeatHandler
 	Expenses *ExpensesHandler
+	Calories *CaloriesHandler
 }
 
 type Deps struct {
 	HeatService     *heat.Service
 	ExpensesService *expenses.Service
+	CaloriesService *calories.Service
 	HardcodedUserID string
 }
 
@@ -24,6 +27,10 @@ func NewHandlers(deps Deps) Handlers {
 		},
 		Expenses: &ExpensesHandler{
 			svc:    deps.ExpensesService,
+			userID: deps.HardcodedUserID,
+		},
+		Calories: &CaloriesHandler{
+			svc:    deps.CaloriesService,
 			userID: deps.HardcodedUserID,
 		},
 	}

@@ -35,5 +35,12 @@ func NewRouter(handlers Handlers) http.Handler {
 		r.Post("/sheet/close", handlers.Expenses.CloseSheet)
 	})
 
+	r.Route("/api/calories", func(r chi.Router) {
+		r.Post("/log", handlers.Calories.AddLog)
+		r.Delete("/log", handlers.Calories.DeleteLog)
+		r.Get("/target", handlers.Calories.GetTarget)
+		r.Post("/target", handlers.Calories.UpdateTarget)
+	})
+
 	return r
 }

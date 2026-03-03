@@ -166,6 +166,70 @@ paths:
       responses:
         "200":
           description: New sheet returned
+  /api/calories/log:
+    post:
+      summary: Create a calorie log
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCalorieLogRequest"
+      responses:
+        "201":
+          description: Log created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalorieLog"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Delete a calorie log
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Log not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/calories/target:
+    get:
+      summary: Get calorie target
+      responses:
+        "200":
+          description: Target
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalorieTarget"
+    post:
+      summary: Update calorie target
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCalorieTargetRequest"
+      responses:
+        "200":
+          description: Target updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalorieTarget"
 components:
   schemas:
     Refill:
@@ -222,3 +286,100 @@ components:
           type: string
       required:
         - error
+    CalorieLog:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        dateTime:
+          type: string
+          format: date-time
+        calories:
+          type: integer
+        proteinG:
+          type: integer
+        carbsG:
+          type: integer
+          nullable: true
+        fatG:
+          type: integer
+          nullable: true
+        title:
+          type: string
+          nullable: true
+      required:
+        - id
+        - userId
+        - dateTime
+        - calories
+        - proteinG
+    CalorieTarget:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        targetKcal:
+          type: integer
+        targetProteinG:
+          type: integer
+        targetCarbsG:
+          type: integer
+          nullable: true
+        targetFatG:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - targetKcal
+        - targetProteinG
+        - createdAt
+        - updatedAt
+    CreateCalorieLogRequest:
+      type: object
+      properties:
+        calories:
+          type: integer
+        protein:
+          type: integer
+        carbs:
+          type: integer
+          nullable: true
+        fat:
+          type: integer
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        date:
+          type: string
+          description: YYYY-MM-DD
+      required:
+        - calories
+        - protein
+    UpdateCalorieTargetRequest:
+      type: object
+      properties:
+        targetKcal:
+          type: integer
+        targetProtein:
+          type: integer
+        targetCarbs:
+          type: integer
+          nullable: true
+        targetFat:
+          type: integer
+          nullable: true
+      required:
+        - targetKcal
+        - targetProtein
