@@ -1,7 +1,6 @@
 package httptransport
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -43,9 +42,7 @@ func (h *HeatHandler) ListRefills(w http.ResponseWriter, r *http.Request) {
 
 func (h *HeatHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
 	var payload createRefillPayload
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&payload); err != nil {
+	if err := decodeJSON(r, &payload); err != nil {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
 		return
 	}
@@ -68,14 +65,7 @@ func (h *HeatHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
 func (h *HeatHandler) DeleteRefill(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
-		var payload struct {
-			ID string `json:"id"`
-		}
-		decoder := json.NewDecoder(r.Body)
-		decoder.DisallowUnknownFields()
-		if err := decoder.Decode(&payload); err == nil {
-			id = payload.ID
-		}
+		id = extractIDFromBody(r)
 	}
 
 	if id == "" {

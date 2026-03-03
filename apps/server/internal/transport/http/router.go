@@ -21,5 +21,19 @@ func NewRouter(handlers Handlers) http.Handler {
 		r.Delete("/refills", handlers.Heat.DeleteRefill)
 	})
 
+	r.Route("/api/expenses", func(r chi.Router) {
+		r.Get("/settings", handlers.Expenses.GetSettings)
+		r.Post("/settings", handlers.Expenses.UpdateSettings)
+		r.Get("/sheet/current", handlers.Expenses.GetCurrentSheet)
+		r.Post("/entries", handlers.Expenses.AddExpense)
+		r.Delete("/entries", handlers.Expenses.DeleteExpense)
+		r.Post("/checklists", handlers.Expenses.UpsertChecklist)
+		r.Delete("/checklists", handlers.Expenses.DeleteChecklist)
+		r.Post("/checklists/complete", handlers.Expenses.CompleteChecklistItem)
+		r.Post("/recurring", handlers.Expenses.UpsertRecurring)
+		r.Delete("/recurring", handlers.Expenses.DeleteRecurring)
+		r.Post("/sheet/close", handlers.Expenses.CloseSheet)
+	})
+
 	return r
 }

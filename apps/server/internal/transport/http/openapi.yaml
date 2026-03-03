@@ -86,6 +86,86 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/expenses/settings:
+    get:
+      summary: Get expenses settings
+      responses:
+        "200":
+          description: Settings
+    post:
+      summary: Update expenses settings
+      responses:
+        "200":
+          description: Settings updated
+  /api/expenses/sheet/current:
+    get:
+      summary: Get current expenses sheet dashboard
+      responses:
+        "200":
+          description: Dashboard data
+  /api/expenses/entries:
+    post:
+      summary: Add expense entry
+      responses:
+        "201":
+          description: Entry created
+    delete:
+      summary: Delete expense entry
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+  /api/expenses/checklists:
+    post:
+      summary: Upsert checklist template
+      responses:
+        "200":
+          description: Template upserted
+    delete:
+      summary: Delete checklist template
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+  /api/expenses/checklists/complete:
+    post:
+      summary: Complete checklist item
+      responses:
+        "201":
+          description: Entry from checklist item created
+  /api/expenses/recurring:
+    post:
+      summary: Upsert recurring template
+      responses:
+        "200":
+          description: Template upserted
+    delete:
+      summary: Delete recurring template
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+  /api/expenses/sheet/close:
+    post:
+      summary: Close current expense sheet
+      responses:
+        "200":
+          description: New sheet returned
 components:
   schemas:
     Refill:

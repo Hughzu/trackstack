@@ -12,6 +12,7 @@ import (
 	"github.com/Hughzu/trackstack/apps/server/internal/core/config"
 	"github.com/Hughzu/trackstack/apps/server/internal/core/logging"
 	httptransport "github.com/Hughzu/trackstack/apps/server/internal/transport/http"
+	expenseswiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/expenses"
 	heatwiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/heat"
 
 	"github.com/joho/godotenv"
@@ -40,8 +41,21 @@ func main() {
 			logger.Error("heat db close error", "error", err)
 		}
 	}()
+
+	expensesDeps, err := expenseswiring.BuildExpenses(cfg)
+	if err != nil {
+		logger.Error("expenses db error", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		if err := expensesDeps.Close(); err != nil {
+			logger.Error("expenses db close error", "error", err)
+		}
+	}()
+
 	handlers := httptransport.NewHandlers(httptransport.Deps{
 		HeatService:     heatDeps.Service,
+		ExpensesService: expensesDeps.Service,
 		HardcodedUserID: cfg.HardcodedUserID,
 	})
 
