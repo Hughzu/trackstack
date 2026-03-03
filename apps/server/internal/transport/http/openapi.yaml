@@ -19,6 +19,19 @@ paths:
                 properties:
                   ok:
                     type: boolean
+  /api/health:
+    get:
+      summary: Health check (compat alias)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
   /api/heat/refills:
     get:
       summary: List heat refills
@@ -122,6 +135,25 @@ paths:
       responses:
         "204":
           description: Deleted
+  /api/expenses/expense:
+    post:
+      summary: Add expense entry (compat alias)
+      deprecated: true
+      responses:
+        "201":
+          description: Entry created
+    delete:
+      summary: Delete expense entry (compat alias)
+      deprecated: true
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
   /api/expenses/checklists:
     post:
       summary: Upsert checklist template
@@ -139,9 +171,35 @@ paths:
       responses:
         "204":
           description: Deleted
+  /api/expenses/checklist:
+    post:
+      summary: Upsert checklist template (compat alias)
+      deprecated: true
+      responses:
+        "200":
+          description: Template upserted
+    delete:
+      summary: Delete checklist template (compat alias)
+      deprecated: true
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
   /api/expenses/checklists/complete:
     post:
       summary: Complete checklist item
+      responses:
+        "201":
+          description: Entry from checklist item created
+  /api/expenses/checklist/complete:
+    post:
+      summary: Complete checklist item (compat alias)
+      deprecated: true
       responses:
         "201":
           description: Entry from checklist item created
@@ -165,6 +223,13 @@ paths:
   /api/expenses/sheet/close:
     post:
       summary: Close current expense sheet
+      responses:
+        "200":
+          description: New sheet returned
+  /api/expenses/close:
+    post:
+      summary: Close current expense sheet (compat alias)
+      deprecated: true
       responses:
         "200":
           description: New sheet returned

@@ -66,7 +66,7 @@ func authMiddleware(handler *AuthHandler) func(http.Handler) http.Handler {
 
 func isPublicPath(path string) bool {
 	switch path {
-	case "/health", "/openapi.yaml", "/api/auth/login", "/api/auth/logout":
+	case "/health", "/api/health", "/openapi.yaml", "/api/auth/login", "/api/auth/logout":
 		return true
 	default:
 		return false

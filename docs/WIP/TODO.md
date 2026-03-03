@@ -1,8 +1,9 @@
 - go backend  
-    - auth
-    - remove hardcoded user
-    - lambda ? 
+    - check compat
+    - lambda go
     - deploy
+    - delete astro endpoints
+    - clean endpoints to be proper rest endpoints + refactor frontend
     - quid migration up/down -> right now we need to pay to use migration down with atlas
     - dependabot ? How can I make sure my dependencies are not too hold (npm, go, terraform)
     - checkmarx free alternatives ? 
