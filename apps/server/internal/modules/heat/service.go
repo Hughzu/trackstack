@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var ErrInvalidInput = errors.New("invalid input")
@@ -50,7 +52,9 @@ func (s *Service) CreateRefill(ctx context.Context, req CreateRefillRequest) (Re
 	}
 
 	seasonLabel := seasonLabelFor(refillDate)
-	input := CreateRefillInput{
+	refill := Refill{
+		ID:          uuid.NewString(),
+		UserID:      req.UserID,
 		Date:        refillDate.UTC().Format(time.RFC3339),
 		WeightKg:    req.WeightKg,
 		Bags:        req.Bags,
@@ -58,7 +62,7 @@ func (s *Service) CreateRefill(ctx context.Context, req CreateRefillRequest) (Re
 		Season:      &seasonLabel,
 	}
 
-	refill, err := s.store.Create(ctx, req.UserID, input)
+	err = s.store.Create(ctx, refill)
 	if err != nil {
 		return Refill{}, err
 	}

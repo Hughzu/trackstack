@@ -15,16 +15,8 @@ func (m *mockRefillStore) ListByRange(ctx context.Context, userID string, from s
 	return []heat.Refill{}, nil
 }
 
-func (m *mockRefillStore) Create(ctx context.Context, userID string, input heat.CreateRefillInput) (heat.Refill, error) {
-	return heat.Refill{
-		ID:          "heat-1",
-		UserID:      userID,
-		Date:        input.Date,
-		WeightKg:    input.WeightKg,
-		Bags:        input.Bags,
-		Temperature: input.Temperature,
-		Season:      input.Season,
-	}, nil
+func (m *mockRefillStore) Create(ctx context.Context, refill heat.Refill) error {
+	return nil
 }
 
 func (m *mockRefillStore) Delete(ctx context.Context, userID string, id string) (bool, error) {
@@ -59,8 +51,8 @@ func TestCreateRefill(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if refill.ID != "heat-1" {
-		t.Errorf("expected ID heat-1, got %s", refill.ID)
+	if refill.ID == "" {
+		t.Errorf("expected ID to be generated, got empty")
 	}
 
 	// verify season logic based on October 2023 date -> 2023-2024

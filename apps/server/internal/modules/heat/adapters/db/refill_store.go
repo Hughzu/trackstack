@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/heat"
-	"github.com/google/uuid"
 )
 
 type RefillStore struct {
@@ -77,34 +76,24 @@ WHERE user_id = ?`
 	return refills, nil
 }
 
-func (s *RefillStore) Create(ctx context.Context, userID string, input heat.CreateRefillInput) (heat.Refill, error) {
-	refillID := uuid.NewString()
-
+func (s *RefillStore) Create(ctx context.Context, refill heat.Refill) error {
 	_, err := s.db.ExecContext(
 		ctx,
 		`INSERT INTO refills (id, user_id, date, weight_kg, bags, temperature, season)
 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		refillID,
-		userID,
-		input.Date,
-		input.WeightKg,
-		input.Bags,
-		input.Temperature,
-		input.Season,
+		refill.ID,
+		refill.UserID,
+		refill.Date,
+		refill.WeightKg,
+		refill.Bags,
+		refill.Temperature,
+		refill.Season,
 	)
 	if err != nil {
-		return heat.Refill{}, fmt.Errorf("create refill: %w", err)
+		return fmt.Errorf("create refill: %w", err)
 	}
 
-	return heat.Refill{
-		ID:          refillID,
-		UserID:      userID,
-		Date:        input.Date,
-		WeightKg:    input.WeightKg,
-		Bags:        input.Bags,
-		Temperature: input.Temperature,
-		Season:      input.Season,
-	}, nil
+	return nil
 }
 
 func (s *RefillStore) Delete(ctx context.Context, userID string, id string) (bool, error) {
