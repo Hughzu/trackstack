@@ -1,5 +1,4 @@
 - go backend  
-    - calories
     - auth
     - remove hardcoded user
     - lambda ? 

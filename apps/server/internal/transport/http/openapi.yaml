@@ -230,6 +230,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CalorieTarget"
+  /api/auth/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "204":
+          description: Logged in
+        "400":
+          description: Missing credentials or invalid JSON
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/logout:
+    post:
+      summary: Logout user
+      responses:
+        "204":
+          description: Logged out
 components:
   schemas:
     Refill:
@@ -383,3 +413,14 @@ components:
       required:
         - targetKcal
         - targetProtein
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password

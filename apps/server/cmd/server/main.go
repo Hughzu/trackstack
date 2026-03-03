@@ -12,8 +12,10 @@ import (
 	"github.com/Hughzu/trackstack/apps/server/internal/core/config"
 	"github.com/Hughzu/trackstack/apps/server/internal/core/logging"
 	httptransport "github.com/Hughzu/trackstack/apps/server/internal/transport/http"
+	authwiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/auth"
 	expenseswiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/expenses"
 	heatwiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/heat"
+	userswiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/users"
 
 	"github.com/joho/godotenv"
 )
@@ -53,10 +55,37 @@ func main() {
 		}
 	}()
 
+	usersDeps, err := userswiring.BuildUsers(cfg)
+	if err != nil {
+		logger.Error("users db error", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		if err := usersDeps.Close(); err != nil {
+			logger.Error("users db close error", "error", err)
+		}
+	}()
+
+	authDeps, err := authwiring.BuildAuth(cfg)
+	if err != nil {
+		logger.Error("auth db error", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		if err := authDeps.Close(); err != nil {
+			logger.Error("auth db close error", "error", err)
+		}
+	}()
+
 	handlers := httptransport.NewHandlers(httptransport.Deps{
-		HeatService:     heatDeps.Service,
-		ExpensesService: expensesDeps.Service,
-		HardcodedUserID: cfg.HardcodedUserID,
+		HeatService:        heatDeps.Service,
+		ExpensesService:    expensesDeps.Service,
+		UsersService:       usersDeps.Service,
+		AuthService:        authDeps.Service,
+		HardcodedUserID:    cfg.HardcodedUserID,
+		AuthCookieName:     cfg.AuthCookieName,
+		AuthCookieSecure:   cfg.AuthCookieSecure,
+		AuthCookieSameSite: cfg.AuthCookieSameSite,
 	})
 
 	router := httptransport.NewRouter(handlers)

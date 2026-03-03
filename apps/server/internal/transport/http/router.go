@@ -42,5 +42,10 @@ func NewRouter(handlers Handlers) http.Handler {
 		r.Post("/target", handlers.Calories.UpdateTarget)
 	})
 
+	r.Route("/api/auth", func(r chi.Router) {
+		r.Post("/login", handlers.Auth.Login)
+		r.Post("/logout", handlers.Auth.Logout)
+	})
+
 	return r
 }
