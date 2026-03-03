@@ -1,5 +1,7 @@
 package auth
 
+import "time"
+
 type ClientContext struct {
 	UserAgent *string
 	IPPrefix  *string
@@ -34,4 +36,16 @@ type CreateSessionRequest struct {
 
 type RevokeSessionRequest struct {
 	RawToken string
+}
+
+type AuthenticateRequest struct {
+	RawToken string
+	Context  ClientContext
+}
+
+type AuthenticateResponse struct {
+	UserID         string
+	SessionID      string
+	ReplacementRaw *string
+	CookieExpires  *time.Time
 }

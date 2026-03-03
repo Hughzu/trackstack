@@ -11,6 +11,7 @@ func NewRouter(handlers Handlers) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
+	r.Use(authMiddleware(handlers.Auth))
 
 	r.Get("/health", Health)
 	r.Get("/openapi.yaml", OpenAPISpec)

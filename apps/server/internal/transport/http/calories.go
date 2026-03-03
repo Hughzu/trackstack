@@ -9,12 +9,15 @@ import (
 )
 
 type CaloriesHandler struct {
-	svc    *calories.Service
-	userID string
+	svc *calories.Service
 }
 
 func (h *CaloriesHandler) GetTarget(w http.ResponseWriter, r *http.Request) {
-	target, err := h.svc.GetTarget(r.Context(), calories.GetTargetRequest{UserID: h.userID})
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
+	target, err := h.svc.GetTarget(r.Context(), calories.GetTargetRequest{UserID: userID})
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "Server Error"})
 		return
@@ -24,6 +27,10 @@ func (h *CaloriesHandler) GetTarget(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CaloriesHandler) UpdateTarget(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	isJSON := isJSONRequest(r)
 	data, ok := readCaloriesPayload(r, isJSON)
 	if !ok {
@@ -41,7 +48,7 @@ func (h *CaloriesHandler) UpdateTarget(w http.ResponseWriter, r *http.Request) {
 	}
 
 	target, err := h.svc.UpdateTarget(r.Context(), calories.UpdateTargetRequest{
-		UserID:         h.userID,
+		UserID:         userID,
 		TargetKcal:     data.TargetKcal,
 		TargetProteinG: data.TargetProtein,
 		TargetCarbsG:   data.TargetCarbs,
@@ -61,6 +68,10 @@ func (h *CaloriesHandler) UpdateTarget(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CaloriesHandler) AddLog(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	isJSON := isJSONRequest(r)
 	data, ok := readCaloriesPayload(r, isJSON)
 	if !ok {
@@ -78,7 +89,7 @@ func (h *CaloriesHandler) AddLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log, err := h.svc.AddLog(r.Context(), calories.AddLogRequest{
-		UserID:   h.userID,
+		UserID:   userID,
 		Calories: data.Calories,
 		ProteinG: data.Protein,
 		CarbsG:   data.Carbs,
@@ -101,6 +112,10 @@ func (h *CaloriesHandler) AddLog(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CaloriesHandler) DeleteLog(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	var id string
 	if payload, ok := readJSONMap(r); ok {
 		if value, ok := payload["id"]; ok {
@@ -118,7 +133,7 @@ func (h *CaloriesHandler) DeleteLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deleted, err := h.svc.DeleteLog(r.Context(), calories.DeleteLogRequest{
-		UserID: h.userID,
+		UserID: userID,
 		ID:     id,
 	})
 	if err != nil {

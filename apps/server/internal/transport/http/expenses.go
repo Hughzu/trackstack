@@ -8,13 +8,16 @@ import (
 )
 
 type ExpensesHandler struct {
-	svc    *expenses.Service
-	userID string
+	svc *expenses.Service
 }
 
 func (h *ExpensesHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	settings, err := h.svc.GetSettings(r.Context(), expenses.GetSettingsRequest{
-		UserID: h.userID,
+		UserID: userID,
 	})
 	if err != nil {
 		writeExpensesError(w, err)
@@ -24,6 +27,10 @@ func (h *ExpensesHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ExpensesHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	var payload struct {
 		Income      *float64 `json:"income"`
 		RatioFund   *int     `json:"ratioFund"`
@@ -36,7 +43,7 @@ func (h *ExpensesHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 	}
 
 	settings, err := h.svc.UpdateSettings(r.Context(), expenses.UpdateSettingsRequest{
-		UserID:      h.userID,
+		UserID:      userID,
 		Income:      payload.Income,
 		RatioFund:   payload.RatioFund,
 		RatioFun:    payload.RatioFun,
@@ -50,8 +57,12 @@ func (h *ExpensesHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *ExpensesHandler) GetCurrentSheet(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	dashboard, err := h.svc.GetDashboard(r.Context(), expenses.GetCurrentSheetRequest{
-		UserID: h.userID,
+		UserID: userID,
 	})
 	if err != nil {
 		writeExpensesError(w, err)
@@ -61,6 +72,10 @@ func (h *ExpensesHandler) GetCurrentSheet(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ExpensesHandler) AddExpense(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	var payload struct {
 		Title    string  `json:"title"`
 		Amount   float64 `json:"amount"`
@@ -73,7 +88,7 @@ func (h *ExpensesHandler) AddExpense(w http.ResponseWriter, r *http.Request) {
 	}
 
 	entry, err := h.svc.AddExpense(r.Context(), expenses.AddExpenseRequest{
-		UserID:   h.userID,
+		UserID:   userID,
 		Title:    payload.Title,
 		Amount:   payload.Amount,
 		Category: payload.Category,
@@ -87,6 +102,10 @@ func (h *ExpensesHandler) AddExpense(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ExpensesHandler) DeleteExpense(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	id := r.URL.Query().Get("id")
 	if id == "" {
 		id = extractIDFromBody(r)
@@ -98,7 +117,7 @@ func (h *ExpensesHandler) DeleteExpense(w http.ResponseWriter, r *http.Request) 
 	}
 
 	deleted, err := h.svc.DeleteExpense(r.Context(), expenses.DeleteExpenseRequest{
-		UserID: h.userID,
+		UserID: userID,
 		ID:     id,
 	})
 	if err != nil {
@@ -113,6 +132,10 @@ func (h *ExpensesHandler) DeleteExpense(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *ExpensesHandler) UpsertChecklist(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	var payload struct {
 		ID       *string `json:"id"`
 		Title    string  `json:"title"`
@@ -126,7 +149,7 @@ func (h *ExpensesHandler) UpsertChecklist(w http.ResponseWriter, r *http.Request
 
 	template, err := h.svc.UpsertChecklistTemplate(r.Context(), expenses.UpsertTemplateRequest{
 		ID:       payload.ID,
-		UserID:   h.userID,
+		UserID:   userID,
 		Title:    payload.Title,
 		Amount:   payload.Amount,
 		Category: payload.Category,
@@ -139,6 +162,10 @@ func (h *ExpensesHandler) UpsertChecklist(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ExpensesHandler) DeleteChecklist(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	id := r.URL.Query().Get("id")
 	if id == "" {
 		id = extractIDFromBody(r)
@@ -149,7 +176,7 @@ func (h *ExpensesHandler) DeleteChecklist(w http.ResponseWriter, r *http.Request
 	}
 
 	deleted, err := h.svc.DeleteChecklistTemplate(r.Context(), expenses.DeleteTemplateRequest{
-		UserID: h.userID,
+		UserID: userID,
 		ID:     id,
 	})
 	if err != nil {
@@ -164,6 +191,10 @@ func (h *ExpensesHandler) DeleteChecklist(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ExpensesHandler) CompleteChecklistItem(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	var payload struct {
 		ID   string  `json:"id"`
 		Date *string `json:"date"`
@@ -175,7 +206,7 @@ func (h *ExpensesHandler) CompleteChecklistItem(w http.ResponseWriter, r *http.R
 
 	entry, err := h.svc.CompleteChecklistItem(r.Context(), expenses.CompleteChecklistItemRequest{
 		ID:     payload.ID,
-		UserID: h.userID,
+		UserID: userID,
 		Date:   payload.Date,
 	})
 	if err != nil {
@@ -186,6 +217,10 @@ func (h *ExpensesHandler) CompleteChecklistItem(w http.ResponseWriter, r *http.R
 }
 
 func (h *ExpensesHandler) UpsertRecurring(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	var payload struct {
 		ID       *string `json:"id"`
 		Title    string  `json:"title"`
@@ -199,7 +234,7 @@ func (h *ExpensesHandler) UpsertRecurring(w http.ResponseWriter, r *http.Request
 
 	template, err := h.svc.UpsertRecurringTemplate(r.Context(), expenses.UpsertTemplateRequest{
 		ID:       payload.ID,
-		UserID:   h.userID,
+		UserID:   userID,
 		Title:    payload.Title,
 		Amount:   payload.Amount,
 		Category: payload.Category,
@@ -212,6 +247,10 @@ func (h *ExpensesHandler) UpsertRecurring(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ExpensesHandler) DeleteRecurring(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	id := r.URL.Query().Get("id")
 	if id == "" {
 		id = extractIDFromBody(r)
@@ -222,7 +261,7 @@ func (h *ExpensesHandler) DeleteRecurring(w http.ResponseWriter, r *http.Request
 	}
 
 	deleted, err := h.svc.DeleteRecurringTemplate(r.Context(), expenses.DeleteTemplateRequest{
-		UserID: h.userID,
+		UserID: userID,
 		ID:     id,
 	})
 	if err != nil {
@@ -237,8 +276,12 @@ func (h *ExpensesHandler) DeleteRecurring(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ExpensesHandler) CloseSheet(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	sheet, err := h.svc.CloseSheet(r.Context(), expenses.CloseSheetRequest{
-		UserID: h.userID,
+		UserID: userID,
 	})
 	if err != nil {
 		writeExpensesError(w, err)

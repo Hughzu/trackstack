@@ -144,7 +144,6 @@ type Config struct {
   TursoHeatURLHTTP    string
   TursoHeatURLWS      string
   TursoHeatToken      string
-  HardcodedUserID     string
   OriginVerifyHeader string
   OriginVerifyValue  string
   AuthCookieName     string

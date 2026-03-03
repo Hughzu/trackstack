@@ -21,7 +21,6 @@ type Deps struct {
 	CaloriesService    *calories.Service
 	UsersService       *users.Service
 	AuthService        *auth.Service
-	HardcodedUserID    string
 	AuthCookieName     string
 	AuthCookieSecure   bool
 	AuthCookieSameSite string
@@ -30,16 +29,13 @@ type Deps struct {
 func NewHandlers(deps Deps) Handlers {
 	return Handlers{
 		Heat: &HeatHandler{
-			svc:    deps.HeatService,
-			userID: deps.HardcodedUserID,
+			svc: deps.HeatService,
 		},
 		Expenses: &ExpensesHandler{
-			svc:    deps.ExpensesService,
-			userID: deps.HardcodedUserID,
+			svc: deps.ExpensesService,
 		},
 		Calories: &CaloriesHandler{
-			svc:    deps.CaloriesService,
-			userID: deps.HardcodedUserID,
+			svc: deps.CaloriesService,
 		},
 		Auth: &AuthHandler{
 			authService:       deps.AuthService,

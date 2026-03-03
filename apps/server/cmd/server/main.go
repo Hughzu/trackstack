@@ -82,7 +82,6 @@ func main() {
 		ExpensesService:    expensesDeps.Service,
 		UsersService:       usersDeps.Service,
 		AuthService:        authDeps.Service,
-		HardcodedUserID:    cfg.HardcodedUserID,
 		AuthCookieName:     cfg.AuthCookieName,
 		AuthCookieSecure:   cfg.AuthCookieSecure,
 		AuthCookieSameSite: cfg.AuthCookieSameSite,

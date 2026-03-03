@@ -8,8 +8,7 @@ import (
 )
 
 type HeatHandler struct {
-	svc    *heat.Service
-	userID string
+	svc *heat.Service
 }
 
 type createRefillPayload struct {
@@ -24,11 +23,15 @@ type errorResponse struct {
 }
 
 func (h *HeatHandler) ListRefills(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	from := r.URL.Query().Get("from")
 	to := r.URL.Query().Get("to")
 
 	refills, err := h.svc.ListRefills(r.Context(), heat.ListRefillsRequest{
-		UserID: h.userID,
+		UserID: userID,
 		From:   from,
 		To:     to,
 	})
@@ -41,6 +44,10 @@ func (h *HeatHandler) ListRefills(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HeatHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	var payload createRefillPayload
 	if err := decodeJSON(r, &payload); err != nil {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
@@ -48,7 +55,7 @@ func (h *HeatHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refill, err := h.svc.CreateRefill(r.Context(), heat.CreateRefillRequest{
-		UserID:      h.userID,
+		UserID:      userID,
 		Date:        payload.Date,
 		WeightKg:    payload.WeightKg,
 		Bags:        payload.Bags,
@@ -63,6 +70,10 @@ func (h *HeatHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HeatHandler) DeleteRefill(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
 	id := r.URL.Query().Get("id")
 	if id == "" {
 		id = extractIDFromBody(r)
@@ -74,7 +85,7 @@ func (h *HeatHandler) DeleteRefill(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deleted, err := h.svc.DeleteRefill(r.Context(), heat.DeleteRefillRequest{
-		UserID: h.userID,
+		UserID: userID,
 		ID:     id,
 	})
 	if err != nil {
