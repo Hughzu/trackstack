@@ -103,7 +103,7 @@ describe('SigV4 Form Attributes', () => {
       path: 'pages/heat/new.astro',
       expects: [
         'data-api-form',
-        'action="/api/heat/refill"',
+        'action="/api/heat/refills"',
         'method="POST"',
         'data-redirect="/heat"',
       ],

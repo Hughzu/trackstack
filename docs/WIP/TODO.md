@@ -1,8 +1,9 @@
 - expenses filters does not work anymore in expenses pages
-- go backend   
+- go backend  
+    - expenses 
     - calories
-    - expenses
     - auth
+    - remove hardcoded user
     - lambda ? 
     - deploy
     - quid migration up/down -> right now we need to pay to use migration down with atlas
