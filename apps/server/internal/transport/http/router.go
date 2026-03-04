@@ -10,6 +10,8 @@ import (
 func NewRouter(handlers Handlers, corsAllowedOrigin string) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(corsMiddleware(corsAllowedOrigin))
 	r.Use(authMiddleware(handlers.Auth))
