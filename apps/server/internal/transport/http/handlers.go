@@ -9,10 +9,11 @@ import (
 )
 
 type Handlers struct {
-	Heat     *HeatHandler
-	Expenses *ExpensesHandler
-	Calories *CaloriesHandler
-	Auth     *AuthHandler
+	Heat      *HeatHandler
+	Expenses  *ExpensesHandler
+	Calories  *CaloriesHandler
+	Auth      *AuthHandler
+	Dashboard *DashboardHandler
 }
 
 type Deps struct {
@@ -43,6 +44,11 @@ func NewHandlers(deps Deps) Handlers {
 			cookieName:        deps.AuthCookieName,
 			cookieSecure:      deps.AuthCookieSecure,
 			cookieSameSiteRaw: deps.AuthCookieSameSite,
+		},
+		Dashboard: &DashboardHandler{
+			heat:     deps.HeatService,
+			calories: deps.CaloriesService,
+			expenses: deps.ExpensesService,
 		},
 	}
 }

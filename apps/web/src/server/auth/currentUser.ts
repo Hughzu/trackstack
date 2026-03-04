@@ -3,6 +3,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 type AuthContext = {
   userId?: string;
   sessionId?: string;
+  rawToken?: string;
 };
 
 const authStorage = new AsyncLocalStorage<AuthContext>();
@@ -19,4 +20,8 @@ export const getCurrentUserId = (): string => {
 
 export const getCurrentSessionId = (): string | undefined => {
   return authStorage.getStore()?.sessionId;
+};
+
+export const getCurrentToken = (): string | undefined => {
+  return authStorage.getStore()?.rawToken;
 };

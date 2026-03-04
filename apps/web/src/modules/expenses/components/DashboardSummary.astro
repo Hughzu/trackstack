@@ -21,13 +21,16 @@ interface Props {
   ratios: Ratio[];
 }
 
-const { periodKey, balance, ratios } = Astro.props;
+const { periodKey, balance } = Astro.props;
+const ratios = Astro.props.ratios ?? [];
 ---
 
 <section>
   <div class="flex items-center justify-between px-1 mb-2">
     <div>
-      <div class="text-xs text-text-muted uppercase tracking-widest">Period</div>
+      <div class="text-xs text-text-muted uppercase tracking-widest">
+        Period
+      </div>
       <div class="text-sm font-semibold text-text-main">{periodKey}</div>
     </div>
     <button
@@ -44,7 +47,9 @@ const { periodKey, balance, ratios } = Astro.props;
         <span class="text-xs text-text-muted uppercase tracking-widest"
           >Remaining</span
         >
-        <div class="text-3xl font-bold text-text-main">€{balance.remaining}</div>
+        <div class="text-3xl font-bold text-text-main">
+          €{balance.remaining}
+        </div>
       </div>
       <div class="text-right">
         <span class="text-xs text-text-muted uppercase tracking-widest"

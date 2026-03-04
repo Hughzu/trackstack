@@ -11,6 +11,13 @@ type Log struct {
 	Title    *string `json:"title,omitempty"`
 }
 
+type Summary struct {
+	Calories int `json:"calories"`
+	ProteinG int `json:"proteinG"`
+	CarbsG   int `json:"carbsG"`
+	FatG     int `json:"fatG"`
+}
+
 type Target struct {
 	ID             string `json:"id"`
 	UserID         string `json:"userId"`

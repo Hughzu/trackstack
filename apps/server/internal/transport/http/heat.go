@@ -43,6 +43,23 @@ func (h *HeatHandler) ListRefills(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, refills)
 }
 
+func (h *HeatHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
+
+	dashboard, err := h.svc.GetDashboard(r.Context(), heat.GetDashboardRequest{
+		UserID: userID,
+	})
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, dashboard)
+}
+
 func (h *HeatHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
 	userID, ok := requireAuthUserID(w, r)
 	if !ok {

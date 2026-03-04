@@ -12,7 +12,7 @@ interface Props {
   }[];
 }
 
-const { recentMeals } = Astro.props;
+const recentMeals = Astro.props.recentMeals ?? [];
 ---
 
 <section class="mt-4">

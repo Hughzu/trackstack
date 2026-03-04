@@ -43,6 +43,18 @@ func (m *mockStore) DeleteLog(ctx context.Context, userID string, id string) (bo
 	return true, nil
 }
 
+func (m *mockStore) GetSummaryByRange(ctx context.Context, userID string, from string, to string) (calories.Summary, error) {
+	return calories.Summary{}, nil
+}
+
+func (m *mockStore) GetLogsByRange(ctx context.Context, userID string, from string, to string) ([]calories.Log, error) {
+	return nil, nil
+}
+
+func (m *mockStore) GetRecentLogs(ctx context.Context, userID string, limit int) ([]calories.Log, error) {
+	return nil, nil
+}
+
 func TestAddLogValidation(t *testing.T) {
 	svc := calories.NewService(&mockStore{})
 

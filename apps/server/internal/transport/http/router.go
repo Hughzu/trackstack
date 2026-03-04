@@ -21,6 +21,7 @@ func NewRouter(handlers Handlers, corsAllowedOrigin string) http.Handler {
 	r.Get("/openapi.yaml", OpenAPISpec)
 
 	r.Route("/api/heat", func(r chi.Router) {
+		r.Get("/dashboard", handlers.Heat.GetDashboard)
 		r.Get("/refills", handlers.Heat.ListRefills)
 		r.Post("/refills", handlers.Heat.CreateRefill)
 		r.Delete("/refills", handlers.Heat.DeleteRefill)
@@ -47,6 +48,7 @@ func NewRouter(handlers Handlers, corsAllowedOrigin string) http.Handler {
 	})
 
 	r.Route("/api/calories", func(r chi.Router) {
+		r.Get("/dashboard", handlers.Calories.GetDashboard)
 		r.Post("/log", handlers.Calories.AddLog)
 		r.Delete("/log", handlers.Calories.DeleteLog)
 		r.Get("/target", handlers.Calories.GetTarget)
@@ -57,6 +59,8 @@ func NewRouter(handlers Handlers, corsAllowedOrigin string) http.Handler {
 		r.Post("/login", handlers.Auth.Login)
 		r.Post("/logout", handlers.Auth.Logout)
 	})
+
+	r.Get("/api/dashboard", handlers.Dashboard.GetDashboard)
 
 	return r
 }

@@ -10,7 +10,7 @@ interface Props {
   }[];
 }
 
-const { pendingObligations } = Astro.props;
+const pendingObligations = Astro.props.pendingObligations ?? [];
 ---
 
 <section>

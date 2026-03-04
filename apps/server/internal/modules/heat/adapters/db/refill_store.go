@@ -76,6 +76,60 @@ WHERE user_id = ?`
 	return refills, nil
 }
 
+func (s *RefillStore) GetLatest(ctx context.Context, userID string) (*heat.Refill, error) {
+	query := "SELECT id, user_id, date, weight_kg, bags, temperature, season FROM refills WHERE user_id = ? ORDER BY date DESC LIMIT 1"
+
+	var refill heat.Refill
+	var temperature sql.NullFloat64
+	var season sql.NullString
+
+	err := s.db.QueryRowContext(ctx, query, userID).Scan(
+		&refill.ID,
+		&refill.UserID,
+		&refill.Date,
+		&refill.WeightKg,
+		&refill.Bags,
+		&temperature,
+		&season,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get latest refill: %w", err)
+	}
+
+	if temperature.Valid {
+		refill.Temperature = &temperature.Float64
+	}
+	if season.Valid {
+		refill.Season = &season.String
+	}
+
+	return &refill, nil
+}
+
+func (s *RefillStore) GetSumByRange(ctx context.Context, userID string, from string, to string) (int, error) {
+	query := "SELECT COALESCE(SUM(bags), 0) FROM refills WHERE user_id = ?"
+	args := []any{userID}
+	if from != "" {
+		query += " AND date >= ?"
+		args = append(args, from)
+	}
+	if to != "" {
+		query += " AND date < ?"
+		args = append(args, to)
+	}
+
+	var total int
+	err := s.db.QueryRowContext(ctx, query, args...).Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("get sum by range: %w", err)
+	}
+	return total, nil
+}
+
 func (s *RefillStore) Create(ctx context.Context, refill heat.Refill) error {
 	_, err := s.db.ExecContext(
 		ctx,

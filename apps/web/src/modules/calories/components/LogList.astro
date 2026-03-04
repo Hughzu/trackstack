@@ -10,14 +10,19 @@ interface Props {
     title?: string | null;
     calories: number;
     proteinG: number;
-    dateTime: Date;
+    dateTime: string | Date;
   }[];
 }
 
-const { logs } = Astro.props;
+const logs = Astro.props.logs ?? [];
 
-const formatTime = (date: Date) =>
-  date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+const formatTime = (dateInput: Date | string) => {
+  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  return date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 ---
 
 <section class="mt-4">
@@ -36,9 +41,7 @@ const formatTime = (date: Date) =>
             </div>
           </div>
           <div slot="right" class="flex items-center gap-2">
-            <span class="font-mono text-sm text-text-main">
-              {log.calories}
-            </span>
+            <span class="font-mono text-sm text-text-main">{log.calories}</span>
             <IconButton
               variant="danger"
               ariaLabel="Delete log"

@@ -26,6 +26,31 @@ func (h *CaloriesHandler) GetTarget(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, target)
 }
 
+func (h *CaloriesHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAuthUserID(w, r)
+	if !ok {
+		return
+	}
+
+	recentLimit := 8
+	if limitStr := r.URL.Query().Get("recentLimit"); limitStr != "" {
+		if val, err := strconv.Atoi(limitStr); err == nil && val > 0 {
+			recentLimit = val
+		}
+	}
+
+	dashboard, err := h.svc.GetDashboard(r.Context(), calories.GetDashboardRequest{
+		UserID:      userID,
+		RecentLimit: recentLimit,
+	})
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "Server Error"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, dashboard)
+}
+
 func (h *CaloriesHandler) UpdateTarget(w http.ResponseWriter, r *http.Request) {
 	userID, ok := requireAuthUserID(w, r)
 	if !ok {

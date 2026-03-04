@@ -2,13 +2,14 @@
 const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
 ---
 
-<script is:inline>
-  const API_BASE_URL = {JSON.stringify(apiBaseUrl)};
+<script define:vars={{ apiBaseUrl }}>
+  const API_BASE_URL = apiBaseUrl;
 
   const resolveApiUrl = (input) => {
     if (!input || typeof input !== "string") return input;
     if (!API_BASE_URL) return input;
-    if (input.startsWith("http://") || input.startsWith("https://")) return input;
+    if (input.startsWith("http://") || input.startsWith("https://"))
+      return input;
 
     const base = API_BASE_URL.replace(/\/+$/, "");
     if (input.startsWith("/")) return `${base}${input}`;
@@ -17,12 +18,14 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
 
   const dropdownState = {
     roots: new Set(),
-    globalBound: false
+    globalBound: false,
   };
 
   const getDropdownPanel = (root) => root.querySelector("[data-menu-panel]");
-  const getDropdownTrigger = (root) => root.querySelector("[data-menu-trigger]");
-  const getDropdownControl = (root) => getDropdownTrigger(root)?.firstElementChild;
+  const getDropdownTrigger = (root) =>
+    root.querySelector("[data-menu-trigger]");
+  const getDropdownControl = (root) =>
+    getDropdownTrigger(root)?.firstElementChild;
 
   const isDropdownOpen = (root) => {
     const panel = getDropdownPanel(root);
@@ -89,24 +92,33 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
 
   const confirmModalState = {
     modals: [],
-    globalBound: false
+    globalBound: false,
   };
 
   const initConfirmModals = () => {
-    confirmModalState.modals = confirmModalState.modals.filter((modal) => modal.dialog.isConnected);
+    confirmModalState.modals = confirmModalState.modals.filter(
+      (modal) => modal.dialog.isConnected,
+    );
 
     const dialogs = Array.from(
-      document.querySelectorAll("dialog[data-confirm-dialog], dialog[dataConfirmDialog]")
+      document.querySelectorAll(
+        "dialog[data-confirm-dialog], dialog[dataConfirmDialog]",
+      ),
     );
 
     dialogs.forEach((dialog) => {
       if (dialog.dataset.confirmBound === "true") return;
       dialog.dataset.confirmBound = "true";
 
-      const getAttr = (kebab, camel) => dialog.getAttribute(kebab) ?? dialog.getAttribute(camel) ?? "";
-      const getOptionalAttr = (kebab, camel) => dialog.getAttribute(kebab) ?? dialog.getAttribute(camel) ?? undefined;
+      const getAttr = (kebab, camel) =>
+        dialog.getAttribute(kebab) ?? dialog.getAttribute(camel) ?? "";
+      const getOptionalAttr = (kebab, camel) =>
+        dialog.getAttribute(kebab) ?? dialog.getAttribute(camel) ?? undefined;
 
-      const triggerAttribute = getAttr("data-trigger-attribute", "dataTriggerAttribute");
+      const triggerAttribute = getAttr(
+        "data-trigger-attribute",
+        "dataTriggerAttribute",
+      );
       if (!triggerAttribute) return;
 
       const config = {
@@ -114,15 +126,25 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
         triggerAttribute,
         idAttribute: getOptionalAttr("data-id-attribute", "dataIdAttribute"),
         endpoint: getAttr("data-endpoint", "dataEndpoint"),
-        method: (getAttr("data-method", "dataMethod") || "DELETE").toUpperCase(),
+        method: (
+          getAttr("data-method", "dataMethod") || "DELETE"
+        ).toUpperCase(),
         payloadKey: getAttr("data-payload-key", "dataPayloadKey") || "id",
-        sendPayload: getAttr("data-send-payload", "dataSendPayload") !== "false",
-        errorMessage: getAttr("data-error-message", "dataErrorMessage") || "Something went wrong. Please try again.",
-        successRedirect: getOptionalAttr("data-success-redirect", "dataSuccessRedirect"),
-        confirmLoadingLabel: getAttr("data-confirm-loading-label", "dataConfirmLoadingLabel") || "Working...",
+        sendPayload:
+          getAttr("data-send-payload", "dataSendPayload") !== "false",
+        errorMessage:
+          getAttr("data-error-message", "dataErrorMessage") ||
+          "Something went wrong. Please try again.",
+        successRedirect: getOptionalAttr(
+          "data-success-redirect",
+          "dataSuccessRedirect",
+        ),
+        confirmLoadingLabel:
+          getAttr("data-confirm-loading-label", "dataConfirmLoadingLabel") ||
+          "Working...",
         confirmBtn: dialog.querySelector("[data-confirm-modal]"),
         closeBtns: dialog.querySelectorAll("[data-close-modal]"),
-        pendingId: null
+        pendingId: null,
       };
 
       config.closeBtns.forEach((btn) => {
@@ -142,23 +164,28 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
           let resolvedEndpoint = config.endpoint;
           const requestInit = {
             method: config.method,
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json" },
           };
 
           if (config.sendPayload) {
             if (config.method === "DELETE") {
-              const url = new URL(resolveApiUrl(config.endpoint), window.location.origin);
+              const url = new URL(
+                resolveApiUrl(config.endpoint),
+                window.location.origin,
+              );
               url.searchParams.set(config.payloadKey, config.pendingId);
               resolvedEndpoint = url.toString();
             } else {
-              requestInit.body = JSON.stringify({ [config.payloadKey]: config.pendingId });
+              requestInit.body = JSON.stringify({
+                [config.payloadKey]: config.pendingId,
+              });
             }
           }
 
           const signedFetch = window.signedFetch || window.fetch;
           const response = await signedFetch(resolveApiUrl(resolvedEndpoint), {
             ...requestInit,
-            credentials: "include"
+            credentials: "include",
           });
 
           if (response.ok) {
@@ -214,7 +241,9 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
   };
 
   const initDialogBackdropClose = () => {
-    const dialogs = Array.from(document.querySelectorAll("dialog[data-modal-root]"));
+    const dialogs = Array.from(
+      document.querySelectorAll("dialog[data-modal-root]"),
+    );
 
     dialogs.forEach((dialog) => {
       if (dialog.dataset.modalBound === "true") return;

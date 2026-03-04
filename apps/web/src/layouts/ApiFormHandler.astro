@@ -3,13 +3,14 @@
 const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
 ---
 
-<script is:inline>
-  const API_BASE_URL = {JSON.stringify(apiBaseUrl)};
+<script define:vars={{ apiBaseUrl }}>
+  const API_BASE_URL = apiBaseUrl;
 
   const resolveApiUrl = (input) => {
     if (!input || typeof input !== "string") return input;
     if (!API_BASE_URL) return input;
-    if (input.startsWith("http://") || input.startsWith("https://")) return input;
+    if (input.startsWith("http://") || input.startsWith("https://"))
+      return input;
 
     const base = API_BASE_URL.replace(/\/+$/, "");
     if (input.startsWith("/")) return `${base}${input}`;
@@ -56,7 +57,7 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
       if (window.crypto?.subtle) {
         const digest = await window.crypto.subtle.digest(
           "SHA-256",
-          new TextEncoder().encode(bodyString)
+          new TextEncoder().encode(bodyString),
         );
         const hash = Array.from(new Uint8Array(digest))
           .map((b) => b.toString(16).padStart(2, "0"))

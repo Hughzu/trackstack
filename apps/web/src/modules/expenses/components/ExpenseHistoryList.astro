@@ -14,7 +14,7 @@ interface Props {
   }[];
 }
 
-const { history } = Astro.props;
+const history = Astro.props.history ?? [];
 
 const formatCategory = (category: string) => {
   if (category === "fun") return "Fun";
@@ -36,7 +36,11 @@ const formatDateLabel = (dateValue: string) => {
     today.getMonth(),
     today.getDate(),
   );
-  const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const startDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
   const diffDays = Math.round(
     (startToday.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
   );

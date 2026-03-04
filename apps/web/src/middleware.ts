@@ -44,7 +44,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   const rawToken = context.cookies.get(authConfig.cookie.name)?.value;
   const { userAgent, ipPrefix } = getClientContext(context.request);
 
-  let authContext: { userId?: string; sessionId?: string } = {};
+  let authContext: { userId?: string; sessionId?: string; rawToken?: string } = {};
 
   if (rawToken) {
     const tokenId = hashToken(rawToken);
@@ -52,7 +52,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
     if (session) {
       const evaluation = evaluateSession(session);
       if (evaluation.valid) {
-        authContext = { userId: session.userId, sessionId: session.id };
+        authContext = { userId: session.userId, sessionId: session.id, rawToken };
 
         if (evaluation.needsRotation) {
           const rotated = await rotateSession(session, { userAgent, ipPrefix });
@@ -60,6 +60,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
           const cookieOptions = getCookieOptions(now, rotated.expiresAt);
           context.cookies.set(authConfig.cookie.name, rotated.rawToken, cookieOptions);
           authContext.sessionId = rotated.sessionId;
+          authContext.rawToken = rotated.rawToken;
         } else if (evaluation.needsTouch) {
           await touchSession(session);
         }

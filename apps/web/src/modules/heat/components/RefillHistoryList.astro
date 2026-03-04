@@ -9,9 +9,10 @@ interface Props {
   history: Refill[];
 }
 
-const { history } = Astro.props;
+const history = Astro.props.history ?? [];
 
-const formatDate = (date: Date) => {
+const formatDate = (dateInput: Date | string) => {
+  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 ---
