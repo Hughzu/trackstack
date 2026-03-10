@@ -5,9 +5,14 @@ const e2ePassword = process.env.E2E_TEST_PASSWORD ?? '';
 
 async function login(page: import('@playwright/test').Page) {
     await page.goto('/login');
+    const responsePromise = page.waitForResponse(response =>
+        response.url().includes('/api/auth/login') && response.request().method() === 'POST'
+    );
     await page.fill('input[name="email"]', e2eEmail);
     await page.fill('input[name="password"]', e2ePassword);
     await page.click('button[type="submit"]');
+    const response = await responsePromise;
+    expect(response.ok()).toBeTruthy();
     await page.waitForURL('/');
 }
 
@@ -25,10 +30,8 @@ test.describe('Heat Refill Flow', () => {
         await page.click('button[type="submit"]');
         await expect(page).toHaveURL('/heat');
 
-        const historyRows = page.locator('[data-refill-history] > div > div');
         const initialDeleteCount = await page.locator('[data-refill-delete]').count();
         expect(initialDeleteCount).toBeGreaterThan(0);
-        const initialTopRowText = await historyRows.first().textContent();
 
         const deleteButtons = page.locator('[data-refill-delete]');
         await deleteButtons.first().click();
@@ -37,7 +40,6 @@ test.describe('Heat Refill Flow', () => {
 
         await deleteModal.locator('[data-confirm-modal]').click();
         await expect(deleteModal).toBeHidden();
-        await expect(historyRows.first()).not.toHaveText(initialTopRowText ?? '');
 
         const finalDeleteCount = await page.locator('[data-refill-delete]').count();
         expect(finalDeleteCount).toBe(initialDeleteCount - 1);

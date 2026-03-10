@@ -1,9 +1,7 @@
 import type { MiddlewareHandler } from "astro";
-import { authDb } from "@/server/auth/db";
 import { authConfig } from "@/server/auth/config";
-import { getClientContext } from "@/server/auth/client";
-import { evaluateSession, getCookieOptions, hashToken, rotateSession, touchSession } from "@/server/auth/session";
 import { runWithAuthContext } from "@/server/auth/currentUser";
+import { verifySession } from "@/server/auth/verifySession";
 
 const isAllowedApiPath = (pathname: string) => {
   if (pathname === "/api/health") return true;
@@ -42,28 +40,20 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   }
 
   const rawToken = context.cookies.get(authConfig.cookie.name)?.value;
-  const { userAgent, ipPrefix } = getClientContext(context.request);
 
   let authContext: { userId?: string; sessionId?: string; rawToken?: string } = {};
 
   if (rawToken) {
-    const tokenId = hashToken(rawToken);
-    const session = await authDb.findSessionById(tokenId);
-    if (session) {
-      const evaluation = evaluateSession(session);
-      if (evaluation.valid) {
-        authContext = { userId: session.userId, sessionId: session.id, rawToken };
+    const verification = await verifySession(rawToken);
+    if (verification.authenticated) {
+      authContext = {
+        userId: verification.userId,
+        sessionId: verification.sessionId,
+        rawToken: verification.rawToken,
+      };
 
-        if (evaluation.needsRotation) {
-          const rotated = await rotateSession(session, { userAgent, ipPrefix });
-          const now = new Date();
-          const cookieOptions = getCookieOptions(now, rotated.expiresAt);
-          context.cookies.set(authConfig.cookie.name, rotated.rawToken, cookieOptions);
-          authContext.sessionId = rotated.sessionId;
-          authContext.rawToken = rotated.rawToken;
-        } else if (evaluation.needsTouch) {
-          await touchSession(session);
-        }
+      for (const cookieHeader of verification.setCookieHeaders) {
+        context.response.headers.append("set-cookie", cookieHeader);
       }
     }
   }

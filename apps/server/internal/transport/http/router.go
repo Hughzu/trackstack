@@ -58,6 +58,7 @@ func NewRouter(handlers Handlers, corsAllowedOrigin string) http.Handler {
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/login", handlers.Auth.Login)
 		r.Post("/logout", handlers.Auth.Logout)
+		r.Get("/session", handlers.Auth.Session)
 	})
 
 	r.Get("/api/dashboard", handlers.Dashboard.GetDashboard)

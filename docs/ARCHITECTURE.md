@@ -41,16 +41,16 @@ Turso connections used by Astro auth and supporting server logic (values are SSM
 - `TURSO_USERS_TOKEN`
 
 Auth cookies:
-- `AUTH_COOKIE_NAME` (default `session`)
+- `AUTH_COOKIE_NAME` (default `trackstack_session`)
 - `AUTH_COOKIE_SECURE` (default `true` in prod)
 - `AUTH_COOKIE_SAMESITE` (default `lax`)
 
 Auth session timing:
-- `AUTH_SESSION_IDLE_SECONDS`
-- `AUTH_SESSION_ABSOLUTE_SECONDS`
-- `AUTH_SESSION_ROTATE_AFTER_SECONDS`
-- `AUTH_SESSION_ROTATION_GRACE_SECONDS`
-- `AUTH_SESSION_TOUCH_SECONDS`
+- `AUTH_SESSION_IDLE_SECONDS` (default `1800`)
+- `AUTH_SESSION_ABSOLUTE_SECONDS` (default `86400`)
+- `AUTH_SESSION_ROTATE_AFTER_SECONDS` (default `1800`)
+- `AUTH_SESSION_ROTATION_GRACE_SECONDS` (default `300`)
+- `AUTH_SESSION_TOUCH_SECONDS` (default `300`)
 
 Runtime SSM prefix (serverless):
 - `/trackstack/serverless/runtime/*` (set via `infra/environments/serverless/01-set-runtime-ssm.sh`)
@@ -69,7 +69,14 @@ The Go backend reads its own runtime config from `apps/server/internal/core/conf
 - `AUTH_COOKIE_NAME`
 - `AUTH_COOKIE_SECURE`
 - `AUTH_COOKIE_SAMESITE`
+- `AUTH_SESSION_IDLE_SECONDS`
+- `AUTH_SESSION_ABSOLUTE_SECONDS`
+- `AUTH_SESSION_ROTATE_AFTER_SECONDS`
+- `AUTH_SESSION_ROTATION_GRACE_SECONDS`
+- `AUTH_SESSION_TOUCH_SECONDS`
 - domain-specific Turso connection values for auth, users, calories, expenses, and heat
+
+Astro reads the same auth env keys from `apps/web/src/server/auth/config.ts`, and its defaults are intentionally kept in lockstep with the Go runtime.
 
 ### CI/CD (deploy workflow)
 

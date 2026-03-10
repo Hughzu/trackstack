@@ -5,9 +5,14 @@ const e2ePassword = process.env.E2E_TEST_PASSWORD ?? '';
 
 async function login(page: import('@playwright/test').Page) {
     await page.goto('/login');
+    const responsePromise = page.waitForResponse(response =>
+        response.url().includes('/api/auth/login') && response.request().method() === 'POST'
+    );
     await page.fill('input[name="email"]', e2eEmail);
     await page.fill('input[name="password"]', e2ePassword);
     await page.click('button[type="submit"]');
+    const response = await responsePromise;
+    expect(response.ok()).toBeTruthy();
     await page.waitForURL('/');
 }
 

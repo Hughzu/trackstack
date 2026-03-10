@@ -18,6 +18,11 @@ type AuthHandler struct {
 	cookieSameSiteRaw string
 }
 
+type authSessionResponse struct {
+	UserID    string `json:"userId"`
+	SessionID string `json:"sessionId"`
+}
+
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	isJSON := strings.Contains(r.Header.Get("Content-Type"), "application/json")
 
@@ -124,6 +129,50 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AuthHandler) Session(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie(h.cookieName)
+	if err != nil || cookie == nil || strings.TrimSpace(cookie.Value) == "" {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: "Unauthorized"})
+		return
+	}
+
+	result, err := h.authService.Authenticate(r.Context(), auth.AuthenticateRequest{
+		RawToken: cookie.Value,
+		Context:  getClientContext(r),
+	})
+	if err != nil {
+		if errors.Is(err, auth.ErrUnauthorized) {
+			writeJSON(w, http.StatusUnauthorized, errorResponse{Error: "Unauthorized"})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "Server Error"})
+		return
+	}
+
+	if result.ReplacementRaw != nil && result.CookieExpires != nil {
+		now := time.Now().UTC()
+		maxAge := int(result.CookieExpires.Sub(now).Seconds())
+		if maxAge < 0 {
+			maxAge = 0
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     h.cookieName,
+			Value:    *result.ReplacementRaw,
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   h.cookieSecure,
+			SameSite: parseSameSite(h.cookieSameSiteRaw),
+			MaxAge:   maxAge,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, authSessionResponse{
+		UserID:    result.UserID,
+		SessionID: result.SessionID,
+	})
 }
 
 type authPayload struct {

@@ -110,3 +110,9 @@ When a regression is found in the frontend/backend boundary:
   - rerun `pnpm test:e2e`; it reseeds the test credentials each run.
 - If Go tools are missing in container runs:
   - execute the command through the `go-backend` service.
+## Auth Boundary
+
+- `apps/web/src/pages/api/auth/login.ts` and `apps/web/src/pages/api/auth/logout.ts` are thin Astro adapters that proxy directly to the Go auth endpoints and forward `Set-Cookie` / redirect headers back to the browser.
+- `apps/web/src/middleware.ts` now verifies page-request sessions through `GET /api/auth/session`, so session validation and rotation semantics come from Go as well.
+- Cookie names and session timing defaults are aligned between `apps/web` and `apps/server`; if you change one, update both configs together.
+- Playwright login helpers now explicitly assert that `/api/auth/login` succeeds before continuing into module tests.
