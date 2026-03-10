@@ -69,10 +69,11 @@
 ### Authentication & Middleware
 *The problem: We need a secure, custom session system that protects both API routes and server-rendered pages without constantly prop-drilling a `userId` through every UI component and business logic function.*
 
-- **How it works (`middleware.ts` & `session.ts`):** 
+- **How it works (`middleware.ts`):**
   - `apps/web/src/middleware.ts` is the bouncer. It intercepts every request. If you hit an API route without a session, it returns a 401. If you hit a Page, it redirects to `/login`.
-  - It handles session security transparently: validating the cookie, updating the "last seen" time (touch), or rotating the cookie if it's getting old, using the logic defined in `session.ts` and the `users` Turso database.
+  - Session validation for page requests is now delegated to the Go backend through `GET /api/auth/session`. If Go rotates the session, Astro forwards the returned `Set-Cookie` header back to the browser.
 - **How it works (`currentUser.ts`):** To solve the prop-drilling problem, the middleware wraps the entire request lifecycle inside Node.js `AsyncLocalStorage`.
-- **Current split:** Login and session bootstrap still happen in Astro, while migrated business routes call the Go backend with the same session cookie.
+- **How it works (`login.ts` / `logout.ts`):** `apps/web/src/pages/api/auth/login.ts` and `apps/web/src/pages/api/auth/logout.ts` are thin adapters that proxy directly to the Go auth endpoints.
+- **Current split:** Go is the source of truth for login, logout, and session verification. Astro still owns request-local auth context for SSR through `AsyncLocalStorage`.
 - **Rule [AsyncLocalStorage]:** Do NOT pass `userId` as arguments to functions if the action is being performed by the currently logged-in user. 
 - **Usage:** Deep inside any backend logic, securely grab the context: `import { getCurrentUserId } from "@/server/auth/currentUser"; const userId = getCurrentUserId();`
