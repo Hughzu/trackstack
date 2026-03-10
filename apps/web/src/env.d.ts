@@ -10,6 +10,8 @@ interface ImportMetaEnv {
     readonly TURSO_HEAT_TOKEN?: string;
     readonly TURSO_USERS_URL?: string;
     readonly TURSO_USERS_TOKEN?: string;
+    readonly E2E_TEST_EMAIL?: string;
+    readonly E2E_TEST_PASSWORD?: string;
     readonly TURSO_NBA_URL?: string;
     readonly TURSO_NBA_TOKEN?: string;
 }

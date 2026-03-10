@@ -9,7 +9,7 @@
     "astro": "astro",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed:e2e-user": "node --env-file=.env ./scripts/seed-user.mjs --email \"test@test.be\" --password \"Test123*\"",
+    "seed:e2e-user": "node --env-file=.env ./scripts/seed-user.mjs",
     "test:e2e": "pnpm seed:e2e-user && playwright test"
   },
   "dependencies": {

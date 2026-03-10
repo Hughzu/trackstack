@@ -128,6 +128,8 @@ The seed script creates a single email/password user in the `users` database.
 node apps/web/scripts/seed-user.mjs --email you@example.com --password yourpass
 ```
 
+For e2e runs, the script can also read `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` from `apps/web/.env`.
+
 Database target precedence:
 
 1) `TURSO_USERS_URL` + `TURSO_USERS_TOKEN` for remote Turso

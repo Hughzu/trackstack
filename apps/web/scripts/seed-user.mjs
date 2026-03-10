@@ -44,11 +44,12 @@ const resolveDbToken = () => {
 };
 
 const main = async () => {
-  const email = readArg("email");
-  const password = readArg("password");
+  const email = readArg("email") ?? process.env.E2E_TEST_EMAIL;
+  const password = readArg("password") ?? process.env.E2E_TEST_PASSWORD;
 
   if (!email || !password) {
     console.error("Usage: node apps/web/scripts/seed-user.mjs --email you@example.com --password yourpass");
+    console.error("Or set E2E_TEST_EMAIL and E2E_TEST_PASSWORD in the environment.");
     process.exit(1);
   }
 

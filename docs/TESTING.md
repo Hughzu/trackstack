@@ -34,7 +34,7 @@ cd apps/web
 pnpm test:e2e
 ```
 
-`pnpm test:e2e` seeds the configured users database before running browser flows. It expects `apps/web/.env` to provide `TURSO_USERS_URL` and, for remote Turso, `TURSO_USERS_TOKEN`.
+`pnpm test:e2e` seeds the configured users database before running browser flows. It expects `apps/web/.env` to provide `TURSO_USERS_URL`, `E2E_TEST_EMAIL`, and `E2E_TEST_PASSWORD`, plus `TURSO_USERS_TOKEN` for remote Turso.
 
 ## Compose Regression Workflow
 
@@ -90,7 +90,7 @@ When a regression is found in the frontend/backend boundary:
 - If frontend container fails after changing dependencies:
   - recreate the `web_node_modules` volume.
 - If `pnpm test:e2e` fails before the browser starts:
-  - verify `apps/web/.env` contains a valid `TURSO_USERS_URL`.
+  - verify `apps/web/.env` contains valid `TURSO_USERS_URL`, `E2E_TEST_EMAIL`, and `E2E_TEST_PASSWORD` values.
 - If login e2e fails unexpectedly:
   - rerun `pnpm test:e2e`; it reseeds the test credentials each run.
 - If Go tools are missing in container runs:

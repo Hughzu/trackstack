@@ -1,11 +1,14 @@
 import { test, expect } from '@playwright/test';
 
+const e2eEmail = process.env.E2E_TEST_EMAIL ?? '';
+const e2ePassword = process.env.E2E_TEST_PASSWORD ?? '';
+
 test.describe('Expenses Logging Flow', () => {
     test('User can submit a new expense entry', async ({ page }) => {
         // 0. Log in as the seeded user
         await page.goto('/login');
-        await page.fill('input[name="email"]', 'test@test.be');
-        await page.fill('input[name="password"]', 'Test123*');
+        await page.fill('input[name="email"]', e2eEmail);
+        await page.fill('input[name="password"]', e2ePassword);
         await page.click('button[type="submit"]');
         await page.waitForURL('/');
 
