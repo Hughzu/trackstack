@@ -3,15 +3,12 @@ package httptransport_test
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/auth"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/calories"
@@ -21,50 +18,6 @@ import (
 	httptransport "github.com/Hughzu/trackstack/apps/server/internal/transport/http"
 	"github.com/go-chi/chi/v5"
 )
-
-const validSessionToken = "valid-token"
-
-func hashSessionToken(value string) string {
-	hash := sha256.Sum256([]byte(value))
-	return hex.EncodeToString(hash[:])
-}
-
-// mockAuthStore satisfies auth.SessionStore for testing
-type mockAuthStore struct{}
-
-func (m *mockAuthStore) FindSessionByID(ctx context.Context, id string) (auth.Session, error) {
-	if id == hashSessionToken(validSessionToken) {
-		now := time.Now().UTC()
-		return auth.Session{
-			UserID:            "test-user",
-			ID:                id,
-			ExpiresAt:         now.Add(24 * time.Hour).Format(time.RFC3339),
-			AbsoluteExpiresAt: now.Add(48 * time.Hour).Format(time.RFC3339),
-			RotatedAt:         now.Format(time.RFC3339),
-			LastSeenAt:        now.Format(time.RFC3339),
-		}, nil
-	}
-	return auth.Session{}, auth.ErrUnauthorized
-}
-func (m *mockAuthStore) InsertSession(ctx context.Context, session auth.Session) error { return nil }
-func (m *mockAuthStore) TouchSession(ctx context.Context, id string, lastSeenAt string, expiresAt string) error {
-	return nil
-}
-func (m *mockAuthStore) RotateOutSession(ctx context.Context, id string, revokedAt string, expiresAt string, rotatedAt string) error {
-	return nil
-}
-func (m *mockAuthStore) RevokeSession(ctx context.Context, id string, revokedAt string) error {
-	return nil
-}
-
-type mockUsersStore struct{}
-
-func (m *mockUsersStore) FindByEmail(ctx context.Context, email string) (users.User, error) {
-	return users.User{}, nil
-}
-func (m *mockUsersStore) UpdateLastLogin(ctx context.Context, userID string, lastLoginAt string) error {
-	return nil
-}
 
 // mockCaloriesStore satisfies calories.Store
 type mockCaloriesStore struct {
@@ -98,16 +51,8 @@ func (m *mockCaloriesStore) GetRecentLogs(ctx context.Context, userID string, li
 }
 
 func setupTestRouter(cStore *mockCaloriesStore) *chi.Mux {
-	cfg := auth.Config{
-		SessionAbsoluteSeconds:      86400,
-		SessionIdleSeconds:          3600,
-		SessionRotateAfterSeconds:   1800,
-		SessionRotationGraceSeconds: 30,
-		SessionTouchSeconds:         60,
-	}
-
-	authService := auth.NewService(&mockAuthStore{}, cfg)
-	usersService := users.NewService(&mockUsersStore{})
+	authService := auth.NewService(&testAuthStore{}, testAuthConfig())
+	usersService := users.NewService(&testUsersStore{})
 	calService := calories.NewService(cStore)
 
 	handlers := httptransport.NewHandlers(httptransport.Deps{
@@ -116,7 +61,7 @@ func setupTestRouter(cStore *mockCaloriesStore) *chi.Mux {
 		CaloriesService:    calService,
 		HeatService:        &heat.Service{},
 		ExpensesService:    &expenses.Service{},
-		AuthCookieName:     "session",
+		AuthCookieName:     testCookieName,
 		AuthCookieSecure:   false,
 		AuthCookieSameSite: "lax",
 	})
@@ -137,7 +82,7 @@ func TestCaloriesAddLogAPI_JSON(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/api/calories/log", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	req.AddCookie(&http.Cookie{Name: "session", Value: validSessionToken})
+	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
 
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
@@ -161,7 +106,7 @@ func TestCaloriesAddLogAPI_Form(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/api/calories/log", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.AddCookie(&http.Cookie{Name: "session", Value: validSessionToken})
+	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
 
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)

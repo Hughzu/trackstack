@@ -108,6 +108,15 @@ describe('SigV4 Form Attributes', () => {
         'data-redirect="/heat"',
       ],
     },
+    {
+      name: 'heat delete modal uses heat delete endpoint',
+      path: 'modules/heat/components/RefillDeleteModal.astro',
+      expects: [
+        'endpoint="/api/heat/refills"',
+        'method="DELETE"',
+        'data-refill-delete',
+      ],
+    },
   ];
 
   cases.forEach(({ name, path, expects }) => {

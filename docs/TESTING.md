@@ -76,6 +76,12 @@ This is the default local loop after changing Astro API routes, Go handlers, or 
   - Assert `POST /api/expenses/expense` succeeds
   - Assert redirect to `/expenses`
 
+- `apps/web/tests/e2e/heat.spec.ts`
+  - Login through Astro
+  - Create a refill
+  - Delete a refill from the heat history list
+  - Assert `DELETE /api/heat/refills` succeeds and the list shrinks
+
 ## Adding Regression Tests
 
 When a regression is found in the frontend/backend boundary:
@@ -89,6 +95,8 @@ When a regression is found in the frontend/backend boundary:
 
 - If frontend container fails after changing dependencies:
   - recreate the `web_node_modules` volume.
+- If the homepage or any server-rendered page throws `fetch failed` in Docker:
+  - rebuild `go-backend` after any `apps/server/go.mod` or Go runtime image change so the running container is not stuck on an older toolchain image.
 - If `pnpm test:e2e` fails before the browser starts:
   - verify `apps/web/.env` contains valid `TURSO_USERS_URL`, `E2E_TEST_EMAIL`, and `E2E_TEST_PASSWORD` values.
 - If login e2e fails unexpectedly:

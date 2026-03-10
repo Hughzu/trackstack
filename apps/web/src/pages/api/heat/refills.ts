@@ -1,30 +1,26 @@
 import type { APIRoute } from 'astro';
-import { heatService } from '@/modules/heat/services/heatService';
-import { getCurrentUserId } from '@/server/auth/currentUser';
+import { fetchApi } from '@/server/auth/fetchApi';
+import { withErrorParam } from '@/server/http/redirects';
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
-  try {
-    const contentType = request.headers.get('content-type') ?? '';
-    if (!contentType.includes('application/json')) {
-      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+  const contentType = request.headers.get('content-type') ?? '';
+  const isJson = contentType.includes('application/json');
+  const parseOptionalNumber = (value: unknown) => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
     }
+    return undefined;
+  };
 
-    let data: {
-      date?: string;
-      weightKg?: number | string;
-      bags?: number | string;
-      temperature?: number | string;
-    } = {};
-
+  let bodyData;
+  if (isJson) {
+    let payload;
     try {
-      data = await request.json();
+      payload = await request.json();
     } catch {
       return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
         status: 400,
@@ -33,34 +29,50 @@ export const POST: APIRoute = async ({ request }) => {
         }
       });
     }
+    bodyData = {
+      date: typeof payload?.date === 'string' ? payload.date : undefined,
+      weightKg: parseOptionalNumber(payload?.weightKg),
+      bags: parseOptionalNumber(payload?.bags),
+      temperature: parseOptionalNumber(payload?.temperature),
+    };
+  } else {
+    const form = await request.formData();
+    bodyData = {
+      date: typeof form.get('date') === 'string' ? form.get('date') : undefined,
+      weightKg: parseOptionalNumber(form.get('weightKg')),
+      bags: parseOptionalNumber(form.get('bags')),
+      temperature: parseOptionalNumber(form.get('temperature')),
+    };
+  }
 
-    // Basic validation
-    if (!data.date || !data.weightKg || !data.bags) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-    }
-
-    const newRefill = await heatService.addRefill({
-      userId: getCurrentUserId(),
-      date: new Date(data.date),
-      weightKg: Number(data.weightKg),
-      bags: Number(data.bags),
-      temperature: data.temperature ? Number(data.temperature) : undefined
+  try {
+    const refill = await fetchApi('/heat/refills', {
+      method: 'POST',
+      body: JSON.stringify(bodyData),
     });
 
-    return new Response(JSON.stringify(newRefill), {
+    if (!isJson) {
+      return new Response(null, { status: 303, headers: { Location: '/heat' } });
+    }
+
+    return new Response(JSON.stringify(refill), {
       status: 201,
       headers: {
         'Content-Type': 'application/json'
       }
     });
-  } catch (e) {
-    console.error(e);
-    return new Response(JSON.stringify({ error: 'Server Error' }), { status: 500 });
+  } catch (error: any) {
+    console.error('Failed to proxy heat POST:', error);
+    if (!isJson) {
+      const fallback = request.headers.get('referer') ?? '/heat/new';
+      return new Response(null, { status: 303, headers: { Location: withErrorParam(request.url, fallback) } });
+    }
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 400,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
   }
 };
 
@@ -88,21 +100,12 @@ export const DELETE: APIRoute = async ({ request }) => {
       });
     }
 
-    const deleted = await heatService.deleteRefill(id, getCurrentUserId());
-    if (!deleted) {
-      return new Response(JSON.stringify({ error: 'Refill not found' }), {
-        status: 404,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-    }
-
+    await fetchApi(`/heat/refills?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
     return new Response(null, { status: 204 });
-  } catch (error) {
-    console.error("Error in DELETE /api/heat/refills:", error);
+  } catch (error: any) {
+    console.error('Failed to proxy heat DELETE:', error);
     return new Response(JSON.stringify({ error: 'Server Error' }), {
-      status: 500,
+      status: 400,
       headers: {
         'Content-Type': 'application/json'
       }
