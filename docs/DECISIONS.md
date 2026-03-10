@@ -27,3 +27,5 @@ Update guidelines:
 2026-03-10 — Use Astro as the frontend/auth adapter and Go as the business API runtime during the migration so browser contracts stay stable while domains move to Go incrementally.
 2026-03-10 — Protect the Astro -> Go boundary with layered regression checks: Go transport tests, frontend form contract tests, and Playwright browser flows.
 2026-03-10 — Make Go the source of truth for auth login, logout, and session verification while Astro keeps request-local auth context for SSR during the migration.
+2026-03-10 — Keep Go as an in-process modular monolith first; only introduce `cmd/lambda` or domain-scoped services when deployment shape requires them.
+2026-03-10 — Treat consumer-owned ports and outbound adapters as the cross-domain rule so future service extraction does not change module boundaries.

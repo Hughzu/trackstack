@@ -25,6 +25,7 @@
 - **Role:** Domain-specific logic and queries.
 - **Rule:** Keep domains isolated (e.g., Calories cannot query Expenses directly).
 - **Rule:** New mutation logic should prefer the Go backend unless there is a documented reason to keep it in Astro.
+- **Rule:** As domains migrate, Astro modules should become view-model helpers and page data loaders, not the source of mutation rules.
 
 ### 4. `src/server/` (Core Services)
 - **Role:** Global services (`auth`, `db`).
@@ -65,6 +66,8 @@
 - **How it works (`sqlite.ts`):** `apps/web/src/server/db/sqlite.ts` manages client instantiation and caching. If the environment variable starts with `/trackstack/` (which happens in production Terraform), the script uses the AWS SDK to pull the *real* values from SSM seamlessly.
 - **Rule [No Raw Clients]:** NEVER instantiate a LibSQL client directly. Rely on `sqlite.ts` to orchestrate credential resolution.
 - **Usage:** `import { getDb } from "@/server/db/sqlite"; const db = getDb("expenses");`
+- **Rule [Frontend DB Boundary]:** Astro application runtime should not read or write domain databases directly. Page data, auth verification, and mutations should go through Go endpoints.
+- **Allowed exceptions:** local tooling and migration support scripts may still talk to Turso directly (for example seeding or one-off maintenance), but that is not part of the app request path.
 
 ### Authentication & Middleware
 *The problem: We need a secure, custom session system that protects both API routes and server-rendered pages without constantly prop-drilling a `userId` through every UI component and business logic function.*
@@ -77,3 +80,10 @@
 - **Current split:** Go is the source of truth for login, logout, and session verification. Astro still owns request-local auth context for SSR through `AsyncLocalStorage`.
 - **Rule [AsyncLocalStorage]:** Do NOT pass `userId` as arguments to functions if the action is being performed by the currently logged-in user. 
 - **Usage:** Deep inside any backend logic, securely grab the context: `import { getCurrentUserId } from "@/server/auth/currentUser"; const userId = getCurrentUserId();`
+
+### Go Backend Boundary
+
+- **Role:** `apps/server/internal/modules/**` owns domain rules, DTOs, and persistence contracts.
+- **Rule:** New domain behavior should be added in Go first; Astro adapters should only normalize browser input, forward auth cookies, and map redirects/errors.
+- **Rule:** Transport code in Go stays thin: parse request, call service, map status/error, serialize JSON.
+- **Rule:** When changing a Go endpoint contract, update the Astro adapter, transport tests, and e2e coverage together.

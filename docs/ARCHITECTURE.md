@@ -26,6 +26,84 @@ Key points:
 - Migrated business routes are served by the Go runtime; remaining domain routes still live in Astro until each slice is moved.
 - CloudFront adds origin verification headers and the Lambda entrypoints remain private behind CloudFront.
 
+## Go Backend Shape
+
+The Go backend is the long-term source of truth for domain logic and API contracts.
+
+Current implemented layout in `apps/server/`:
+
+```text
+apps/server/
+├── cmd/
+│   └── server/              # HTTP server entrypoint used in local/container runs
+├── internal/
+│   ├── core/                # config, db, logging
+│   ├── modules/             # domain logic, DTOs, ports, db adapters
+│   ├── transport/
+│   │   └── http/            # router, middleware, handlers, OpenAPI
+│   └── wiring/              # composition helpers per domain
+```
+
+Target expansion path for later phases:
+
+- `cmd/lambda/` for the serverless production entrypoint
+- `cmd/service/<domain>/` only if domains are extracted into separate services
+
+### Backend Principles
+
+- Hexagonal architecture: domain logic lives in `internal/modules/**`; transport and runtime wiring stay outside modules.
+- Stateless compute: runtime state lives in Turso; no local-disk dependency is part of the design contract.
+- Transport isolation: HTTP, Lambda, and any future service transport must reuse the same module services.
+- Environment-driven database mode: Turso DSNs are selected from config so the same backend can run in local/container and serverless environments.
+
+### Module Contract
+
+Each domain module follows the same shape:
+
+```text
+internal/modules/<domain>/
+├── ports.go
+├── types.go
+├── service.go
+└── adapters/
+    └── db/
+```
+
+Hard boundaries:
+
+- Modules do not import transport or AWS packages.
+- Transport depends on modules, never the reverse.
+- DB adapters implement module ports.
+- Cross-domain access should go through ports owned by the consuming module.
+- If domains are split later, outbound adapters live with the consumer and inbound transport adapters live with the provider.
+
+### Transport Contract
+
+The current Go transport is JSON-over-HTTP under `/api/*`.
+
+- Router: `apps/server/internal/transport/http/router.go`
+- OpenAPI: `GET /openapi.yaml`
+- Auth middleware: cookie-based session auth in `apps/server/internal/transport/http/middleware_auth.go`
+- Response helpers: `apps/server/internal/transport/http/response.go`
+
+Current error contract is intentionally simple:
+
+- HTTP status carries the main classification
+- JSON errors use `{ "error": "..." }`
+
+If a richer typed API error contract is introduced later, update this doc and the transport tests together.
+
+### Auth Contract
+
+Go is now the source of truth for:
+
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/session`
+- authenticated API access under `/api/*`
+
+Astro still owns request-local SSR auth context, but page-session verification now delegates to Go.
+
 ## Environment Variables
 
 ### Frontend runtime (Astro Lambda)
@@ -36,7 +114,7 @@ Origin verification:
 - `ORIGIN_VERIFY_HEADER` (default: `X-Origin-Verify`)
 - `ORIGIN_VERIFY_VALUE` (random secret stored in SSM)
 
-Turso connections used by Astro auth and supporting server logic (values are SSM parameter paths, resolved at runtime by `apps/web/src/server/db/sqlite.ts`):
+Turso connections are still available to Astro tooling/helpers through `apps/web/src/server/db/sqlite.ts`, but application request handling should prefer Go-owned APIs over direct DB access:
 - `TURSO_USERS_URL`
 - `TURSO_USERS_TOKEN`
 

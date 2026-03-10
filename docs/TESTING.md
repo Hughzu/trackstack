@@ -51,6 +51,12 @@ This is the default local loop after changing Astro API routes, Go handlers, or 
 
 ## Current Regression Coverage
 
+- `apps/server/internal/transport/http/auth_test.go`
+  - Login JSON request
+  - Logout JSON request
+  - Session verification request
+  - Assert cookie issuance and auth transport behavior
+
 - `apps/server/internal/transport/http/calories_test.go`
   - Authenticated `POST /api/calories/log` JSON request
   - Authenticated `POST /api/calories/log` form request
@@ -116,3 +122,4 @@ When a regression is found in the frontend/backend boundary:
 - `apps/web/src/middleware.ts` now verifies page-request sessions through `GET /api/auth/session`, so session validation and rotation semantics come from Go as well.
 - Cookie names and session timing defaults are aligned between `apps/web` and `apps/server`; if you change one, update both configs together.
 - Playwright login helpers now explicitly assert that `/api/auth/login` succeeds before continuing into module tests.
+- When auth transport behavior changes, update both Go auth transport tests and at least one browser flow that authenticates through `/api/auth/login`.

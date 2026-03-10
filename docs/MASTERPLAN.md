@@ -1,106 +1,142 @@
-# 🗺️ TrackStack & Platform Engineering: Master Plan v7
+# TrackStack & Platform Engineering: Master Plan
 
-**Date:** 2026-02-20
-**Strategy:** "The Infrastructure Matrix Monorepo"
-**Goal:** Build "TrackStack" (a "Lazy UX" personal tracking app) while showcasing advanced Platform Engineering and SRE skills. The repo demonstrates how a single, well-architected application can be seamlessly deployed across multiple paradigms (Serverless, Containers, Kubernetes) while adhering to FinOps principles.
+Date: 2026-03-10
+Strategy: The Infrastructure Matrix Monorepo
+Goal: Build TrackStack as a product and as a platform engineering portfolio piece, with Astro as the frontend shell and Go as the backend source of truth.
 
----
+## 1. Core Philosophy
 
-## 1. The Core Philosophy
+This repo is a monorepo where application boundaries make multiple deployment targets possible.
 
-This is a Monorepo where the **Application Architecture (Hexagonal)** enables the **Infrastructure Matrix**.
+1. The app is split into an Astro frontend and a Go backend.
+2. The same backend contracts should run across local containers, serverless production, and later lab environments.
+3. Production stays serverless and cost-aware; container and Kubernetes environments remain optional labs with explicit cost controls.
 
-1. **The App:** A modular application written in Go (Backend) and Astro (Frontend).
-2. **The Flex:** The exact same core business logic is packaged into different computing environments to demonstrate mastery of the cloud ecosystem.
-3. **The FinOps Constraint:** The "Production" environment is Serverless ($0/mo scale-to-zero). The other environments (ECS, EKS) are ephemeral "Labs" spun up for weekend testing and automatically destroyed to prevent costs.
+## 2. Current Architecture Direction
 
----
+TrackStack is in a hybrid migration phase.
 
-## 2. Application Architecture: "The Hexagonal Monorepo"
+- Astro owns pages, layouts, browser interaction, and thin API adapters.
+- Go owns business API contracts, domain rules, and transport tests.
+- Auth login, logout, and session verification are now Go-backed.
+- Astro still owns request-local SSR auth context and some migration-era helpers.
 
-To run the same application in AWS Lambda *and* an EKS cluster, the code must be strictly decoupled from the transport layer.
+Target end state:
 
-### Directory Structure
+- Astro becomes the UI shell only.
+- Go becomes the source of truth for all application data access and mutations.
+- Frontend request handling should go through Go endpoints rather than direct database access.
+
+## 3. Repository Shape
 
 ```text
 trackstack/
 ├── apps/
-│   └── server/
-│       ├── cmd/
-│       │   ├── lambda/          # Entrypoint 1: AWS Lambda API Gateway/Function URL adapter
-│       │   └── server/          # Entrypoint 2: Long-running HTTP Server (Chi/Echo) for ECS/EKS
-│       │
-│       ├── internal/
-│       │   ├── core/            # Database connections, Auth, Logger
-│       │   └── modules/         # Pure Business Logic (Calories, Expenses, Heat). No HTTP knowledge here.
-│       │
-│       └── web/                 # Astro Frontend (Builds to static /client and SSR /server)
-│
+│   ├── server/
+│   │   ├── cmd/
+│   │   │   └── server/          # Current HTTP entrypoint for local/container runs
+│   │   └── internal/
+│   │       ├── core/            # config, db, logging
+│   │       ├── modules/         # domain logic, ports, DTOs, db adapters
+│   │       ├── transport/       # HTTP transport, middleware, OpenAPI
+│   │       └── wiring/          # composition helpers per domain
+│   └── web/                     # Astro frontend shell
 ├── infra/
-│   ├── bootstrap/               # One-time account setup (OIDC, state, deploy role)
-│   ├── modules/                 # Shared Terraform modules (lambda-api, static-hosting, cost-guardrails)
+│   ├── bootstrap/
+│   ├── modules/
 │   └── environments/
-│       ├── serverless/          # (PROD) Lambda + CloudFront + S3 ($0 FinOps)
-│       ├── ecs/                 # (LAB) Fargate Spot + ALB
-│       ├── eks/                 # (LAB) Kubernetes
-│       └── k3s/                 # (FUTURE) VPS Deployment
-│
-└── .github/workflows/           # CI/CD and automated Lab destruction
+│       ├── serverless/
+│       ├── ecs/
+│       └── eks/
+└── .github/workflows/
 ```
 
----
+Planned later only when needed:
 
-## 3. The Infrastructure Matrix
+- `apps/server/cmd/lambda/` for the serverless Go entrypoint
+- `apps/server/cmd/service/<domain>/` if domains are split into separate services
 
-This matrix is the core resume piece. It shows the evolution of compute from easiest/cheapest to most complex.
+## 4. Infrastructure Matrix
 
 | Level | Environment | Compute Type | Persistence | Cost Strategy | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **0** | `local` | `docker-compose` | Local SQLite / Turso | Free | Pending |
-| **1** | `serverless` | Lambda + CloudFront + S3 | Turso (HTTP) | **Production:** Scale-to-Zero ($0) | WIP |
-| **2** | `ecs` | Fargate + ALB | Turso (WebSocket) | **Lab:** Ephemeral. Destroyed after use. | Planned |
-| **3** | `eks` | Kubernetes | Turso (WebSocket) | **Lab:** Ephemeral. Destroyed after use. | Planned |
-| **4** | `k3s` | Self-hosted VPS | Turso | **Hacker:** Cheap fixed cost | Backlog |
+| 0 | `local` | `docker-compose` | Turso | Free | Active |
+| 1 | `serverless` | Astro + Go on Lambda/CloudFront/S3 | Turso (HTTP-oriented) | Production scale-to-zero | WIP |
+| 2 | `ecs` | Containers on Fargate | Turso | Ephemeral lab | Planned |
+| 3 | `eks` | Kubernetes | Turso | Ephemeral lab | Planned |
+| 4 | `k3s` | Self-hosted VPS | Turso | Cheap fixed-cost lab | Backlog |
 
-### The Database Strategy (Turso)
-Turso (SQLite at the Edge) is the backbone.
-* **In `serverless`:** Connections use the HTTP API to avoid connection pooling limits on constant cold boots.
-* **In `ecs`/`eks`:** Connections use WebSockets for lower latentcy long-lived connection pools.
-* This difference is handled purely via Environment Variables passed by Terraform.
+Database strategy:
 
----
+- Turso remains the persistence layer for all domains.
+- Runtime selection of HTTP vs WS-style connection settings is environment-driven in Go.
+- Frontend runtime should not be the long-term owner of domain DB access.
 
-## 4. Execution Roadmap
+## 5. Execution Roadmap
 
-### 🏁 Phase 1: The Go Backend & Serverless Prod (Current Focus)
+### Phase 1: Hybrid Astro + Go Migration
 
-* **Goal:** Migrate the existing Astro SSR backend logic into a pure Go backend and deploy it to the $0 Serverless environment.
-* **Tasks:**
-  1. Initialize the `apps/server` Go module.
-  2. Implement the Hexagonal Architecture: `internal/modules/` (business logic) and `cmd/lambda/main.go` (transport).
-  3. Clean up the `infra/environments/serverless` Terraform using modules (`lambda-api`, `static-hosting`, `cost-guardrails`).
-  4. Deploy the hybrid Astro Static + Go Lambda architecture.
+Goal: finish moving the app boundary so Go is the operational backend and Astro is a thin frontend shell.
 
-### 🧪 Phase 2: The Container Lab (ECS Fargate)
+Current progress:
 
-* **Goal:** Prove the code can run in a containerized environment without modification to the business logic.
-* **Tasks:**
-  1. Create `apps/server/cmd/server/main.go` and a `Dockerfile`.
-  2. Write Terraform `infra/modules/network` (VPC) and `infra/environments/ecs`.
-  3. Implement a GitHub Action to deploy the Lab, run tests, and **automatically run `terraform destroy`** to enforce FinOps.
+- Go backend module structure is in place.
+- Local HTTP server entrypoint exists in `apps/server/cmd/server/main.go`.
+- Calories, expenses, heat, dashboard, and auth contracts are actively served by Go.
+- Astro adapters proxy login/logout/session verification and migrated domain mutations to Go.
+- Regression guardrails exist at three layers: Go transport tests, frontend contract tests, and Playwright browser flows.
 
-### ☸️ Phase 3: The Orchestration Lab (EKS)
+Remaining work in this phase:
 
-* **Goal:** Demonstrate Kubernetes proficiency.
-* **Tasks:**
-  1. Write Helm charts or Kubernetes Manifests for the `trackstack` container.
-  2. Write Terraform for `infra/environments/eks`.
-  3. Integrate into the ephemeral Lab destruction CI/CD pipeline.
+1. Remove remaining frontend-side direct DB usage from the application request path.
+2. Add the production Go Lambda entrypoint and complete serverless deployment wiring.
+3. Keep tightening endpoint contracts and regression coverage as refactors land.
+4. Review security, performance, and architecture consistency of the Go backend.
 
----
+### Phase 2: Serverless Production Completion
 
-## 5. Technical Guardrails
+Goal: make the hybrid frontend/backend production deployment clean and durable.
 
-1. **Strict Hexagonal:** `internal/modules` cannot import `net/http` or AWS Lambda SDKs. They receive data, process it, and return data.
-2. **Stateless Compute:** All environments must assume disks are ephemeral. State lives only in Turso or S3.
-3. **FinOps First:** If it's not the `serverless` environment, it must have an automated kill-switch. No surprise AWS bills.
+Tasks:
+
+1. Add `apps/server/cmd/lambda/main.go`.
+2. Finalize Terraform and CI/CD wiring for Astro frontend plus Go backend deployment.
+3. Ensure migrations, runtime config, and rollback posture are documented and repeatable.
+
+### Phase 3: Container Lab (ECS)
+
+Goal: prove the same backend contracts run in containerized compute without changing domain logic.
+
+Tasks:
+
+1. Package the Go backend cleanly for long-running container execution.
+2. Build ECS environment Terraform and deployment workflow.
+3. Add explicit destroy/cleanup automation to preserve FinOps guardrails.
+
+### Phase 4: Orchestration Lab (EKS)
+
+Goal: demonstrate Kubernetes operation with the same backend contracts.
+
+Tasks:
+
+1. Add manifests or Helm packaging.
+2. Build EKS infrastructure and deploy workflow.
+3. Reuse the same application contracts and keep the lab ephemeral.
+
+## 6. Technical Guardrails
+
+1. Strict hexagonal architecture: Go modules do not import transport or cloud runtime packages.
+2. Thin transport adapters: request parsing, auth, error mapping, serialization.
+3. Stateless compute: runtime state lives in Turso or object storage, never local disk.
+4. Frontend/backend boundary tests are mandatory when contracts change.
+5. FinOps first: non-serverless environments must have an explicit cost-control plan.
+
+## 7. Success Criteria
+
+TrackStack is considered structurally successful when:
+
+- Go owns all business API contracts.
+- Astro is primarily a frontend shell and adapter layer.
+- Local and production environments use the same backend contract surface.
+- Regression coverage catches contract breakage before refactors ship.
+- The repo demonstrates both product engineering and platform engineering maturity.
