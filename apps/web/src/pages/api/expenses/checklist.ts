@@ -1,12 +1,13 @@
 import type { APIRoute } from "astro";
-import { expensesService } from "@/modules/expenses/services/expensesService";
-import { getCurrentUserId } from "@/server/auth/currentUser";
+import { fetchApi } from "@/server/auth/fetchApi";
 import { withErrorParam } from "@/server/http/redirects";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const contentType = request.headers.get("content-type") ?? "";
+    const isJson = contentType.includes("application/json");
     let data: {
       id?: string;
       title?: string;
@@ -14,8 +15,6 @@ export const POST: APIRoute = async ({ request }) => {
       category?: string;
     } = {};
 
-    const contentType = request.headers.get("content-type") ?? "";
-    const isJson = contentType.includes("application/json");
     if (isJson) {
       try {
         data = await request.json();
@@ -53,12 +52,16 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const template = await expensesService.upsertChecklistTemplate({
+    const payload = {
       id: data.id,
-      userId: getCurrentUserId(),
       title: data.title.trim(),
       amount: Number(amount),
       category: data.category
+    };
+
+    const template = await fetchApi("/expenses/checklist", {
+      method: "POST",
+      body: JSON.stringify(payload)
     });
 
     if (!isJson) {
@@ -72,9 +75,9 @@ export const POST: APIRoute = async ({ request }) => {
       }
     });
   } catch (error) {
-    console.error("Error in POST /api/expenses/checklist:", error);
+    console.error("Failed to proxy expenses checklist POST:", error);
     return new Response(JSON.stringify({ error: "Server Error" }), {
-      status: 500,
+      status: 400,
       headers: {
         "Content-Type": "application/json"
       }
@@ -106,21 +109,12 @@ export const DELETE: APIRoute = async ({ request }) => {
       });
     }
 
-    const deleted = await expensesService.deleteChecklistTemplate(id, getCurrentUserId());
-    if (!deleted) {
-      return new Response(JSON.stringify({ error: "Template not found" }), {
-        status: 404,
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-    }
-
+    await fetchApi(`/expenses/checklist?id=${encodeURIComponent(id)}`, { method: "DELETE" });
     return new Response(null, { status: 204 });
   } catch (error) {
-    console.error("Error in DELETE /api/expenses/checklist:", error);
+    console.error("Failed to proxy expenses checklist DELETE:", error);
     return new Response(JSON.stringify({ error: "Server Error" }), {
-      status: 500,
+      status: 400,
       headers: {
         "Content-Type": "application/json"
       }

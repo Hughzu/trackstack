@@ -92,8 +92,14 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
             continue;
           }
 
-          const field = form.querySelector(`[name="${CSS.escape(key)}"]`);
-          const isNumberField = field instanceof HTMLInputElement && field.type === "number";
+          const namedField = form.elements.namedItem(key);
+          const field =
+            namedField instanceof RadioNodeList
+              ? namedField[0]
+              : namedField;
+          const isNumberField =
+            field instanceof HTMLInputElement &&
+            (field.type === "number" || field.type === "range");
           if (isNumberField && rawValue.trim() !== "") {
             const numericValue = Number(rawValue);
             payload[key] = Number.isFinite(numericValue) ? numericValue : rawValue;

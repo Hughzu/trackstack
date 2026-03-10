@@ -89,6 +89,15 @@ describe('SigV4 Form Attributes', () => {
       ],
     },
     {
+      name: 'expenses checklist delete modal',
+      path: 'pages/expenses/settings.astro',
+      expects: [
+        'endpoint="/api/expenses/checklist"',
+        'method="DELETE"',
+        'data-checklist-delete',
+      ],
+    },
+    {
       name: 'expenses recurring form',
       path: 'pages/expenses/settings.astro',
       expects: [
@@ -96,6 +105,15 @@ describe('SigV4 Form Attributes', () => {
         'data-api-form',
         'action="/api/expenses/recurring"',
         'method="POST"',
+      ],
+    },
+    {
+      name: 'expenses recurring delete modal',
+      path: 'pages/expenses/settings.astro',
+      expects: [
+        'endpoint="/api/expenses/recurring"',
+        'method="DELETE"',
+        'data-recurring-delete',
       ],
     },
     {

@@ -1,18 +1,13 @@
 import type { APIRoute } from "astro";
-import { expensesService } from "@/modules/expenses/services/expensesService";
-import { getCurrentUserId } from "@/server/auth/currentUser";
+import { fetchApi } from "@/server/auth/fetchApi";
 import { withErrorParam } from "@/server/http/redirects";
 
 export const prerender = false;
 
 export const GET: APIRoute = async () => {
   try {
-    const userId = getCurrentUserId();
-    const settings = await expensesService.getSettings(userId);
-    const checklist = await expensesService.getChecklistTemplates(userId);
-    const recurring = await expensesService.getRecurringTemplates(userId);
-
-    return new Response(JSON.stringify({ settings, checklist, recurring }), {
+    const settings = await fetchApi("/expenses/settings");
+    return new Response(JSON.stringify(settings), {
       status: 200,
       headers: {
         "Content-Type": "application/json"
@@ -31,6 +26,8 @@ export const GET: APIRoute = async () => {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const contentType = request.headers.get("content-type") ?? "";
+    const isJson = contentType.includes("application/json");
     let data: {
       income?: number | string;
       ratioFund?: number | string;
@@ -38,8 +35,6 @@ export const POST: APIRoute = async ({ request }) => {
       ratioFuture?: number | string;
     } = {};
 
-    const contentType = request.headers.get("content-type") ?? "";
-    const isJson = contentType.includes("application/json");
     if (isJson) {
       try {
         data = await request.json();
@@ -72,12 +67,14 @@ export const POST: APIRoute = async ({ request }) => {
       return Number.isFinite(parsed) ? parsed : undefined;
     };
 
-    const income = parseNumber(data.income);
-    const ratioFund = parseNumber(data.ratioFund);
-    const ratioFun = parseNumber(data.ratioFun);
-    const ratioFuture = parseNumber(data.ratioFuture);
+    const payload = {
+      income: parseNumber(data.income),
+      ratioFund: parseNumber(data.ratioFund),
+      ratioFun: parseNumber(data.ratioFun),
+      ratioFuture: parseNumber(data.ratioFuture)
+    };
 
-    if (income === undefined || ratioFund === undefined || ratioFun === undefined || ratioFuture === undefined) {
+    if (payload.income === undefined || payload.ratioFund === undefined || payload.ratioFun === undefined || payload.ratioFuture === undefined) {
       if (!isJson) {
         const fallback = request.headers.get("referer") ?? "/expenses/settings";
         return new Response(null, { status: 303, headers: { Location: withErrorParam(fallback) } });
@@ -90,12 +87,9 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const settings = await expensesService.updateSettings({
-      userId: getCurrentUserId(),
-      income,
-      ratioFund,
-      ratioFun,
-      ratioFuture
+    const settings = await fetchApi("/expenses/settings", {
+      method: "POST",
+      body: JSON.stringify(payload)
     });
 
     if (!isJson) {
@@ -109,9 +103,9 @@ export const POST: APIRoute = async ({ request }) => {
       }
     });
   } catch (error) {
-    console.error("Error in POST /api/expenses/settings:", error);
+    console.error("Failed to proxy expenses settings POST:", error);
     return new Response(JSON.stringify({ error: "Server Error" }), {
-      status: 500,
+      status: 400,
       headers: {
         "Content-Type": "application/json"
       }

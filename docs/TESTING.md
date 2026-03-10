@@ -77,8 +77,11 @@ This is the default local loop after changing Astro API routes, Go handlers, or 
 - `apps/web/tests/e2e/expenses.spec.ts`
   - Login through Astro
   - Submit expense form
+  - Save expense settings
+  - Add monthly checklist template
+  - Add recurring template
   - Assert `POST /api/expenses/expense` succeeds
-  - Assert redirect to `/expenses`
+  - Assert settings and template mutations still work through Astro -> Go
 
 - `apps/web/tests/e2e/heat.spec.ts`
   - Login through Astro
