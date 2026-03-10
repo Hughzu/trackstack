@@ -50,6 +50,15 @@ describe('SigV4 Form Attributes', () => {
       ],
     },
     {
+      name: 'calories delete modal uses log endpoint',
+      path: 'modules/calories/components/DeleteLogModal.astro',
+      expects: [
+        'endpoint="/api/calories/log"',
+        'method="DELETE"',
+        'data-calorie-delete',
+      ],
+    },
+    {
       name: 'expenses/new form',
       path: 'pages/expenses/new.astro',
       expects: [

@@ -119,3 +119,45 @@ func TestCaloriesAddLogAPI_Form(t *testing.T) {
 		t.Fatalf("expected log to be added to store")
 	}
 }
+
+func TestCaloriesUpdateTargetAPI_JSON(t *testing.T) {
+	store := &mockCaloriesStore{}
+	router := setupTestRouter(store)
+
+	payload := map[string]any{
+		"targetKcal":    2400,
+		"targetProtein": 180,
+		"targetCarbs":   220,
+		"targetFat":     70,
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/calories/target", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d: body: %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestCaloriesDeleteLogAPI_Query(t *testing.T) {
+	store := &mockCaloriesStore{}
+	router := setupTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/calories/log?id=log-123", nil)
+	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("expected status 204, got %d: body: %s", rr.Code, rr.Body.String())
+	}
+}

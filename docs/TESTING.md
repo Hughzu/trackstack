@@ -54,6 +54,8 @@ This is the default local loop after changing Astro API routes, Go handlers, or 
 - `apps/server/internal/transport/http/calories_test.go`
   - Authenticated `POST /api/calories/log` JSON request
   - Authenticated `POST /api/calories/log` form request
+  - Authenticated `POST /api/calories/target` JSON request
+  - Authenticated `DELETE /api/calories/log?id=...` request
   - Assert created vs redirect behavior at the HTTP transport boundary
 
 - `apps/server/internal/modules/heat/service_test.go`
@@ -67,8 +69,10 @@ This is the default local loop after changing Astro API routes, Go handlers, or 
 - `apps/web/tests/e2e/calories.spec.ts`
   - Login through Astro
   - Submit calorie form
+  - Update calorie targets
+  - Delete a calorie log
   - Assert `POST /api/calories/log` succeeds
-  - Assert redirect to `/calories`
+  - Assert target updates and delete flow still work through Astro -> Go
 
 - `apps/web/tests/e2e/expenses.spec.ts`
   - Login through Astro

@@ -3,14 +3,17 @@ import { test, expect } from '@playwright/test';
 const e2eEmail = process.env.E2E_TEST_EMAIL ?? '';
 const e2ePassword = process.env.E2E_TEST_PASSWORD ?? '';
 
+async function login(page: import('@playwright/test').Page) {
+    await page.goto('/login');
+    await page.fill('input[name="email"]', e2eEmail);
+    await page.fill('input[name="password"]', e2ePassword);
+    await page.click('button[type="submit"]');
+    await page.waitForURL('/');
+}
+
 test.describe('Calories Logging Flow', () => {
     test('User can submit a new calorie entry', async ({ page }) => {
-        // 0. Log in as the seeded user
-        await page.goto('/login');
-        await page.fill('input[name="email"]', e2eEmail);
-        await page.fill('input[name="password"]', e2ePassword);
-        await page.click('button[type="submit"]');
-        await page.waitForURL('/');
+        await login(page);
 
         // 1. Visit the new calories page
         await page.goto('/calories/new');
@@ -33,5 +36,55 @@ test.describe('Calories Logging Flow', () => {
 
         // 5. Verify the user is redirected to the calories dashboard
         await expect(page).toHaveURL('/calories');
+    });
+
+    test('User can update calorie targets', async ({ page }) => {
+        await login(page);
+
+        await page.goto('/calories/settings');
+        await page.fill('input[name="targetKcal"]', '2600');
+        await page.fill('input[name="targetProtein"]', '190');
+        await page.fill('input[name="targetCarbs"]', '240');
+        await page.fill('input[name="targetFat"]', '80');
+
+        const responsePromise = page.waitForResponse(response =>
+            response.url().includes('/api/calories/target') && response.request().method() === 'POST'
+        );
+
+        await page.click('button[type="submit"]');
+
+        const response = await responsePromise;
+        expect(response.ok()).toBeTruthy();
+        await expect(page).toHaveURL('/calories');
+    });
+
+    test('User can delete a calorie log', async ({ page }) => {
+        await login(page);
+
+        await page.goto('/calories/new');
+        await page.fill('input[name="calories"]', '510');
+        await page.fill('input[name="protein"]', '35');
+        await page.fill('input[name="title"]', 'Delete Me');
+        await page.click('button[type="submit"]');
+        await expect(page).toHaveURL('/calories');
+
+        const calorieRows = page.locator('button[data-calorie-delete]');
+        const initialCount = await calorieRows.count();
+        expect(initialCount).toBeGreaterThan(0);
+
+        await calorieRows.first().click();
+        const deleteModal = page.locator('#calorie-delete-modal');
+        await expect(deleteModal).toBeVisible();
+
+        const [deleteResponse] = await Promise.all([
+            page.waitForResponse(response =>
+                response.url().includes('/api/calories/log?id=') && response.request().method() === 'DELETE'
+            ),
+            deleteModal.locator('[data-confirm-modal]').click(),
+        ]);
+
+        expect(deleteResponse.ok()).toBeTruthy();
+        await expect(deleteModal).toBeHidden();
+        await expect(page.locator('button[data-calorie-delete]')).toHaveCount(initialCount - 1);
     });
 });

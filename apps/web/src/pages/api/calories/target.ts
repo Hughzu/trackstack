@@ -1,13 +1,12 @@
 import type { APIRoute } from "astro";
-import { caloriesService } from "@/modules/calories/services/caloriesService";
-import { getCurrentUserId } from "@/server/auth/currentUser";
+import { fetchApi } from "@/server/auth/fetchApi";
 import { withErrorParam } from "@/server/http/redirects";
 
 export const prerender = false;
 
 export const GET: APIRoute = async () => {
   try {
-    const target = await caloriesService.getTarget(getCurrentUserId());
+    const target = await fetchApi("/calories/target");
     return new Response(JSON.stringify(target), {
       status: 200,
       headers: {
@@ -27,6 +26,8 @@ export const GET: APIRoute = async () => {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const contentType = request.headers.get("content-type") ?? "";
+    const isJson = contentType.includes("application/json");
     let data: {
       targetKcal?: number | string;
       targetProtein?: number | string;
@@ -34,8 +35,6 @@ export const POST: APIRoute = async ({ request }) => {
       targetFat?: number | string;
     } = {};
 
-    const contentType = request.headers.get("content-type") ?? "";
-    const isJson = contentType.includes("application/json");
     if (isJson) {
       try {
         data = await request.json();
@@ -68,12 +67,14 @@ export const POST: APIRoute = async ({ request }) => {
       return Number.isFinite(parsed) ? parsed : undefined;
     };
 
-    const targetKcal = parseOptionalNumber(data.targetKcal);
-    const targetProtein = parseOptionalNumber(data.targetProtein);
-    const targetCarbs = parseOptionalNumber(data.targetCarbs);
-    const targetFat = parseOptionalNumber(data.targetFat);
+    const payload = {
+      targetKcal: parseOptionalNumber(data.targetKcal),
+      targetProtein: parseOptionalNumber(data.targetProtein),
+      targetCarbs: parseOptionalNumber(data.targetCarbs),
+      targetFat: parseOptionalNumber(data.targetFat)
+    };
 
-    if (targetKcal === undefined || targetProtein === undefined) {
+    if (payload.targetKcal === undefined || payload.targetProtein === undefined) {
       if (!isJson) {
         const fallback = request.headers.get("referer") ?? "/calories/settings";
         return new Response(null, { status: 303, headers: { Location: withErrorParam(fallback) } });
@@ -86,12 +87,9 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const target = await caloriesService.updateTarget({
-      userId: getCurrentUserId(),
-      targetKcal,
-      targetProteinG: targetProtein,
-      targetCarbsG: targetCarbs,
-      targetFatG: targetFat
+    const target = await fetchApi("/calories/target", {
+      method: "POST",
+      body: JSON.stringify(payload)
     });
 
     if (!isJson) {
@@ -105,9 +103,9 @@ export const POST: APIRoute = async ({ request }) => {
       }
     });
   } catch (error) {
-    console.error("Error in POST /api/calories/target:", error);
+    console.error("Failed to proxy calorie target POST:", error);
     return new Response(JSON.stringify({ error: "Server Error" }), {
-      status: 500,
+      status: 400,
       headers: {
         "Content-Type": "application/json"
       }
