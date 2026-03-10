@@ -19,6 +19,14 @@ func (m *mockRefillStore) Create(ctx context.Context, refill heat.Refill) error 
 	return nil
 }
 
+func (m *mockRefillStore) GetLatest(ctx context.Context, userID string) (*heat.Refill, error) {
+	return nil, nil
+}
+
+func (m *mockRefillStore) GetSumByRange(ctx context.Context, userID string, fromDate string, toDate string) (int, error) {
+	return 0, nil
+}
+
 func (m *mockRefillStore) Delete(ctx context.Context, userID string, id string) (bool, error) {
 	return true, nil
 }

@@ -1,0 +1,11 @@
+FROM mcr.microsoft.com/playwright:v1.58.2-noble
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@10.18.3 --activate
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
+
+# The rest of the files will be mounted via docker-compose volumes
+CMD ["pnpm", "dev", "--host", "0.0.0.0"]

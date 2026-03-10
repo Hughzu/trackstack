@@ -24,3 +24,5 @@ Update guidelines:
 2026-02-23 — Make Turso connection mode configurable via `DB_CONNECTION_MODE` (HTTP for serverless, WebSockets for containers).
 2026-02-23 — Gate deploys with migrations-first CI/CD; no rollback in CI until Atlas supports down migrations in community CLI.
 2026-02-23 — Keep testing lightweight in the Astro phase: fast unit tests for form contracts, defer heavy backend testing until Go migration.
+2026-03-10 — Use Astro as the frontend/auth adapter and Go as the business API runtime during the migration so browser contracts stay stable while domains move to Go incrementally.
+2026-03-10 — Protect the Astro -> Go boundary with layered regression checks: Go transport tests, frontend form contract tests, and Playwright browser flows.

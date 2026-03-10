@@ -8,13 +8,18 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
 
   const resolveApiUrl = (input) => {
     if (!input || typeof input !== "string") return input;
+    if (input.startsWith("/api")) return input;
     if (!API_BASE_URL) return input;
     if (input.startsWith("http://") || input.startsWith("https://"))
       return input;
 
-    const base = API_BASE_URL.replace(/\/+$/, "");
-    if (input.startsWith("/")) return `${base}${input}`;
-    return `${base}/${input}`;
+    const normalizedPath = input.startsWith("/api")
+      ? input
+      : `/api${input.startsWith("/") ? input : `/${input}`}`;
+
+    // Avoid /api/api duplication when API_BASE_URL already includes /api.
+    const base = API_BASE_URL.replace(/\/+$/, "").replace(/\/api$/, "");
+    return `${base}${normalizedPath}`;
   };
 
   const ensureSignedFetch = () => {
@@ -80,7 +85,23 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
         event.preventDefault();
 
         const formData = new FormData(form);
-        const payload = Object.fromEntries(formData);
+        const payload = {};
+        for (const [key, rawValue] of formData.entries()) {
+          if (typeof rawValue !== "string") {
+            payload[key] = rawValue;
+            continue;
+          }
+
+          const field = form.querySelector(`[name="${CSS.escape(key)}"]`);
+          const isNumberField = field instanceof HTMLInputElement && field.type === "number";
+          if (isNumberField && rawValue.trim() !== "") {
+            const numericValue = Number(rawValue);
+            payload[key] = Number.isFinite(numericValue) ? numericValue : rawValue;
+            continue;
+          }
+
+          payload[key] = rawValue;
+        }
 
         const action = form.getAttribute("action");
         const method = form.getAttribute("method")?.toUpperCase() || "POST";

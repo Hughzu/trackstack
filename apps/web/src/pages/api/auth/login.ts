@@ -13,7 +13,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const contentType = request.headers.get("content-type") ?? "";
   const isJson = contentType.includes("application/json");
 
-  if (isJson) {
+  if (!isJson) {
+    const form = await request.formData();
+    const emailStr = form.get("email");
+    const passwordStr = form.get("password");
+    payload = {
+      email: typeof emailStr === "string" ? emailStr : undefined,
+      password: typeof passwordStr === "string" ? passwordStr : undefined
+    };
+  } else {
     try {
       payload = await request.json();
     } catch {
@@ -22,14 +30,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         headers: { "Content-Type": "application/json" }
       });
     }
-  } else {
-    const form = await request.formData();
-    const email = form.get("email");
-    const password = form.get("password");
-    payload = {
-      email: typeof email === "string" ? email : undefined,
-      password: typeof password === "string" ? password : undefined
-    };
   }
 
   const email = payload.email?.trim().toLowerCase();

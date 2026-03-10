@@ -1,0 +1,33 @@
+services:
+  go-backend:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/server:/app
+      # prevent local vendor/mod issues if any
+      - server_go_modules:/go/pkg/mod
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./apps/server/.env
+
+  astro-frontend:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/web:/app
+      - web_node_modules:/app/node_modules
+    ports:
+      - "4321:4321"
+    environment:
+      - API_PROXY_URL=http://go-backend:8080
+      - PUBLIC_API_BASE_URL=http://go-backend:8080/api
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    env_file:
+      - ./apps/web/.env
+
+volumes:
+  server_go_modules:
+  web_node_modules:

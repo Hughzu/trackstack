@@ -125,17 +125,18 @@ atlas migrate apply \
 The seed script creates a single email/password user in the `users` database.
 
 ```bash
-node src/web/scripts/seed-user.mjs --email you@example.com --password yourpass
+node apps/web/scripts/seed-user.mjs --email you@example.com --password yourpass
 ```
 
 Database target precedence:
 
-1) `TURSO_USERS_URL` + `TURSO_USERS_TOKEN`
-2) Local SQLite file at `src/data/users.sqlite`
+1) `TURSO_USERS_URL` + `TURSO_USERS_TOKEN` for remote Turso
+2) `TURSO_USERS_URL=file:/absolute/path/to/users.sqlite` for local SQLite
 
 Notes:
 
-- If the user already exists, the script exits without changes.
+- The script now requires `TURSO_USERS_URL`; it does not guess a local fallback path.
+- If the user already exists, the script updates the password hash in place.
 - The password is hashed using scrypt with the same parameters as the app.
 
 ## CI/CD Migrations

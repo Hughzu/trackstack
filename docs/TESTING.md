@@ -1,115 +1,97 @@
 # Testing Guide for Trackstack
 
-This document describes the testing strategy and setup for the Trackstack application.
+This document defines the regression workflow for the Astro frontend plus Go backend split.
 
 ## Overview
 
-Our testing strategy focuses on **fast local feedback** while preventing regressions, especially for the critical SigV4 form submission flow. Tests are intentionally lightweight while the Astro SSR frontend transitions to SSG and the backend moves to Go.
+Use three test layers:
 
-## Test Structure
+1. `Go tests` to catch backend and transport regressions quickly.
+2. `Vitest` to validate frontend contracts and form wiring.
+3. `Playwright e2e` to verify real browser flows across the Astro -> Go boundary.
 
+## Test Commands
+
+### Backend (Go)
+
+```bash
+cd apps/server
+go test ./...
 ```
-apps/web/
-├── tests/
-│   ├── forms.test.ts         # Unit tests: form attribute validation
-├── vitest.config.ts          # Unit test configuration
-```
 
-## Quick Start
-
-### Installation
+### Frontend Unit Tests (Vitest)
 
 ```bash
 cd apps/web
-pnpm install
+pnpm test
+pnpm test:watch
 ```
 
-### Running Tests
+### Frontend Integration Tests (Playwright)
 
 ```bash
-# Fast unit tests (< 300ms)
-pnpm test           # Run once
-pnpm test:watch     # Watch mode for development
+cd apps/web
+pnpm test:e2e
 ```
 
-## Unit Tests (Vitest)
+`pnpm test:e2e` seeds the configured users database before running browser flows. It expects `apps/web/.env` to provide `TURSO_USERS_URL` and, for remote Turso, `TURSO_USERS_TOKEN`.
 
-**Purpose:** Verify forms have correct SigV4 attributes without rendering Astro components.
+## Compose Regression Workflow
 
-**What they check:**
-- ✅ `data-api-form` attribute present
-- ✅ Correct `action` URLs
-- ✅ Proper `method` attributes
-- ✅ `data-redirect` for success navigation
-- ✅ No inline scripts bypassing ApiFormHandler
+From repo root:
 
-**Example:**
-```typescript
-// tests/forms.test.ts
-test('calories/new form has required data attributes', () => {
-  const content = getSourceContent('pages/calories/new.astro');
-  expect(content).toContain('data-api-form');
-  expect(content).toContain('action="/api/calories/log"');
-});
+```bash
+docker compose up --build -d
+docker compose exec -T go-backend sh -lc 'go test ./...'
+docker compose exec -T astro-frontend sh -lc 'pnpm test'
+docker compose exec -T astro-frontend sh -lc 'pnpm test:e2e'
 ```
 
-**When to run:** Before every commit. These are fast and catch missing attributes.
+This is the default local loop after changing Astro API routes, Go handlers, or request/response contracts between them.
 
-## Test Strategy by Phase
+## Current Regression Coverage
 
-### Current Phase (Astro SSR)
+- `apps/server/internal/transport/http/calories_test.go`
+  - Authenticated `POST /api/calories/log` JSON request
+  - Authenticated `POST /api/calories/log` form request
+  - Assert created vs redirect behavior at the HTTP transport boundary
 
-Focus on **boundary testing**:
-1. Unit tests verify form attributes (fast feedback)
-2. Skip testing business logic deeply (being rewritten in Go)
+- `apps/server/internal/modules/heat/service_test.go`
+  - Basic service validation and season behavior regression checks
 
-### Future Phase (Go Backend + SSG)
+- `apps/web/tests/forms.test.ts`
+  - Required `data-api-form` attributes across mutation forms
+  - Redirect contract checks
+  - Guard against inline fetch logic bypassing the shared form runtime
 
-When migrating:
-1. Add contract tests between Astro SSG and Go API
-2. Heavy testing shifts to Go backend unit tests
-3. Astro tests become minimal (build verification only)
+- `apps/web/tests/e2e/calories.spec.ts`
+  - Login through Astro
+  - Submit calorie form
+  - Assert `POST /api/calories/log` succeeds
+  - Assert redirect to `/calories`
 
-## Adding New Tests
+- `apps/web/tests/e2e/expenses.spec.ts`
+  - Login through Astro
+  - Submit expense form
+  - Assert `POST /api/expenses/expense` succeeds
+  - Assert redirect to `/expenses`
 
-### For a New Form
+## Adding Regression Tests
 
-1. **Add unit test** in `tests/forms.test.ts`:
-```typescript
-test('new-domain/new form has required data attributes', () => {
-  const content = getSourceContent('pages/new-domain/new.astro');
-  expect(content).toContain('data-api-form');
-  expect(content).toContain('action="/api/new-domain/endpoint"');
-});
-```
+When a regression is found in the frontend/backend boundary:
 
-### For New Components
-
-Components receiving data via props don't need tests (Astro handles rendering). Focus tests on:
-- Interactive behaviors (via `ClientRuntime.astro` data attributes)
-- Form submissions (SigV4 contract)
-- API responses (error handling)
-
-## CI/CD Integration
-
-```yaml
-# .github/workflows/test.yml
-jobs:
-  test:
-    steps:
-      - name: Run unit tests
-        run: pnpm test
-        working-directory: apps/web
-```
+1. Add or update a Go transport test if the issue is in request parsing, auth, or HTTP response behavior.
+2. Add or update a Playwright test if the issue is only reproducible through the browser flow.
+3. Add or update `apps/web/tests/forms.test.ts` when a form contract changes.
+4. Keep assertions at the boundary: status code, redirect target, and minimal visible success behavior.
 
 ## Troubleshooting
 
-### Unit tests fail on Windows
-Paths use forward slashes. Tests use `path.resolve()` for cross-platform compatibility.
-
-## Best Practices
-
-1. **Run unit tests frequently** - they're sub-second
-2. **Don't test Astro internals** - test the contracts (SigV4 form attributes)
-3. **Use `test.skip()` for flaky tests** - fix them before merging
-4. **Keep credentials out of the repo** - never commit real credentials
+- If frontend container fails after changing dependencies:
+  - recreate the `web_node_modules` volume.
+- If `pnpm test:e2e` fails before the browser starts:
+  - verify `apps/web/.env` contains a valid `TURSO_USERS_URL`.
+- If login e2e fails unexpectedly:
+  - rerun `pnpm test:e2e`; it reseeds the test credentials each run.
+- If Go tools are missing in container runs:
+  - execute the command through the `go-backend` service.

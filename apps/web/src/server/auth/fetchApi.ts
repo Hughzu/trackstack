@@ -1,7 +1,7 @@
 import { getCurrentToken } from "@/server/auth/currentUser";
 import { authConfig } from "@/server/auth/config";
 
-const API_BASE_URL = import.meta.env.PUBLIC_API_BASE_URL || "http://127.0.0.1:8080/api";
+const API_BASE_URL = (typeof process !== 'undefined' && process.env.API_PROXY_URL ? `${process.env.API_PROXY_URL}/api` : null) || import.meta.env?.PUBLIC_API_BASE_URL || "http://127.0.0.1:8080/api";
 
 export const fetchApi = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
     const token = getCurrentToken();
@@ -18,8 +18,9 @@ export const fetchApi = async <T>(path: string, options: RequestInit = {}): Prom
 
     // Ensure base URL doesn't end with slash, and remove /api if present to avoid duplication
     const baseUrl = API_BASE_URL.replace(/\/+$/, "").replace(/\/api$/, "");
+    const finalUrl = `${baseUrl}${normalizedPath}`;
 
-    const response = await fetch(`${baseUrl}${normalizedPath}`, {
+    const response = await fetch(finalUrl, {
         ...options,
         headers,
     });

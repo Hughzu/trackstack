@@ -2,46 +2,43 @@
 
 This document defines the macro system flow and the strict boundaries between frontend, server, and infrastructure. It is a constraint for future changes.
 
-## Request Flow (Serverless Prod)
+## Request Flow (Current Hybrid Migration)
 
 ```mermaid
 flowchart LR
   U[User Browser] --> CF[CloudFront Distribution]
   CF -->|/assets/* or /_astro/*| S3[Assets S3 Bucket]
-  CF -->|All other paths| LURL[Lambda Function URL]
-  LURL --> SSR[Astro SSR Lambda]
-  SSR -->|LibSQL| TU[Turso DBs: users, calories, expenses, heat]
+  CF -->|HTML pages and auth routes| AFL[Astro Frontend Lambda]
+  CF -->|Migrated API routes| GFL[Go API Lambda]
+  AFL -->|Auth and non-migrated domain data| TU[Turso DBs: users, calories, expenses, heat]
+  GFL -->|LibSQL domain data| TU
 
-  CF -. custom header .-> LURL
-  LURL -. IAM auth + OAC .-> CF
+  CF -. custom header .-> AFL
+  CF -. custom header .-> GFL
+  AFL -. IAM auth + OAC .-> CF
+  GFL -. IAM auth + OAC .-> CF
 ```
 
 Key points:
 - CloudFront is the single public entrypoint.
 - Static assets (`/assets/*`, `/_astro/*`) are served from S3 with optimized caching.
-- All other routes (pages + `/api/*`) go to the Lambda Function URL.
-- CloudFront adds an origin verification header; the Astro middleware rejects requests without it.
-- Lambda Function URL is IAM-authenticated and only invokable by CloudFront.
+- Page rendering and frontend auth stay in the Astro runtime.
+- Migrated business routes are served by the Go runtime; remaining domain routes still live in Astro until each slice is moved.
+- CloudFront adds origin verification headers and the Lambda entrypoints remain private behind CloudFront.
 
 ## Environment Variables
 
-### Server-side runtime (Lambda)
+### Frontend runtime (Astro Lambda)
 
-These are injected into the Lambda environment in `infra/modules/lambda-api` and resolved at runtime.
+These are injected into the frontend runtime and resolved at runtime.
 
 Origin verification:
 - `ORIGIN_VERIFY_HEADER` (default: `X-Origin-Verify`)
 - `ORIGIN_VERIFY_VALUE` (random secret stored in SSM)
 
-Turso connections (values are SSM parameter paths, resolved at runtime by `apps/web/src/server/db/sqlite.ts`):
+Turso connections used by Astro auth and supporting server logic (values are SSM parameter paths, resolved at runtime by `apps/web/src/server/db/sqlite.ts`):
 - `TURSO_USERS_URL`
 - `TURSO_USERS_TOKEN`
-- `TURSO_CALORIES_URL`
-- `TURSO_CALORIES_TOKEN`
-- `TURSO_EXPENSES_URL`
-- `TURSO_EXPENSES_TOKEN`
-- `TURSO_HEAT_URL`
-- `TURSO_HEAT_TOKEN`
 
 Auth cookies:
 - `AUTH_COOKIE_NAME` (default `session`)
@@ -60,7 +57,19 @@ Runtime SSM prefix (serverless):
 
 ### Frontend
 
-No public (`PUBLIC_`) environment variables are currently used. Astro pages and components access data via server-side logic only.
+Public or local frontend integration variables:
+- `PUBLIC_API_BASE_URL` for browser-side API submission targets when needed
+- `API_PROXY_URL` for Astro server-side proxying to the Go backend in local/container workflows
+
+### Go API runtime
+
+The Go backend reads its own runtime config from `apps/server/internal/core/config/config.go`, including:
+- `PORT`
+- `CORS_ALLOWED_ORIGIN`
+- `AUTH_COOKIE_NAME`
+- `AUTH_COOKIE_SECURE`
+- `AUTH_COOKIE_SAMESITE`
+- domain-specific Turso connection values for auth, users, calories, expenses, and heat
 
 ### CI/CD (deploy workflow)
 
@@ -78,19 +87,21 @@ The deploy workflow loads infra outputs from SSM:
 - `terraform-serverless.yml` runs `terraform plan` on main; `apply` and `destroy` are manual via workflow dispatch.
 - Optional bootstrap artifact build produces an initial Lambda zip for first apply.
 
-### Application (Astro SSR + Static Assets)
-- `deploy-serverless.yml` runs on main when `apps/web/**` or migrations change.
+### Application (Astro Frontend + Go Backend)
+- `deploy-serverless.yml` runs on main when frontend, backend, or migrations change.
 - If migrations changed, Atlas applies Turso migrations first (users → expenses → heat → calories).
 - Astro build outputs:
   - Static assets in `apps/web/dist/client`
-  - SSR bundle in `apps/web/dist/server`
-- The SSR bundle is zipped and uploaded to the artifacts bucket, then used to update the Lambda function.
+  - server bundle in `apps/web/dist/server`
+- The frontend bundle is published separately from the Go API runtime.
+- Local development uses `docker-compose.yml` at repo root to run both runtimes together.
 - Static assets are synced to S3 with long-lived cache headers.
 - CloudFront cache is invalidated to publish updates.
 
 ## Architecture Boundaries (Macro)
 
 - CloudFront is the only public ingress.
-- Lambda is the only dynamic runtime for SSR + API routes.
+- Astro owns page rendering, frontend-facing auth flows, and any domain routes not migrated yet.
+- Go owns the migrated business API routes and their transport tests.
 - Turso is the only persistent store; all compute is stateless.
 - Runtime secrets come from SSM; no hardcoded secrets in code or Terraform.

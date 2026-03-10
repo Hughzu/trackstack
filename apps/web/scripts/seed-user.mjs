@@ -1,7 +1,5 @@
 import crypto from "node:crypto";
 import { promisify } from "node:util";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { createClient } from "@libsql/client";
 
 const scryptAsync = promisify(crypto.scrypt);
@@ -37,10 +35,7 @@ const hashPassword = async (password) => {
 const resolveDbUrl = () => {
   const envUrl = process.env.TURSO_USERS_URL;
   if (envUrl && envUrl.trim().length > 0) return envUrl.trim();
-  const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-  const repoRoot = path.resolve(scriptDir, "..", "..", "..");
-  const filePath = path.join(repoRoot, "src", "data", "users.sqlite");
-  return `file:${filePath}`;
+  throw new Error("Missing TURSO_USERS_URL. Seed the same users database configured for the app.");
 };
 
 const resolveDbToken = () => {
@@ -53,7 +48,7 @@ const main = async () => {
   const password = readArg("password");
 
   if (!email || !password) {
-    console.error("Usage: node src/web/scripts/seed-user.mjs --email you@example.com --password yourpass");
+    console.error("Usage: node apps/web/scripts/seed-user.mjs --email you@example.com --password yourpass");
     process.exit(1);
   }
 
@@ -67,18 +62,24 @@ const main = async () => {
     args: [normalizedEmail]
   });
 
+  const passwordHash = await hashPassword(password);
+  const now = new Date().toISOString();
+
   if (existing.rows.length > 0) {
-    console.log(`User already exists for ${normalizedEmail}`);
+    const existingId = String(existing.rows[0].id);
+    await client.execute({
+      sql: "UPDATE users SET password_hash = ? WHERE id = ?",
+      args: [passwordHash, existingId]
+    });
+    console.log(`Updated password for existing user ${normalizedEmail}`);
     process.exit(0);
   }
 
-  const passwordHash = await hashPassword(password);
   const id = crypto.randomUUID();
-  const createdAt = new Date().toISOString();
 
   await client.execute({
     sql: "INSERT INTO users (id, email, password_hash, created_at) VALUES (?, ?, ?, ?)",
-    args: [id, normalizedEmail, passwordHash, createdAt]
+    args: [id, normalizedEmail, passwordHash, now]
   });
 
   console.log(`Created user ${normalizedEmail} with id ${id}`);
