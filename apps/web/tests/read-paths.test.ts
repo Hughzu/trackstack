@@ -110,4 +110,10 @@ describe('client-loaded read paths', () => {
     expect(existsSync(resolve(srcDir, 'modules/expenses/services/expensesService.ts'))).toBe(false);
     expect(existsSync(resolve(srcDir, 'modules/heat/services/heatService.ts'))).toBe(false);
   });
+
+  test('astro frontend config uses static output', () => {
+    const astroConfig = readFileSync(resolve(srcDir, '../astro.config.mjs'), 'utf-8');
+    expect(astroConfig).toContain('output: "static"');
+    expect(astroConfig).not.toContain('@astro-aws/adapter');
+  });
 });

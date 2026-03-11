@@ -143,8 +143,7 @@ When a regression is found in the frontend/backend boundary:
   - execute the command through the `go-backend` service.
 ## Auth Boundary
 
-- `apps/web/src/pages/api/auth/login.ts` and `apps/web/src/pages/api/auth/logout.ts` are thin Astro adapters that proxy directly to the Go auth endpoints and forward `Set-Cookie` / redirect headers back to the browser.
-- `apps/web/src/middleware.ts` now verifies page-request sessions through `GET /api/auth/session`, so session validation and rotation semantics come from Go as well.
-- Cookie names and session timing defaults are aligned between `apps/web` and `apps/server`; if you change one, update both configs together.
+- Browser auth now talks directly to Go under `/api/auth/*`.
+- Protected-page gating happens through `AuthBootstrap.astro` calling `GET /api/auth/session` and redirecting client-side.
 - Playwright login helpers now explicitly assert that `/api/auth/login` succeeds before continuing into module tests.
 - When auth transport behavior changes, update both Go auth transport tests and at least one browser flow that authenticates through `/api/auth/login`.

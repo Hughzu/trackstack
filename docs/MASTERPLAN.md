@@ -16,10 +16,10 @@ This repo is a monorepo where application boundaries make multiple deployment ta
 
 TrackStack is in a hybrid migration phase.
 
-- Astro owns pages, layouts, browser interaction, and thin API adapters.
+- Astro owns pages, layouts, browser interaction, and the static frontend shell.
 - Go owns business API contracts, domain rules, and transport tests.
 - Auth login, logout, and session verification are now Go-backed.
-- Astro still owns request-local SSR auth context and some migration-era helpers.
+- Astro no longer owns request-local SSR auth context or migration-era backend helpers.
 
 Target end state:
 
@@ -83,7 +83,7 @@ Current progress:
 - Go backend module structure is in place.
 - Local HTTP server entrypoint exists in `apps/server/cmd/server/main.go`.
 - Calories, expenses, heat, dashboard, and auth contracts are actively served by Go.
-- Astro adapters proxy login/logout/session verification and migrated domain mutations to Go.
+- Browser auth and domain requests now call Go endpoints directly; Astro no longer proxies them.
 - Regression guardrails exist at three layers: Go transport tests, frontend contract tests, and Playwright browser flows.
 
 Remaining work in this phase:

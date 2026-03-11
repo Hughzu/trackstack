@@ -122,8 +122,8 @@ Purpose:
 - Composes the modules and keeps only environment glue in the root.
 
 Composition:
-- `module.lambda_api`: Lambda SSR + IAM + SSM origin secret.
-- `module.static_hosting`: S3 assets + CloudFront + OAC.
+- `module.lambda_api`: Go API Lambda + IAM + SSM origin secret.
+- `module.static_hosting`: S3 frontend assets + CloudFront + OAC.
 - `module.cost_guardrails`: monthly budget.
 - `s3.tf`: artifacts bucket used for Lambda package storage.
 - `ssm.tf`: publishes infra outputs to SSM for CI/CD.
@@ -133,9 +133,9 @@ Local init:
 
 ## Resource Inventory (Serverless)
 
-- 1 CloudFront distribution (SSR + assets)
+- 1 CloudFront distribution (frontend assets + API origin)
 - 2 S3 buckets (assets, artifacts)
-- 1 Lambda function + Function URL
+- 1 Go Lambda function + Function URL
 - 1 IAM role for Lambda execution
 - SSM parameters for origin verification and deployment outputs
 - AWS Budget for cost guardrail
@@ -164,4 +164,4 @@ Local init:
 ## CI/CD Touchpoints
 
 - `.github/workflows/terraform-serverless.yml` runs Terraform with OIDC.
-- `.github/workflows/deploy-serverless.yml` builds Astro, uploads assets, updates Lambda, and invalidates CloudFront.
+- `.github/workflows/deploy-serverless.yml` builds static Astro assets, uploads them to S3, updates the Go Lambda, and invalidates CloudFront.

@@ -1,7 +1,7 @@
 # Application Architecture: AI Directives
 
 ## 🗺️ Domains
-- **Auth:** `src/pages/login.astro`, `src/server/auth`
+- **Auth:** `src/pages/login.astro`, `src/layouts/AuthBootstrap.astro`
 - **Dashboard:** `src/modules/dashboard`
 - **Calories:** `src/modules/calories`, `src/pages/calories`
 - **Expenses:** `src/modules/expenses`, `src/pages/expenses`
@@ -12,8 +12,8 @@
 ## 📂 Architecture Rules
 
 ### 1. `src/pages/` (Routing)
-- **Role:** Astro pages plus temporary auth-facing adapter endpoints.
-- **Rule:** Map URLs to views and only the remaining auth adapter endpoints. Handle query params, cookies, headers, redirects, and frontend navigation concerns.
+- **Role:** Astro pages and static route shells.
+- **Rule:** Map URLs to views and frontend navigation concerns. Astro pages must not act as backend adapters.
 - **Rule:** NO complex business logic here. Defer to `src/modules/`, `src/server/`, or the Go backend.
 
 ### 2. `src/components/` & `src/layouts/` (UI Elements)
@@ -27,8 +27,9 @@
 - **Rule:** New mutation logic should prefer the Go backend unless there is a documented reason to keep it in Astro.
 - **Rule:** As domains migrate, Astro modules should become view-model helpers and page data loaders, not the source of mutation rules.
 
-### 4. `src/server/` (Core Services)
-- **Role:** Global services (`auth`, `db`).
+### 4. `src/server/`
+- **Role:** Reserved for future frontend-only helpers if needed.
+- **Rule:** Do not rebuild backend-like auth or data access layers here.
 
 ---
 
@@ -36,8 +37,7 @@
 
 ### UI & Styling
 - **Rule [Tailwind]:** ALWAYS use Tailwind CSS. NEVER use inline `style="..."` or external `.css` files unless Tailwind absolutely cannot handle dynamic calculations.
-- **Rule [Content Separation]:** Data fetching occurs ONLY in the Astro Frontmatter (`---`). The template renders validated data without DB queries.
-- **Migration exception:** as protected pages move off SSR, some read paths may bootstrap in the browser after auth readiness instead of using Astro frontmatter. The current example is the home dashboard overview.
+- **Rule [Content Separation]:** Protected app data loads in the browser after auth readiness and should come from Go endpoints, not Astro frontmatter.
 
 ### Client Interactivity & Global State
 *The problem: Astro is incredible for fast, zero-JS page loads. But interactive UI features (like modals or dropdowns) need global state management without pulling in a heavy framework like React.*
@@ -54,9 +54,9 @@
   - **SigV4 Signing Prep:** AWS SigV4 requires the request payload to be hashed. The script uses the browser's native `window.crypto.subtle` API to calculate the `SHA-256` hash of the JSON body and injects it into the `x-amz-content-sha256` header.
   - **Fetching & UI Feedback:** Finally, it performs an AJAX `fetch` request using `window.signedFetch` (which is configured elsewhere in `AppShell` to handle the final AWS signing). Based on the HTTP response status, it either reloads the page, navigates to `data-redirect`, or automatically reveals a hidden error element defined by `data-error-target` containing the JSON error message sent back by the server.
 - **Rule [API Mutations Only]:** UI components must never mutate data directly. Browser mutations must target canonical `/api/*` endpoints owned by Go.
-- **Migration note:** Astro auth routes stay temporarily for login/logout, but calorie, heat, expenses, and health no longer have Astro adapter files. In development, browser calls should stay same-origin and use the Astro/Vite `/api` proxy. Direct browser calls to `PUBLIC_API_BASE_URL` are enabled only for production-style builds.
+- **Deployment note:** In development, browser calls stay same-origin and use the Astro/Vite `/api` proxy. In production/static builds, browser calls target Go through `PUBLIC_API_BASE_URL`.
 - **Rule [SigV4 Forms - CRITICAL]:** ANY form triggering a mutation must use the `data-api-form` attribute to be intercepted by `ApiFormHandler.astro`.
-- **Rule [Go Boundary]:** For migrated domains, the browser should call Go-owned `/api/*` endpoints directly. Astro adapters are temporary and currently limited to auth flows.
+- **Rule [Go Boundary]:** The browser should call Go-owned `/api/*` endpoints directly. Astro does not own API adapter routes.
 - **Usage:**
   - `data-redirect="/path"` controls the success destination. 
   - `data-error-target="element-id"` injects the API error message softly on failure avoiding a full page crash.
@@ -68,23 +68,23 @@
 - **Rule [Frontend DB Boundary]:** Astro application runtime must not read or write domain databases directly. Page data, auth verification, and mutations go through Go endpoints.
 - **Rule [Backend-Owned Tooling]:** Direct Turso access for seeding or maintenance belongs in backend-owned commands under `apps/server/cmd`, not inside the frontend app.
 
-### Authentication & Middleware
+### Authentication
 *The problem: We need a secure, custom session system that protects both API routes and server-rendered pages without constantly prop-drilling a `userId` through every UI component and business logic function.*
 
-- **How it works (`AuthBootstrap.astro`):** `apps/web/src/layouts/AuthBootstrap.astro` now performs a browser-side session bootstrap against `GET /api/auth/session` and publishes auth readiness into the client runtime. This is the first migration step away from middleware-owned page auth.
+- **How it works (`AuthBootstrap.astro`):** `apps/web/src/layouts/AuthBootstrap.astro` performs a browser-side session bootstrap against `GET /api/auth/session` and publishes auth readiness into the client runtime.
 - **Current page guard:** protected pages now rely on browser-side auth bootstrap against `GET /api/auth/session` and redirect to `/login` on the client when the session is missing.
 - **Current auth flow:** login, logout, and session verification are all direct browser-to-Go interactions over `/api/auth/*`.
-- **Current split:** Go is the source of truth for login, logout, session verification, and page data. Legacy Astro server auth helpers and SSR service wrappers have been removed from the active frontend architecture.
+- **Current split:** Go is the source of truth for login, logout, session verification, page data, and API contracts. The Astro app is now a static frontend shell plus client runtime.
 - **Milestone reached:** the home, calories, expenses, and heat dashboards plus the calories and expenses settings pages now load their authenticated read models in the browser after auth bootstrap, so they no longer depend on `getCurrentUserId()` or SSR request-local auth context.
 
 ### Go Backend Boundary
 
 - **Role:** `apps/server/internal/modules/**` owns domain rules, DTOs, and persistence contracts.
-- **Rule:** New domain behavior should be added in Go first; Astro adapters should only normalize browser input, forward auth cookies, and map redirects/errors.
-- **Rule:** Transport code in Go stays thin: parse request, call service, map status/error, serialize JSON. Redirect and browser-form behavior belong in frontend adapters, not Go handlers.
-- **Rule:** Mutating Go endpoints should prefer a single JSON request contract; browser form posts should be normalized by frontend adapters before they reach Go.
+- **Rule:** New domain behavior should be added in Go first.
+- **Rule:** Transport code in Go stays thin: parse request, call service, map status/error, serialize JSON.
+- **Rule:** Mutating Go endpoints should prefer a single JSON request contract; the frontend runtime may still submit JSON from forms, but Astro pages do not adapt requests server-side.
 - **Rule:** Expenses mutations and command-like actions (`close sheet`, `complete checklist`, template upserts/deletes) should call Go over HTTP rather than reimplementing logic in Astro routes.
 - **Rule:** Delete-style Go endpoints should use an explicit URL identifier contract rather than accepting ids from multiple locations.
-- **Rule:** Go route aliases should be temporary migration shims only; once Astro adapters call the canonical backend paths, remove the aliases from Go and OpenAPI.
+- **Rule:** Go route aliases should be temporary migration shims only; once the browser uses the canonical backend paths, remove the aliases from Go and OpenAPI.
 - **Rule:** Astro forms and UI triggers should use the canonical migrated API paths directly once those paths are stable.
-- **Rule:** When changing a Go endpoint contract, update the Astro adapter, transport tests, and e2e coverage together.
+- **Rule:** When changing a Go endpoint contract, update the frontend client runtime, transport tests, and e2e coverage together.

@@ -3,14 +3,10 @@ import { defineConfig } from "astro/config";
 import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import AstroPWA from "@vite-pwa/astro";
-import astroAws from "@astro-aws/adapter";
 
 // https://astro.build/config
 export default defineConfig({
-  output: "server",
-  adapter: astroAws({
-    mode: "ssr"
-  }),
+  output: "static",
   integrations: [
     AstroPWA({
       registerType: "autoUpdate",

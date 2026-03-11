@@ -2,28 +2,25 @@
 
 This document defines the macro system flow and the strict boundaries between frontend, server, and infrastructure. It is a constraint for future changes.
 
-## Request Flow (Current Hybrid Migration)
+## Request Flow
 
 ```mermaid
 flowchart LR
   U[User Browser] --> CF[CloudFront Distribution]
   CF -->|/assets/* or /_astro/*| S3[Assets S3 Bucket]
-  CF -->|HTML pages and auth routes| AFL[Astro Frontend Lambda]
-  CF -->|API routes and health| GFL[Go API Lambda]
-  AFL -->|Auth/session verification only| TU[Turso DBs: users, calories, expenses, heat]
+  CF -->|HTML shell and PWA assets| S3
+  CF -->|/api/* and /health| GFL[Go API Lambda]
   GFL -->|LibSQL domain data| TU
 
-  CF -. custom header .-> AFL
   CF -. custom header .-> GFL
-  AFL -. IAM auth + OAC .-> CF
   GFL -. IAM auth + OAC .-> CF
 ```
 
 Key points:
 - CloudFront is the single public entrypoint.
 - Static assets (`/assets/*`, `/_astro/*`) are served from S3 with optimized caching.
-- Page rendering and frontend auth stay in the Astro runtime.
-- Business routes and health checks are served by the Go runtime.
+- The Astro frontend is built as static assets and served from S3.
+- Business routes, auth routes, and health checks are served by the Go runtime.
 - CloudFront adds origin verification headers and the Lambda entrypoints remain private behind CloudFront.
 
 ## Go Backend Shape
@@ -108,38 +105,13 @@ Astro no longer enforces page auth in middleware, proxies auth routes, or mainta
 
 ## Environment Variables
 
-### Frontend runtime (Astro Lambda)
-
-These are injected into the frontend runtime and resolved at runtime.
-
-Origin verification:
-- `ORIGIN_VERIFY_HEADER` (default: `X-Origin-Verify`)
-- `ORIGIN_VERIFY_VALUE` (random secret stored in SSM)
-
-Astro application request handling should not connect to Turso directly.
-
-Auth cookies:
-- `AUTH_COOKIE_NAME` (default `trackstack_session`)
-- `AUTH_COOKIE_SECURE` (default `true` in prod)
-- `AUTH_COOKIE_SAMESITE` (default `lax`)
-
-Auth session timing:
-- `AUTH_SESSION_IDLE_SECONDS` (default `1800`)
-- `AUTH_SESSION_ABSOLUTE_SECONDS` (default `86400`)
-- `AUTH_SESSION_ROTATE_AFTER_SECONDS` (default `1800`)
-- `AUTH_SESSION_ROTATION_GRACE_SECONDS` (default `300`)
-- `AUTH_SESSION_TOUCH_SECONDS` (default `300`)
-
-Runtime SSM prefix (serverless):
-- `/trackstack/serverless/runtime/*` (set via `infra/environments/serverless/01-set-runtime-ssm.sh`)
-
 ### Frontend
 
 Public or local frontend integration variables:
 - `PUBLIC_API_BASE_URL` for browser-side API submission targets when needed
-- `API_PROXY_URL` for Astro server-side proxying to the Go backend in local/container workflows
+- `API_PROXY_URL` for Astro/Vite dev proxying to the Go backend in local/container workflows
 
-In local/container development, browser requests should keep using same-origin `/api` paths and rely on the frontend dev proxy. `PUBLIC_API_BASE_URL` is for production-style direct browser access.
+In local/container development, browser requests should keep using same-origin `/api` paths and rely on the frontend dev proxy. `PUBLIC_API_BASE_URL` is for production-style direct browser access from the static frontend.
 
 ### Go API runtime
 
@@ -158,8 +130,6 @@ The Go backend reads its own runtime config from `apps/server/internal/core/conf
 
 Backend-owned commands under `apps/server/cmd/**` use the same config surface for direct database tooling such as user seeding.
 
-Astro reads the same auth env keys from `apps/web/src/server/auth/config.ts`, and its defaults are intentionally kept in lockstep with the Go runtime.
-
 ### CI/CD (deploy workflow)
 
 The deploy workflow loads infra outputs from SSM:
@@ -176,12 +146,11 @@ The deploy workflow loads infra outputs from SSM:
 - `terraform-serverless.yml` runs `terraform plan` on main; `apply` and `destroy` are manual via workflow dispatch.
 - Optional bootstrap artifact build produces an initial Lambda zip for first apply.
 
-### Application (Astro Frontend + Go Backend)
+### Application (Static Astro Frontend + Go Backend)
 - `deploy-serverless.yml` runs on main when frontend, backend, or migrations change.
 - If migrations changed, Atlas applies Turso migrations first (users → expenses → heat → calories).
 - Astro build outputs:
-  - Static assets in `apps/web/dist/client`
-  - server bundle in `apps/web/dist/server`
+  - Static assets in `apps/web/dist`
 - The frontend bundle is published separately from the Go API runtime.
 - Local development uses `docker-compose.yml` at repo root to run both runtimes together.
 - Static assets are synced to S3 with long-lived cache headers.
@@ -190,7 +159,7 @@ The deploy workflow loads infra outputs from SSM:
 ## Architecture Boundaries (Macro)
 
 - CloudFront is the only public ingress.
-- Astro owns page rendering and temporary frontend-facing auth flows.
-- Go owns health plus the business API routes and their transport tests.
+- Astro owns the static frontend shell and client runtime only.
+- Go owns health, auth, and business API routes plus their transport tests.
 - Turso is the only persistent store; all compute is stateless.
 - Runtime secrets come from SSM; no hardcoded secrets in code or Terraform.
