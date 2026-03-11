@@ -83,7 +83,7 @@ The current Go transport is JSON-over-HTTP under `/api/*`.
 
 - Router: `apps/server/internal/transport/http/router.go`
 - OpenAPI: `GET /openapi.yaml`
-- Auth middleware: cookie-based session auth in `apps/server/internal/transport/http/middleware_auth.go`
+- Auth middleware: cookie-based session auth in `apps/server/internal/transport/http/middleware_auth.go`, applied only to protected route groups under `/api/*`
 - Response helpers: `apps/server/internal/transport/http/response.go`
 
 Current error contract is intentionally simple:

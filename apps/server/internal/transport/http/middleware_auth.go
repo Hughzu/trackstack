@@ -16,12 +16,6 @@ func authMiddleware(handler *AuthHandler) func(http.Handler) http.Handler {
 				return
 			}
 
-			path := r.URL.Path
-			if isPublicPath(path) {
-				next.ServeHTTP(w, r)
-				return
-			}
-
 			cookie, err := r.Cookie(handler.cookieName)
 			if err != nil || cookie == nil || cookie.Value == "" {
 				writeJSON(w, http.StatusUnauthorized, errorResponse{Error: "Unauthorized"})
@@ -61,14 +55,5 @@ func authMiddleware(handler *AuthHandler) func(http.Handler) http.Handler {
 
 			next.ServeHTTP(w, r.WithContext(withAuthContext(r.Context(), result.UserID, result.SessionID)))
 		})
-	}
-}
-
-func isPublicPath(path string) bool {
-	switch path {
-	case "/health", "/api/health", "/openapi.yaml", "/api/auth/login", "/api/auth/logout", "/api/auth/session":
-		return true
-	default:
-		return false
 	}
 }

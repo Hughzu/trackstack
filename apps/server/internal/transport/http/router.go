@@ -14,54 +14,56 @@ func NewRouter(handlers Handlers, corsAllowedOrigin string) http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(corsMiddleware(corsAllowedOrigin))
-	r.Use(authMiddleware(handlers.Auth))
 
 	r.Get("/health", Health)
 	r.Get("/api/health", Health)
 	r.Get("/openapi.yaml", OpenAPISpec)
-
-	r.Route("/api/heat", func(r chi.Router) {
-		r.Get("/dashboard", handlers.Heat.GetDashboard)
-		r.Get("/refills", handlers.Heat.ListRefills)
-		r.Post("/refills", handlers.Heat.CreateRefill)
-		r.Delete("/refills", handlers.Heat.DeleteRefill)
-	})
-
-	r.Route("/api/expenses", func(r chi.Router) {
-		r.Get("/settings", handlers.Expenses.GetSettings)
-		r.Post("/settings", handlers.Expenses.UpdateSettings)
-		r.Post("/expense", handlers.Expenses.AddExpense)
-		r.Delete("/expense", handlers.Expenses.DeleteExpense)
-		r.Post("/checklist", handlers.Expenses.UpsertChecklist)
-		r.Delete("/checklist", handlers.Expenses.DeleteChecklist)
-		r.Post("/checklist/complete", handlers.Expenses.CompleteChecklistItem)
-		r.Post("/close", handlers.Expenses.CloseSheet)
-		r.Get("/sheet/current", handlers.Expenses.GetCurrentSheet)
-		r.Post("/entries", handlers.Expenses.AddExpense)
-		r.Delete("/entries", handlers.Expenses.DeleteExpense)
-		r.Post("/checklists", handlers.Expenses.UpsertChecklist)
-		r.Delete("/checklists", handlers.Expenses.DeleteChecklist)
-		r.Post("/checklists/complete", handlers.Expenses.CompleteChecklistItem)
-		r.Post("/recurring", handlers.Expenses.UpsertRecurring)
-		r.Delete("/recurring", handlers.Expenses.DeleteRecurring)
-		r.Post("/sheet/close", handlers.Expenses.CloseSheet)
-	})
-
-	r.Route("/api/calories", func(r chi.Router) {
-		r.Get("/dashboard", handlers.Calories.GetDashboard)
-		r.Post("/log", handlers.Calories.AddLog)
-		r.Delete("/log", handlers.Calories.DeleteLog)
-		r.Get("/target", handlers.Calories.GetTarget)
-		r.Post("/target", handlers.Calories.UpdateTarget)
-	})
-
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/login", handlers.Auth.Login)
 		r.Post("/logout", handlers.Auth.Logout)
 		r.Get("/session", handlers.Auth.Session)
 	})
 
-	r.Get("/api/dashboard", handlers.Dashboard.GetDashboard)
+	r.Group(func(r chi.Router) {
+		r.Use(authMiddleware(handlers.Auth))
+
+		r.Route("/api/heat", func(r chi.Router) {
+			r.Get("/dashboard", handlers.Heat.GetDashboard)
+			r.Get("/refills", handlers.Heat.ListRefills)
+			r.Post("/refills", handlers.Heat.CreateRefill)
+			r.Delete("/refills", handlers.Heat.DeleteRefill)
+		})
+
+		r.Route("/api/expenses", func(r chi.Router) {
+			r.Get("/settings", handlers.Expenses.GetSettings)
+			r.Post("/settings", handlers.Expenses.UpdateSettings)
+			r.Post("/expense", handlers.Expenses.AddExpense)
+			r.Delete("/expense", handlers.Expenses.DeleteExpense)
+			r.Post("/checklist", handlers.Expenses.UpsertChecklist)
+			r.Delete("/checklist", handlers.Expenses.DeleteChecklist)
+			r.Post("/checklist/complete", handlers.Expenses.CompleteChecklistItem)
+			r.Post("/close", handlers.Expenses.CloseSheet)
+			r.Get("/sheet/current", handlers.Expenses.GetCurrentSheet)
+			r.Post("/entries", handlers.Expenses.AddExpense)
+			r.Delete("/entries", handlers.Expenses.DeleteExpense)
+			r.Post("/checklists", handlers.Expenses.UpsertChecklist)
+			r.Delete("/checklists", handlers.Expenses.DeleteChecklist)
+			r.Post("/checklists/complete", handlers.Expenses.CompleteChecklistItem)
+			r.Post("/recurring", handlers.Expenses.UpsertRecurring)
+			r.Delete("/recurring", handlers.Expenses.DeleteRecurring)
+			r.Post("/sheet/close", handlers.Expenses.CloseSheet)
+		})
+
+		r.Route("/api/calories", func(r chi.Router) {
+			r.Get("/dashboard", handlers.Calories.GetDashboard)
+			r.Post("/log", handlers.Calories.AddLog)
+			r.Delete("/log", handlers.Calories.DeleteLog)
+			r.Get("/target", handlers.Calories.GetTarget)
+			r.Post("/target", handlers.Calories.UpdateTarget)
+		})
+
+		r.Get("/api/dashboard", handlers.Dashboard.GetDashboard)
+	})
 
 	return r
 }
