@@ -93,13 +93,13 @@ type DashboardBudget struct {
 }
 
 type DashboardRatio struct {
-	Percent int     `json:"percent"`
-	Color   string  `json:"color"`
-	Label   string  `json:"label"`
-	Value   float64 `json:"value"`
-	Budget  int     `json:"budget"`
-	Target  int     `json:"target"`
-	Over    bool    `json:"over"`
+	Percent    int     `json:"percent"`
+	CategoryId string  `json:"categoryId"` // e.g. "fund", "fun", "future"
+	Label      string  `json:"label"`
+	Value      float64 `json:"value"`
+	Budget     int     `json:"budget"`
+	Target     int     `json:"target"`
+	Over       bool    `json:"over"`
 }
 
 type ViewDashboard struct {

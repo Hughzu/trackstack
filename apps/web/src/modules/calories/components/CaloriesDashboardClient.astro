@@ -1,4 +1,5 @@
 ---
+import Skeleton from "@/components/Skeleton.astro";
 ---
 
 <div class="flex flex-col gap-5 pb-24" data-calories-dashboard>
@@ -15,14 +16,16 @@
       <div class="mb-6 flex items-start justify-between">
         <div>
           <span class="text-xs uppercase tracking-widest text-text-muted">Daily Intake</span>
-          <div class="flex items-baseline gap-2">
-            <span class="text-3xl font-bold text-text-main" data-calories-consumed>Loading...</span>
-            <span class="text-sm font-mono text-text-muted" data-calories-target>/ -- kcal</span>
+          <div class="flex flex-col">
+            <div class="flex h-9 items-center" data-calories-consumed><Skeleton class="h-8 w-24 rounded bg-white/10" /></div>
+            <span class="flex items-center gap-1 mt-1 text-xs font-medium text-text-muted">
+              / <span class="flex h-4 items-center" data-calories-target><Skeleton class="h-3 w-8 rounded bg-white/10" /></span> kcal
+            </span>
           </div>
         </div>
         <div class="text-right">
           <span class="text-xs uppercase tracking-widest text-text-muted">Protein</span>
-          <div class="text-sm font-bold text-primary" data-calories-protein>--</div>
+          <div class="flex h-5 items-center justify-end font-bold text-primary" data-calories-protein><Skeleton class="h-4 w-12 rounded bg-primary/20" /></div>
         </div>
       </div>
 
@@ -31,19 +34,19 @@
       </div>
 
       <div class="grid grid-cols-3 gap-2 text-center divide-x divide-white/10">
-        <div class="px-1">
+        <div class="px-1 mt-1">
           <div class="text-[10px] uppercase text-text-muted">Carbs</div>
-          <div class="text-xs font-bold" data-calories-carbs>--</div>
+          <div class="flex h-4 items-center justify-center font-bold mt-0.5" data-calories-carbs><Skeleton class="h-3 w-8 rounded bg-white/10" /></div>
           <div class="mt-1 h-1 w-full rounded-full bg-orange-400 opacity-50"></div>
         </div>
-        <div class="px-1">
+        <div class="px-1 mt-1">
           <div class="text-[10px] uppercase text-text-muted">Fat</div>
-          <div class="text-xs font-bold" data-calories-fat>--</div>
+          <div class="flex h-4 items-center justify-center font-bold mt-0.5" data-calories-fat><Skeleton class="h-3 w-8 rounded bg-white/10" /></div>
           <div class="mt-1 h-1 w-full rounded-full bg-yellow-400 opacity-50"></div>
         </div>
-        <div class="px-1">
+        <div class="px-1 mt-1">
           <div class="text-[10px] uppercase text-text-muted">Protein</div>
-          <div class="text-xs font-bold" data-calories-protein-summary>--</div>
+          <div class="flex h-4 items-center justify-center font-bold mt-0.5" data-calories-protein-summary><Skeleton class="h-3 w-8 rounded bg-white/10" /></div>
           <div class="mt-1 h-1 w-full rounded-full bg-emerald-400 opacity-50"></div>
         </div>
       </div>
@@ -55,8 +58,12 @@
       <span class="text-sm font-bold text-text-muted">Quick Add</span>
     </div>
     <div class="quick-add-scroll relative overflow-x-auto pb-2" data-calorie-quick-add>
-      <div class="flex min-w-max gap-2 px-1 pb-0 pt-1" data-calorie-quick-add-list></div>
-      <div class="py-4 text-center text-xs italic text-text-muted" data-calorie-quick-add-empty>
+      <div class="flex min-w-max gap-2 px-1 pb-0 pt-1" data-calorie-quick-add-list>
+        <div class="flex min-w-[8rem] h-[38px] items-center justify-center rounded-full border border-primary/20 bg-surface px-4 py-2"><Skeleton class="h-4 w-16 rounded bg-white/10" /></div>
+        <div class="flex min-w-[8rem] h-[38px] items-center justify-center rounded-full border border-primary/20 bg-surface px-4 py-2"><Skeleton class="h-4 w-20 rounded bg-white/10" /></div>
+        <div class="flex min-w-[8rem] h-[38px] items-center justify-center rounded-full border border-primary/20 bg-surface px-4 py-2"><Skeleton class="h-4 w-12 rounded bg-white/10" /></div>
+      </div>
+      <div class="hidden py-4 text-center text-xs italic text-text-muted" data-calorie-quick-add-empty>
         No recent meals yet.
       </div>
     </div>
@@ -67,8 +74,19 @@
       <span class="text-sm font-bold text-text-muted">Today's Logs</span>
     </div>
     <div class="overflow-hidden rounded-2xl border border-primary/20 bg-panel shadow-lg shadow-black/40 divide-y divide-white/5" data-calorie-logs-list>
-      <div class="p-4 text-center text-xs italic text-text-muted" data-calorie-logs-empty>
-        No logs yet for today.
+      <div class="flex items-center justify-between p-3">
+        <div class="min-w-0 flex flex-col gap-2">
+          <Skeleton class="h-4 w-24 rounded bg-white/10" />
+          <Skeleton class="h-3 w-16 rounded bg-white/10" />
+        </div>
+        <Skeleton class="h-4 w-8 rounded bg-white/10" />
+      </div>
+      <div class="flex items-center justify-between p-3">
+        <div class="min-w-0 flex flex-col gap-2">
+          <Skeleton class="h-4 w-32 rounded bg-white/10" />
+          <Skeleton class="h-3 w-20 rounded bg-white/10" />
+        </div>
+        <Skeleton class="h-4 w-10 rounded bg-white/10" />
       </div>
     </div>
   </section>
@@ -114,7 +132,7 @@
 
   const renderSummary = (summary) => {
     document.querySelector("[data-calories-consumed]").textContent = String(summary.consumed);
-    document.querySelector("[data-calories-target]").textContent = `/ ${summary.target.targetKcal} kcal`;
+    document.querySelector("[data-calories-target]").textContent = String(summary.target.targetKcal);
     document.querySelector("[data-calories-protein]").innerHTML = `${summary.protein}g <span class="font-normal text-text-muted">/ ${summary.target.targetProteinG}g</span>`;
     document.querySelector("[data-calories-carbs]").textContent = `${summary.carbs}g`;
     document.querySelector("[data-calories-fat]").textContent = `${summary.fat}g`;
@@ -228,7 +246,7 @@
   };
 
   const loadDashboard = async () => {
-    const root = document.querySelector("[data-calories-dashboard]");
+    const root = document.querySelector("[data-calories-dashboard]") as HTMLElement | null;
     if (!root || root.dataset.bound === "true") return;
     root.dataset.bound = "true";
 

@@ -1,4 +1,5 @@
 ---
+import Skeleton from "@/components/Skeleton.astro";
 ---
 
 <div class="flex flex-col gap-5 pb-24" data-expenses-dashboard>
@@ -14,7 +15,7 @@
     <div class="mb-2 flex items-center justify-between px-1">
       <div>
         <div class="text-xs uppercase tracking-widest text-text-muted">Period</div>
-        <div class="text-sm font-semibold text-text-main" data-expenses-period>Loading...</div>
+        <div class="flex h-5 items-center" data-expenses-period><Skeleton class="h-4 w-16 rounded bg-white/10" /></div>
       </div>
       <button
         type="button"
@@ -29,15 +30,15 @@
       <div class="mb-4 flex items-start justify-between">
         <div>
           <span class="text-xs uppercase tracking-widest text-text-muted">Remaining</span>
-          <div class="text-3xl font-bold text-text-main" data-expenses-remaining>--</div>
+          <div class="flex h-9 items-center" data-expenses-remaining><Skeleton class="h-8 w-24 rounded bg-white/10" /></div>
         </div>
         <div class="text-right">
           <span class="text-xs uppercase tracking-widest text-text-muted">Income</span>
-          <div class="text-sm font-mono text-text-muted" data-expenses-income>--</div>
+          <div class="flex h-5 items-center justify-end" data-expenses-income><Skeleton class="h-4 w-16 rounded bg-white/10" /></div>
         </div>
       </div>
 
-      <div class="mb-2 h-2 overflow-hidden rounded-full bg-gray-800" data-expenses-bar></div>
+      <div class="mb-4 flex h-2 overflow-hidden rounded-full bg-gray-800" data-expenses-bar></div>
       <div class="mb-4 flex justify-between text-[10px] font-mono text-text-muted" data-expenses-ratio-labels></div>
 
       <div class="flex justify-between text-center divide-x divide-white/10" data-expenses-ratio-values></div>
@@ -49,8 +50,8 @@
       <summary class="mb-2 flex cursor-pointer list-none items-center justify-between px-1">
         <div class="flex items-center gap-2">
           <h3 class="text-sm font-bold text-text-muted">Obligations</h3>
-          <span class="rounded-full bg-orange-500/20 px-1.5 py-0.5 text-[10px] text-orange-400" data-expenses-obligations-count>
-            0 Left
+          <span class="flex h-5 items-center rounded-full bg-orange-500/20 px-2 group-open:bg-transparent" data-expenses-obligations-count>
+            <Skeleton class="h-4 w-8 rounded-full bg-orange-500/30" />
           </span>
         </div>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4 text-text-muted transition-transform group-open:rotate-180">
@@ -60,7 +61,20 @@
 
       <div class="flex flex-col gap-2 animate-fade-in" data-expense-checklist>
         <div class="overflow-hidden rounded-2xl border border-primary/20 bg-panel shadow-lg shadow-black/40 divide-y divide-white/5" data-expenses-obligations-list>
-          <div class="p-4 text-center text-xs italic text-text-muted">All obligations paid for this month!</div>
+          <div class="flex items-center justify-between p-4">
+            <div class="flex gap-3 items-center">
+              <Skeleton class="h-5 w-5 rounded-md bg-white/10" />
+              <Skeleton class="h-4 w-24 rounded bg-white/10" />
+            </div>
+            <Skeleton class="h-4 w-12 rounded bg-white/10" />
+          </div>
+          <div class="flex items-center justify-between p-4">
+            <div class="flex gap-3 items-center">
+              <Skeleton class="h-5 w-5 rounded-md bg-white/10" />
+              <Skeleton class="h-4 w-32 rounded bg-white/10" />
+            </div>
+            <Skeleton class="h-4 w-16 rounded bg-white/10" />
+          </div>
         </div>
       </div>
     </details>
@@ -78,7 +92,20 @@
     </div>
 
     <div class="overflow-hidden rounded-2xl border border-primary/20 bg-panel shadow-lg shadow-black/40 divide-y divide-white/5" data-expense-history>
-      <div class="p-4 text-center text-xs italic text-text-muted">No expenses yet for this sheet.</div>
+      <div class="flex items-center justify-between p-4">
+        <div class="flex flex-col gap-2">
+          <Skeleton class="h-4 w-32 rounded bg-white/10" />
+          <Skeleton class="h-3 w-16 rounded bg-white/10" />
+        </div>
+        <Skeleton class="h-4 w-12 rounded bg-white/10" />
+      </div>
+      <div class="flex items-center justify-between p-4">
+        <div class="flex flex-col gap-2">
+          <Skeleton class="h-4 w-24 rounded bg-white/10" />
+          <Skeleton class="h-3 w-20 rounded bg-white/10" />
+        </div>
+        <Skeleton class="h-4 w-16 rounded bg-white/10" />
+      </div>
     </div>
   </section>
 </div>
@@ -112,9 +139,18 @@
   const renderSegments = (container, segments) => {
     if (!container) return;
     container.innerHTML = "";
+    
+    // Add mapping function
+    const getColorClass = (categoryId) => {
+      if (categoryId === 'fun') return 'bg-orange-500';
+      if (categoryId === 'future') return 'bg-emerald-500';
+      return 'bg-red-500'; // default/fund
+    };
+
     segments.forEach((segment) => {
       const bar = document.createElement("div");
-      bar.className = `${segment.color} h-full`;
+      // Use map to determine color, and add transition classes
+      bar.className = `${getColorClass(segment.categoryId)} h-full transition-all duration-1000 ease-out`;
       bar.style.width = `${segment.percent}%`;
       container.appendChild(bar);
     });
@@ -123,9 +159,16 @@
   const renderRatioLabels = (container, ratios) => {
     if (!container) return;
     container.innerHTML = "";
+    
+    const getTextColorClass = (categoryId) => {
+      if (categoryId === 'fun') return 'text-orange-400';
+      if (categoryId === 'future') return 'text-emerald-400';
+      return 'text-red-400';
+    };
+
     ratios.forEach((ratio) => {
       const label = document.createElement("span");
-      label.className = ratio.over ? "font-semibold text-red-400" : "text-text-muted";
+      label.className = ratio.over ? `font-semibold ${getTextColorClass(ratio.categoryId)}` : "text-text-muted";
       label.textContent = `${ratio.label} ${ratio.percent}%`;
       container.appendChild(label);
     });
@@ -134,11 +177,18 @@
   const renderRatioValues = (container, ratios) => {
     if (!container) return;
     container.innerHTML = "";
+
+    const getBgColorClass = (categoryId) => {
+      if (categoryId === 'fun') return 'bg-orange-500';
+      if (categoryId === 'future') return 'bg-emerald-500';
+      return 'bg-red-500';
+    };
+
     ratios.forEach((ratio) => {
       const item = document.createElement("div");
       item.className = "flex-1 px-1";
       item.innerHTML = `
-        <div class="mx-auto mb-1 h-1.5 w-1.5 rounded-full ${ratio.color}"></div>
+        <div class="mx-auto mb-1 h-1.5 w-1.5 rounded-full ${getBgColorClass(ratio.categoryId)}"></div>
         <div class="text-[10px] uppercase text-text-muted">${ratio.label}</div>
         <div class="text-xs font-bold">${formatEuro(ratio.value)}</div>
         <div class="text-[10px] text-text-muted">/ ${formatEuro(ratio.budget)}</div>
