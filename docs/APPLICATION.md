@@ -71,13 +71,11 @@
 ### Authentication & Middleware
 *The problem: We need a secure, custom session system that protects both API routes and server-rendered pages without constantly prop-drilling a `userId` through every UI component and business logic function.*
 
-- **How it works (`middleware.ts`):**
-  - `apps/web/src/middleware.ts` is the bouncer. It intercepts every request. If you hit an API route without a session, it returns a 401. If you hit a Page, it redirects to `/login`.
-  - Session validation for page requests is now delegated to the Go backend through `GET /api/auth/session`. If Go rotates the session, Astro forwards the returned `Set-Cookie` header back to the browser.
 - **How it works (`AuthBootstrap.astro`):** `apps/web/src/layouts/AuthBootstrap.astro` now performs a browser-side session bootstrap against `GET /api/auth/session` and publishes auth readiness into the client runtime. This is the first migration step away from middleware-owned page auth.
+- **Current page guard:** protected pages now rely on browser-side auth bootstrap against `GET /api/auth/session` and redirect to `/login` on the client when the session is missing.
 - **How it works (`currentUser.ts`):** To solve the prop-drilling problem, the middleware wraps the entire request lifecycle inside Node.js `AsyncLocalStorage`.
 - **How it works (`login.ts` / `logout.ts`):** `apps/web/src/pages/api/auth/login.ts` and `apps/web/src/pages/api/auth/logout.ts` adapt browser form posts into JSON calls to Go and keep browser redirects in the frontend layer.
-- **Current split:** Go is the source of truth for login, logout, and session verification. Astro still owns request-local auth context for SSR through `AsyncLocalStorage`, while the browser now also bootstraps session state directly from Go for future static-client routing.
+- **Current split:** Go is the source of truth for login, logout, and session verification. Astro no longer enforces page auth in middleware; the browser bootstrap owns page gating while a few legacy server auth helpers still remain for cleanup.
 - **Milestone reached:** the home, calories, expenses, and heat dashboards plus the calories and expenses settings pages now load their authenticated read models in the browser after auth bootstrap, so they no longer depend on `getCurrentUserId()` or SSR request-local auth context.
 - **Rule [AsyncLocalStorage]:** Do NOT pass `userId` as arguments to functions if the action is being performed by the currently logged-in user. 
 - **Usage:** Deep inside any backend logic, securely grab the context: `import { getCurrentUserId } from "@/server/auth/currentUser"; const userId = getCurrentUserId();`

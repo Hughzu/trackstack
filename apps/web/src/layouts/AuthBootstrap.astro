@@ -34,9 +34,9 @@ const { authMode = "none" } = Astro.props;
     const state = { authenticated: false };
     publishAuthState(state);
 
-    // Middleware still owns authoritative page protection during the transition.
-    // Do not redirect protected pages from the browser bootstrap yet, or a false
-    // negative session check can cause a login loop after a successful sign-in.
+    if (bootstrapAuthMode === "required" && window.location.pathname !== "/login") {
+      window.location.replace("/login");
+    }
   };
 
   const bootstrapAuth = async () => {

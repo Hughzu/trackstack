@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
@@ -81,5 +82,13 @@ describe('client-loaded read paths', () => {
     const expensesSettingsClient = readSource('modules/expenses/components/ExpensesSettingsClient.astro');
     expect(expensesSettingsClient).toContain('resolveBrowserApiUrl("/api/expenses/settings")');
     expect(expensesSettingsClient).toContain('waitForAuthReady');
+  });
+
+  test('astro middleware is removed and auth bootstrap owns page guarding', () => {
+    expect(existsSync(resolve(srcDir, 'middleware.ts'))).toBe(false);
+
+    const authBootstrap = readSource('layouts/AuthBootstrap.astro');
+    expect(authBootstrap).toContain('bootstrapAuthMode === "required"');
+    expect(authBootstrap).toContain('window.location.replace("/login")');
   });
 });
