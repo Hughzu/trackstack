@@ -1,5 +1,9 @@
 /// <reference path="../.astro/types.d.ts" />
 
+interface Window {
+  __TRACKSTACK_AUTH__?: { authenticated: boolean };
+}
+
 interface ImportMetaEnv {
     readonly PUBLIC_API_BASE_URL?: string;
     readonly DATA_DIR?: string;

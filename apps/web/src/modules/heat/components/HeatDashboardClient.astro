@@ -1,4 +1,5 @@
 ---
+import Skeleton from "@/components/Skeleton.astro";
 ---
 
 <div class="flex flex-col gap-5 pb-24" data-heat-dashboard>
@@ -21,7 +22,7 @@
 
       <div class="flex flex-col items-center justify-center py-4">
         <span class="mb-1 text-xs uppercase tracking-widest text-text-muted">Days Since Refill</span>
-        <span class="text-6xl font-bold tracking-tighter text-text-main" data-heat-days>Loading...</span>
+        <span class="flex h-[60px] items-center" data-heat-days><Skeleton class="h-12 w-20 rounded bg-white/10" /></span>
       </div>
     </div>
   </section>
@@ -29,19 +30,19 @@
   <section>
     <div class="mb-2 flex items-center justify-between px-1">
       <span class="text-xs font-bold uppercase tracking-widest text-text-muted">Season Snapshot</span>
-      <span class="text-[11px] text-text-muted" data-heat-season-label>--</span>
+      <span class="flex h-4 items-center" data-heat-season-label><Skeleton class="h-3 w-16 rounded bg-white/10" /></span>
     </div>
     <div class="grid grid-cols-2 gap-3">
       <div class="rounded-2xl border border-primary/20 bg-surface p-5 text-text-main shadow-lg shadow-black/40 ring-1 ring-primary/20">
         <div class="flex flex-col items-center justify-center py-2">
           <span class="mb-1 text-[10px] uppercase tracking-widest text-text-muted">This season</span>
-          <span class="text-3xl font-semibold tracking-tight text-text-main" data-heat-current>--</span>
+          <div class="flex h-[40px] items-center" data-heat-current><Skeleton class="h-7 w-16 rounded-lg bg-white/10" /></div>
         </div>
       </div>
       <div class="rounded-2xl border border-primary/20 bg-surface p-5 text-text-main shadow-lg shadow-black/40 ring-1 ring-primary/20">
         <div class="flex flex-col items-center justify-center py-2">
           <span class="mb-1 text-[10px] uppercase tracking-widest text-text-muted">Last season</span>
-          <span class="text-3xl font-semibold tracking-tight text-text-main" data-heat-last>--</span>
+          <div class="flex h-[40px] items-center" data-heat-last><Skeleton class="h-7 w-16 rounded-lg bg-white/10" /></div>
         </div>
       </div>
     </div>
@@ -52,7 +53,20 @@
       <span class="text-sm font-bold text-text-muted">Refill History</span>
     </div>
     <div class="overflow-hidden rounded-2xl border border-primary/20 bg-panel shadow-lg shadow-black/40 divide-y divide-white/5" data-refill-history>
-      <div class="p-4 text-center text-xs italic text-text-muted">No refill history found.</div>
+      <div class="flex items-center justify-between p-3">
+        <div class="min-w-0 flex flex-col gap-2">
+          <Skeleton class="h-4 w-24 rounded bg-white/10" />
+          <Skeleton class="h-3 w-16 rounded bg-white/10" />
+        </div>
+        <Skeleton class="h-4 w-12 rounded bg-white/10" />
+      </div>
+      <div class="flex items-center justify-between p-3">
+        <div class="min-w-0 flex flex-col gap-2">
+          <Skeleton class="h-4 w-32 rounded bg-white/10" />
+          <Skeleton class="h-3 w-20 rounded bg-white/10" />
+        </div>
+        <Skeleton class="h-4 w-16 rounded bg-white/10" />
+      </div>
     </div>
   </section>
 </div>
@@ -125,16 +139,18 @@
   };
 
   const renderDashboard = (viewModel) => {
-    document.querySelector("[data-heat-days]").textContent = String(viewModel.daysSinceRefill);
+    document.querySelector("[data-heat-days]").innerHTML = String(viewModel.daysSinceRefill);
+    document.querySelector("[data-heat-days]").className = "text-6xl font-bold tracking-tighter text-text-main";
     document.querySelector("[data-heat-season-label]").textContent = viewModel.seasonSnapshot.seasonLabel;
-    document.querySelector("[data-heat-current]").textContent = formatNumber(viewModel.seasonSnapshot.seasonToDate);
-    document.querySelector("[data-heat-last]").textContent = formatNumber(viewModel.seasonSnapshot.lastSeasonToDate);
+    document.querySelector("[data-heat-season-label]").className = "text-[11px] text-text-muted";
+    document.querySelector("[data-heat-current]").innerHTML = `<span class="text-2xl font-bold">${formatNumber(viewModel.seasonSnapshot.seasonToDate)}</span><span class="ml-1 text-xs text-text-muted">bags</span>`;
+    document.querySelector("[data-heat-last]").innerHTML = `<span class="text-2xl font-bold text-text-muted">${formatNumber(viewModel.seasonSnapshot.lastSeasonToDate)}</span><span class="ml-1 text-xs text-text-muted">bags</span>`;
     document.querySelector("[data-heat-warning]").classList.toggle("hidden", !(viewModel.daysSinceRefill > 14));
     renderHistory(viewModel.history ?? []);
   };
 
   const loadDashboard = async () => {
-    const root = document.querySelector("[data-heat-dashboard]");
+    const root = document.querySelector("[data-heat-dashboard]") as HTMLElement | null;
     if (!root || root.dataset.bound === "true") return;
     root.dataset.bound = "true";
 
