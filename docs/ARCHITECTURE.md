@@ -104,7 +104,7 @@ Go is now the source of truth for:
 - `GET /api/auth/session`
 - authenticated API access under `/api/*`
 
-Astro still owns request-local SSR auth context for the remaining protected forms that have not been migrated, but page-session verification now delegates to Go and the browser can bootstrap session state directly from `GET /api/auth/session`. The home, calories, expenses, and heat dashboards plus the calories settings page now load directly from Go in the browser.
+Astro still owns request-local SSR auth context for the remaining protected forms that have not been migrated, but page-session verification now delegates to Go and the browser can bootstrap session state directly from `GET /api/auth/session`. The home, calories, expenses, and heat dashboards plus the calories and expenses settings pages now load directly from Go in the browser.
 
 ## Environment Variables
 

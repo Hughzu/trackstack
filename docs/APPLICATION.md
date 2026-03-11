@@ -78,7 +78,7 @@
 - **How it works (`currentUser.ts`):** To solve the prop-drilling problem, the middleware wraps the entire request lifecycle inside Node.js `AsyncLocalStorage`.
 - **How it works (`login.ts` / `logout.ts`):** `apps/web/src/pages/api/auth/login.ts` and `apps/web/src/pages/api/auth/logout.ts` adapt browser form posts into JSON calls to Go and keep browser redirects in the frontend layer.
 - **Current split:** Go is the source of truth for login, logout, and session verification. Astro still owns request-local auth context for SSR through `AsyncLocalStorage`, while the browser now also bootstraps session state directly from Go for future static-client routing.
-- **Milestone reached:** the home, calories, expenses, and heat dashboards plus the calories settings page now load their authenticated read models in the browser after auth bootstrap, so they no longer depend on `getCurrentUserId()` or SSR request-local auth context.
+- **Milestone reached:** the home, calories, expenses, and heat dashboards plus the calories and expenses settings pages now load their authenticated read models in the browser after auth bootstrap, so they no longer depend on `getCurrentUserId()` or SSR request-local auth context.
 - **Rule [AsyncLocalStorage]:** Do NOT pass `userId` as arguments to functions if the action is being performed by the currently logged-in user. 
 - **Usage:** Deep inside any backend logic, securely grab the context: `import { getCurrentUserId } from "@/server/auth/currentUser"; const userId = getCurrentUserId();`
 

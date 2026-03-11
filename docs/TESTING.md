@@ -89,6 +89,8 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Guard that the expenses and heat dashboards read their Go endpoints in the browser after auth bootstrap
   - Guard that the calories settings page no longer imports SSR auth context
   - Guard that the calories settings page reads `/api/calories/target` in the browser after auth bootstrap
+  - Guard that the expenses settings page no longer imports SSR auth context
+  - Guard that the expenses settings page reads `/api/expenses/settings` in the browser after auth bootstrap
 
 - `apps/web/tests/e2e/calories.spec.ts`
   - Login through Astro

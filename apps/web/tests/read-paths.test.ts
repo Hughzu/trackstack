@@ -69,4 +69,17 @@ describe('client-loaded read paths', () => {
     expect(caloriesSettingsClient).toContain('resolveBrowserApiUrl("/api/calories/target")');
     expect(caloriesSettingsClient).toContain('waitForAuthReady');
   });
+
+  test('expenses settings page no longer depends on SSR auth context', () => {
+    const expensesSettings = readSource('pages/expenses/settings.astro');
+    expect(expensesSettings).toContain('ExpensesSettingsClient');
+    expect(expensesSettings).not.toContain('getCurrentUserId');
+    expect(expensesSettings).not.toContain('expensesService');
+  });
+
+  test('expenses settings client fetches browser data from Go', () => {
+    const expensesSettingsClient = readSource('modules/expenses/components/ExpensesSettingsClient.astro');
+    expect(expensesSettingsClient).toContain('resolveBrowserApiUrl("/api/expenses/settings")');
+    expect(expensesSettingsClient).toContain('waitForAuthReady');
+  });
 });
