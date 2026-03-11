@@ -44,7 +44,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-		const entry = await fetchApi("/expenses/checklist/complete", {
+		const entry = await fetchApi("/expenses/checklists/complete", {
 			method: "POST",
 			body: JSON.stringify({
 				id: data.id,

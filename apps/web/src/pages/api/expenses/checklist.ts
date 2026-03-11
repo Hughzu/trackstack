@@ -52,17 +52,17 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const payload = {
-      id: data.id,
-      title: data.title.trim(),
-      amount: Number(amount),
-      category: data.category
-    };
+		const payload = {
+			id: data.id,
+			title: data.title.trim(),
+			amount: Number(amount),
+			category: data.category
+		};
 
-    const template = await fetchApi("/expenses/checklist", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+		const template = await fetchApi("/expenses/checklists", {
+			method: "POST",
+			body: JSON.stringify(payload)
+		});
 
     if (!isJson) {
       return new Response(null, { status: 303, headers: { Location: "/expenses/settings" } });
@@ -109,10 +109,10 @@ export const DELETE: APIRoute = async ({ request }) => {
       });
     }
 
-    await fetchApi(`/expenses/checklist?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-    return new Response(null, { status: 204 });
-  } catch (error) {
-    console.error("Failed to proxy expenses checklist DELETE:", error);
+		await fetchApi(`/expenses/checklists?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+		return new Response(null, { status: 204 });
+	} catch (error) {
+		console.error("Failed to proxy expenses checklist DELETE:", error);
     return new Response(JSON.stringify({ error: "Server Error" }), {
       status: 400,
       headers: {

@@ -40,11 +40,11 @@ export const POST: APIRoute = async ({ request }) => {
     };
   }
 
-  try {
-    const entry = await fetchApi("/expenses/expense", {
-      method: "POST",
-      body: JSON.stringify(bodyData)
-    });
+	try {
+		const entry = await fetchApi("/expenses/entries", {
+			method: "POST",
+			body: JSON.stringify(bodyData)
+		});
 
     if (!isJson) {
       return new Response(null, { status: 303, headers: { Location: "/expenses" } });
@@ -86,7 +86,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 	}
 
 	try {
-		await fetchApi(`/expenses/expense?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+		await fetchApi(`/expenses/entries?id=${encodeURIComponent(id)}`, { method: "DELETE" });
 		return new Response(null, { status: 204 });
 	} catch (err: any) {
 		return new Response(JSON.stringify({ error: err.message }), { status: 400 });

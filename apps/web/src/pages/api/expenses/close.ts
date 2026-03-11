@@ -3,9 +3,9 @@ import { fetchApi } from "@/server/auth/fetchApi";
 
 export const prerender = false;
 
-export const POST: APIRoute = async () => {
+	export const POST: APIRoute = async () => {
 	try {
-		const sheet = await fetchApi("/expenses/close", {
+		const sheet = await fetchApi("/expenses/sheet/close", {
 			method: "POST"
 		});
 		return new Response(JSON.stringify(sheet), {

@@ -37,12 +37,6 @@ func NewRouter(handlers Handlers, corsAllowedOrigin string) http.Handler {
 		r.Route("/api/expenses", func(r chi.Router) {
 			r.Get("/settings", handlers.Expenses.GetSettings)
 			r.Post("/settings", handlers.Expenses.UpdateSettings)
-			r.Post("/expense", handlers.Expenses.AddExpense)
-			r.Delete("/expense", handlers.Expenses.DeleteExpense)
-			r.Post("/checklist", handlers.Expenses.UpsertChecklist)
-			r.Delete("/checklist", handlers.Expenses.DeleteChecklist)
-			r.Post("/checklist/complete", handlers.Expenses.CompleteChecklistItem)
-			r.Post("/close", handlers.Expenses.CloseSheet)
 			r.Get("/sheet/current", handlers.Expenses.GetCurrentSheet)
 			r.Post("/entries", handlers.Expenses.AddExpense)
 			r.Delete("/entries", handlers.Expenses.DeleteExpense)

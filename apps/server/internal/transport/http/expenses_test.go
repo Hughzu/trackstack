@@ -226,7 +226,7 @@ func TestExpensesUpsertChecklistAPI_JSON(t *testing.T) {
 		t.Fatalf("marshal payload: %v", err)
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/api/expenses/checklist", bytes.NewReader(body))
+	req := httptest.NewRequest(http.MethodPost, "/api/expenses/checklists", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
 
@@ -278,7 +278,7 @@ func TestExpensesAddExpenseAPI_FormRejected(t *testing.T) {
 	form.Set("amount", "42.50")
 	form.Set("category", "fund")
 
-	req := httptest.NewRequest(http.MethodPost, "/api/expenses/expense", bytes.NewBufferString(form.Encode()))
+	req := httptest.NewRequest(http.MethodPost, "/api/expenses/entries", bytes.NewBufferString(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
 

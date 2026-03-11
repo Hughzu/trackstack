@@ -89,4 +89,5 @@
 - **Rule:** Mutating Go endpoints should prefer a single JSON request contract; browser form posts should be normalized by frontend adapters before they reach Go.
 - **Rule:** Expenses mutations and command-like actions (`close sheet`, `complete checklist`, template upserts/deletes) should call Go over HTTP rather than reimplementing logic in Astro routes.
 - **Rule:** Delete-style Go endpoints should use an explicit URL identifier contract rather than accepting ids from multiple locations.
+- **Rule:** Go route aliases should be temporary migration shims only; once Astro adapters call the canonical backend paths, remove the aliases from Go and OpenAPI.
 - **Rule:** When changing a Go endpoint contract, update the Astro adapter, transport tests, and e2e coverage together.
