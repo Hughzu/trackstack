@@ -92,6 +92,9 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Guard that the expenses settings page no longer imports SSR auth context
   - Guard that the expenses settings page reads `/api/expenses/settings` in the browser after auth bootstrap
   - Guard that Astro middleware is removed and `AuthBootstrap` is the active page guard
+  - Guard that Astro auth adapter route files are removed
+  - Guard that legacy SSR auth helper files are removed
+  - Guard that legacy SSR service wrappers are removed
 
 - `apps/web/tests/e2e/calories.spec.ts`
   - Login through Astro

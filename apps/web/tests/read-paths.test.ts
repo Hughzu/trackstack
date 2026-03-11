@@ -91,4 +91,23 @@ describe('client-loaded read paths', () => {
     expect(authBootstrap).toContain('bootstrapAuthMode === "required"');
     expect(authBootstrap).toContain('window.location.replace("/login")');
   });
+
+  test('astro auth adapter routes are removed', () => {
+    expect(existsSync(resolve(srcDir, 'pages/api/auth/login.ts'))).toBe(false);
+    expect(existsSync(resolve(srcDir, 'pages/api/auth/logout.ts'))).toBe(false);
+  });
+
+  test('legacy SSR auth helper files are removed', () => {
+    expect(existsSync(resolve(srcDir, 'server/auth/currentUser.ts'))).toBe(false);
+    expect(existsSync(resolve(srcDir, 'server/auth/fetchApi.ts'))).toBe(false);
+    expect(existsSync(resolve(srcDir, 'server/auth/verifySession.ts'))).toBe(false);
+    expect(existsSync(resolve(srcDir, 'server/auth/config.ts'))).toBe(false);
+  });
+
+  test('legacy SSR service wrappers are removed', () => {
+    expect(existsSync(resolve(srcDir, 'modules/dashboard/services/dashboardService.ts'))).toBe(false);
+    expect(existsSync(resolve(srcDir, 'modules/calories/services/caloriesService.ts'))).toBe(false);
+    expect(existsSync(resolve(srcDir, 'modules/expenses/services/expensesService.ts'))).toBe(false);
+    expect(existsSync(resolve(srcDir, 'modules/heat/services/heatService.ts'))).toBe(false);
+  });
 });

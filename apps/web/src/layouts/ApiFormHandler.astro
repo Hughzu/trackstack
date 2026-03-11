@@ -6,19 +6,6 @@ import { apiConfig } from "@/config/api";
   const browserDirectApiCalls = directBrowserCalls;
   const apiBaseUrl = publicApiBaseUrl;
 
-  const shouldUseDirectBrowserApi = (input) => {
-    if (!input || typeof input !== "string") return false;
-    if (input.startsWith("http://") || input.startsWith("https://")) {
-      return false;
-    }
-
-    const normalizedPath = input.startsWith("/api")
-      ? input
-      : `/api${input.startsWith("/") ? input : `/${input}`}`;
-
-    return !normalizedPath.startsWith("/api/auth/");
-  };
-
   const resolveApiUrl = (input) => {
     if (!input || typeof input !== "string") return input;
     if (input.startsWith("http://") || input.startsWith("https://")) {
@@ -29,7 +16,7 @@ import { apiConfig } from "@/config/api";
       ? input
       : `/api${input.startsWith("/") ? input : `/${input}`}`;
 
-    if (!browserDirectApiCalls || !shouldUseDirectBrowserApi(normalizedPath)) {
+    if (!browserDirectApiCalls) {
       return normalizedPath;
     }
 
@@ -142,16 +129,6 @@ import { apiConfig } from "@/config/api";
           });
 
           if (response.ok) {
-            if (action === "/api/auth/logout") {
-              window.location.href = redirectUrl || "/login";
-              return;
-            }
-
-            if (action === "/api/auth/login") {
-              window.location.href = redirectUrl || "/";
-              return;
-            }
-
             if (redirectUrl) window.location.href = redirectUrl;
             else window.location.reload();
             return;
