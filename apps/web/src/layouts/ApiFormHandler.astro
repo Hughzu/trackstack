@@ -199,7 +199,10 @@ import { apiConfig } from "@/config/api";
     bindApiForms();
   };
 
+  window.__TRACKSTACK_BIND_API_FORMS__ = bindApiForms;
   window.__TRACKSTACK_DIRECT_BROWSER_API__ = browserDirectApiCalls;
+
+  document.addEventListener("trackstack:bind-api-forms", bindApiForms);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

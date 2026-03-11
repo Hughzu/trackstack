@@ -104,7 +104,7 @@ Go is now the source of truth for:
 - `GET /api/auth/session`
 - authenticated API access under `/api/*`
 
-Astro still owns request-local SSR auth context for most protected pages, but page-session verification now delegates to Go and the browser can bootstrap session state directly from `GET /api/auth/session`. The home dashboard is the first protected read path already loading directly from Go in the browser.
+Astro still owns request-local SSR auth context for settings and other protected forms, but page-session verification now delegates to Go and the browser can bootstrap session state directly from `GET /api/auth/session`. The home, calories, expenses, and heat dashboards now load directly from Go in the browser.
 
 ## Environment Variables
 

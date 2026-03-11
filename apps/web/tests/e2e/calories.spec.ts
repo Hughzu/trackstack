@@ -63,6 +63,30 @@ test.describe('Calories Logging Flow', () => {
         await expect(page).toHaveURL('/calories');
     });
 
+    test('User can quick-add a recent meal from the dashboard', async ({ page }) => {
+        await login(page);
+
+        await page.goto('/calories/new');
+        await page.fill('input[name="calories"]', '640');
+        await page.fill('input[name="protein"]', '42');
+        await page.fill('input[name="title"]', 'Quick Add Seed');
+        await page.click('button[type="submit"]');
+        await expect(page).toHaveURL('/calories');
+
+        const quickAddButton = page.getByRole('button', { name: 'Quick add Quick Add Seed' }).first();
+        await expect(quickAddButton).toBeVisible();
+
+        const responsePromise = page.waitForResponse(response =>
+            response.url().includes('/api/calories/log') && response.request().method() === 'POST'
+        );
+
+        await quickAddButton.click();
+
+        const response = await responsePromise;
+        expect(response.ok()).toBeTruthy();
+        await expect(page).toHaveURL('/calories');
+    });
+
     test('User can delete a calorie log', async ({ page }) => {
         await login(page);
 

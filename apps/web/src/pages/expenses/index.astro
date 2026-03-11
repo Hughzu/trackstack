@@ -2,26 +2,11 @@
 import AppShell from "@/layouts/AppShell.astro";
 import Fab from "@/components/Fab.astro";
 import ConfirmModal from "@/components/ConfirmModal.astro";
-import DashboardSummary from "@/modules/expenses/components/DashboardSummary.astro";
-import ObligationsList from "@/modules/expenses/components/ObligationsList.astro";
-import ExpenseHistoryList from "@/modules/expenses/components/ExpenseHistoryList.astro";
-import { expensesService } from "@/modules/expenses/services/expensesService";
-import { getCurrentUserId } from "@/server/auth/currentUser";
-
-const currentUserId = getCurrentUserId();
-const viewModel = await expensesService.getDashboardViewModel(currentUserId);
+import ExpensesDashboardClient from "@/modules/expenses/components/ExpensesDashboardClient.astro";
 ---
 
 <AppShell title="Wealth" currentDomain="expenses">
-  <div class="flex flex-col gap-5 pb-24">
-    <DashboardSummary
-      periodKey={viewModel.periodKey}
-      balance={viewModel.balance}
-      ratios={viewModel.ratios}
-    />
-    <ObligationsList pendingObligations={viewModel.pendingObligations} />
-    <ExpenseHistoryList history={viewModel.history} />
-  </div>
+  <ExpensesDashboardClient />
 
   <div slot="actions" class="flex gap-2 w-full max-w-sm mx-auto">
     <Fab

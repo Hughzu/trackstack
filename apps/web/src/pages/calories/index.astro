@@ -1,27 +1,12 @@
 ---
 import AppShell from "@/layouts/AppShell.astro";
 import Fab from "@/components/Fab.astro";
-import DailySummary from "@/modules/calories/components/DailySummary.astro";
-import QuickAdd from "@/modules/calories/components/QuickAdd.astro";
-import LogList from "@/modules/calories/components/LogList.astro";
+import CaloriesDashboardClient from "@/modules/calories/components/CaloriesDashboardClient.astro";
 import DeleteLogModal from "@/modules/calories/components/DeleteLogModal.astro";
-
-import { caloriesService } from "@/modules/calories/services/caloriesService";
-import { getCurrentUserId } from "@/server/auth/currentUser";
-
-const currentUserId = getCurrentUserId();
-const viewModel = await caloriesService.getDashboardViewModel(currentUserId, 8);
 ---
 
 <AppShell title="Health" currentDomain="calories">
-  <div class="flex flex-col gap-5 pb-24">
-    <section>
-      <DailySummary summary={viewModel.summary} />
-    </section>
-
-    <QuickAdd recentMeals={viewModel.recentMeals} />
-    <LogList logs={viewModel.logs} />
-  </div>
+  <CaloriesDashboardClient />
 
   <div slot="actions" class="flex gap-2 w-full max-w-sm mx-auto">
     <Fab

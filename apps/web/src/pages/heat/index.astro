@@ -1,27 +1,12 @@
 ---
 import AppShell from "@/layouts/AppShell.astro";
 import Fab from "@/components/Fab.astro";
-import HeatStatusCard from "@/modules/heat/components/HeatStatusCard.astro";
-import SeasonSnapshotCard from "@/modules/heat/components/SeasonSnapshotCard.astro";
-import RefillHistoryList from "@/modules/heat/components/RefillHistoryList.astro";
+import HeatDashboardClient from "@/modules/heat/components/HeatDashboardClient.astro";
 import RefillDeleteModal from "@/modules/heat/components/RefillDeleteModal.astro";
-import { heatService } from "@/modules/heat/services/heatService";
-import { getCurrentUserId } from "@/server/auth/currentUser";
-
-const currentUserId = getCurrentUserId();
-const viewModel = await heatService.getDashboardViewModel(currentUserId, 1, 20);
 ---
 
 <AppShell title="Heating" currentDomain="heat">
-  <div class="flex flex-col gap-5 pb-24">
-    <HeatStatusCard daysSinceRefill={viewModel.daysSinceRefill} />
-    <SeasonSnapshotCard
-      seasonLabel={viewModel.seasonSnapshot.seasonLabel}
-      seasonToDate={viewModel.seasonSnapshot.seasonToDate}
-      lastSeasonToDate={viewModel.seasonSnapshot.lastSeasonToDate}
-    />
-    <RefillHistoryList history={viewModel.history} />
-  </div>
+  <HeatDashboardClient />
 
   <div slot="actions" class="flex gap-2 w-full max-w-sm mx-auto">
     <div class="flex-1 justify-center">
