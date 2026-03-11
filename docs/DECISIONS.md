@@ -31,3 +31,5 @@ Update guidelines:
 2026-03-10 — Treat consumer-owned ports and outbound adapters as the cross-domain rule so future service extraction does not change module boundaries.
 2026-03-11 — Treat the Go backend as a frontend-agnostic JSON API and keep browser form/redirect adaptation in the web client so runtime or frontend changes do not alter backend contracts.
 2026-03-11 — Build Astro as a static frontend/PWA served from S3 and route all auth, health, and business API traffic directly to the Go runtime.
+2026-03-11 — Enforce Go backend hexagonal boundaries with `cmd/archguard` so structural regressions fail like tests before modular-monolith drift blocks service extraction.
+2026-03-11 — Enforce dumb-repository guardrails with `cmd/lintguard` so `adapters/db` stays focused on persistence mapping instead of domain decisions.
