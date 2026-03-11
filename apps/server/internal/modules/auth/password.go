@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
 	"strconv"
@@ -13,7 +14,27 @@ const (
 	defaultScryptN = 16384
 	defaultScryptR = 8
 	defaultScryptP = 1
+	defaultKeyLen  = 64
+	defaultSaltLen = 16
 )
+
+func HashPassword(password string) (string, error) {
+	salt := make([]byte, defaultSaltLen)
+	if _, err := rand.Read(salt); err != nil {
+		return "", err
+	}
+
+	derived, err := scrypt.Key([]byte(password), salt, defaultScryptN, defaultScryptR, defaultScryptP, defaultKeyLen)
+	if err != nil {
+		return "", err
+	}
+
+	params := "N=16384,r=8,p=1"
+	saltEncoded := base64.StdEncoding.EncodeToString(salt)
+	hashEncoded := base64.StdEncoding.EncodeToString(derived)
+
+	return "$scrypt$" + params + "$" + saltEncoded + "$" + hashEncoded, nil
+}
 
 func VerifyPassword(password string, storedHash string) bool {
 	if !strings.HasPrefix(storedHash, "$scrypt$") {

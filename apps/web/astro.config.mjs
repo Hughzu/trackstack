@@ -104,9 +104,6 @@ export default defineConfig({
         },
       },
     },
-    ssr: {
-      noExternal: ["@libsql/client", "@libsql/client/web", "@libsql/client/http"]
-    },
     resolve: {
       alias: {
         "@app": fileURLToPath(new URL("./src/app", import.meta.url))

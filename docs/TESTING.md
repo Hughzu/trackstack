@@ -34,7 +34,7 @@ cd apps/web
 pnpm test:e2e
 ```
 
-`pnpm test:e2e` seeds the configured users database before running browser flows. It expects `apps/web/.env` to provide `TURSO_USERS_URL`, `E2E_TEST_EMAIL`, and `E2E_TEST_PASSWORD`, plus `TURSO_USERS_TOKEN` for remote Turso.
+`pnpm test:e2e` seeds the configured users database through the backend-owned seed command before running browser flows. The test workflow remains compatible with `apps/web/.env` for `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD`; the backend command also supports `apps/server/.env` or exported environment variables for DB config.
 
 ## Compose Regression Workflow
 
@@ -124,7 +124,7 @@ When a regression is found in the frontend/backend boundary:
 - If the homepage or any server-rendered page throws `fetch failed` in Docker:
   - rebuild `go-backend` after any `apps/server/go.mod` or Go runtime image change so the running container is not stuck on an older toolchain image.
 - If `pnpm test:e2e` fails before the browser starts:
-  - verify `apps/web/.env` contains valid `TURSO_USERS_URL`, `E2E_TEST_EMAIL`, and `E2E_TEST_PASSWORD` values.
+  - verify `apps/web/.env` contains valid `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` values, and verify `apps/server/.env` or your shell environment provides valid Turso users DB credentials if they are not already shared.
 - If login e2e fails unexpectedly:
   - rerun `pnpm test:e2e`; it reseeds the test credentials each run.
 - If Go tools are missing in container runs:

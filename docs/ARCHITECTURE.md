@@ -116,9 +116,7 @@ Origin verification:
 - `ORIGIN_VERIFY_HEADER` (default: `X-Origin-Verify`)
 - `ORIGIN_VERIFY_VALUE` (random secret stored in SSM)
 
-Turso connections are still available to Astro tooling/helpers through `apps/web/src/server/db/sqlite.ts`, but application request handling should prefer Go-owned APIs over direct DB access:
-- `TURSO_USERS_URL`
-- `TURSO_USERS_TOKEN`
+Astro application request handling should not connect to Turso directly.
 
 Auth cookies:
 - `AUTH_COOKIE_NAME` (default `trackstack_session`)
@@ -155,6 +153,8 @@ The Go backend reads its own runtime config from `apps/server/internal/core/conf
 - `AUTH_SESSION_ROTATION_GRACE_SECONDS`
 - `AUTH_SESSION_TOUCH_SECONDS`
 - domain-specific Turso connection values for auth, users, calories, expenses, and heat
+
+Backend-owned commands under `apps/server/cmd/**` use the same config surface for direct database tooling such as user seeding.
 
 Astro reads the same auth env keys from `apps/web/src/server/auth/config.ts`, and its defaults are intentionally kept in lockstep with the Go runtime.
 

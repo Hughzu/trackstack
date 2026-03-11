@@ -15,16 +15,10 @@ Each database has its own migration directory under `packages/db/migrations/` an
 
 ## Connection & Access Rules
 
-- **All DB access goes through** `apps/web/src/server/db/sqlite.ts` via `getDb(domain)`.
-- **Never instantiate a LibSQL client directly.**
-- Runtime secrets are resolved from SSM when env values start with `/trackstack/`.
-
-Domains are mapped in the modules:
-
-- `calories` → `apps/web/src/modules/calories/db.ts`
-- `expenses` → `apps/web/src/modules/expenses/db.ts`
-- `heat` → `apps/web/src/modules/heat/db.ts`
-- `users` → `apps/web/src/server/auth` (sessions + auth logic)
+- Application request-path DB access is owned by `apps/server/`.
+- Astro does not connect to domain databases directly.
+- Runtime database config is resolved by the Go backend from environment variables.
+- Direct DB tooling should live with backend-owned commands, not the frontend app.
 
 ## Migration Locations
 
@@ -74,7 +68,7 @@ turso db tokens create heat
 
 ### Environment variables
 
-Set these in your local `.env` (not committed) or CI secrets. For the Astro app, use `apps/web/.env`:
+Set these in your local `.env` (not committed) or CI secrets. For backend commands and local backend runs, use `apps/server/.env`:
 
 ```bash
 TURSO_USERS_URL=libsql://<users-db>.turso.io
@@ -122,13 +116,14 @@ atlas migrate apply \
 
 ### Seed user
 
-The seed script creates a single email/password user in the `users` database.
+The seed command creates a single email/password user in the `users` database.
 
 ```bash
-node apps/web/scripts/seed-user.mjs --email you@example.com --password yourpass
+cd apps/server
+go run ./cmd/seed-user --email you@example.com --password yourpass
 ```
 
-For e2e runs, the script can also read `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` from `apps/web/.env`.
+For e2e runs, the command can read `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` from `apps/web/.env`, `apps/server/.env`, or the shell environment.
 
 Database target precedence:
 
@@ -137,9 +132,9 @@ Database target precedence:
 
 Notes:
 
-- The script now requires `TURSO_USERS_URL`; it does not guess a local fallback path.
+- The command now requires `TURSO_USERS_URL`; it does not guess a local fallback path.
 - If the user already exists, the script updates the password hash in place.
-- The password is hashed using scrypt with the same parameters as the app.
+- The password is hashed using the Go backend auth implementation so seeding stays aligned with production auth.
 
 ## CI/CD Migrations
 
@@ -314,7 +309,7 @@ Type mappings live in `apps/web/src/modules/heat/types.ts` and service logic in 
 
 ## Mutation Rules
 
-- Database mutations **must** occur in API routes under `apps/web/src/pages/api/`.
+- Database mutations in the application request path must occur through Go-owned APIs.
 - UI components and pages must call domain services, not raw SQL.
-- All DB access must go through `getDb(domain)` (`apps/web/src/server/db/sqlite.ts`).
+- Frontend code must not access Turso directly.
 - Migrations are the only source of truth for schema changes; update SQL + this doc together.

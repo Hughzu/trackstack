@@ -63,11 +63,8 @@
 ### Database (Turso Distributed SQLite)
 *The problem: We need to connect to 4 completely separate Turso databases simultaneously (Users, Calories, Expenses, Heat). Furthermore, local development uses hardcoded `.env` secrets, but AWS Lambda must securely fetch connection strings from AWS SSM Parameter Store at runtime to prevent leaks.*
 
-- **How it works (`sqlite.ts`):** `apps/web/src/server/db/sqlite.ts` manages client instantiation and caching. If the environment variable starts with `/trackstack/` (which happens in production Terraform), the script uses the AWS SDK to pull the *real* values from SSM seamlessly.
-- **Rule [No Raw Clients]:** NEVER instantiate a LibSQL client directly. Rely on `sqlite.ts` to orchestrate credential resolution.
-- **Usage:** `import { getDb } from "@/server/db/sqlite"; const db = getDb("expenses");`
-- **Rule [Frontend DB Boundary]:** Astro application runtime should not read or write domain databases directly. Page data, auth verification, and mutations should go through Go endpoints.
-- **Allowed exceptions:** local tooling and migration support scripts may still talk to Turso directly (for example seeding or one-off maintenance), but that is not part of the app request path.
+- **Rule [Frontend DB Boundary]:** Astro application runtime must not read or write domain databases directly. Page data, auth verification, and mutations go through Go endpoints.
+- **Rule [Backend-Owned Tooling]:** Direct Turso access for seeding or maintenance belongs in backend-owned commands under `apps/server/cmd`, not inside the frontend app.
 
 ### Authentication & Middleware
 *The problem: We need a secure, custom session system that protects both API routes and server-rendered pages without constantly prop-drilling a `userId` through every UI component and business logic function.*
