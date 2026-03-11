@@ -289,3 +289,35 @@ func TestExpensesAddExpenseAPI_FormRejected(t *testing.T) {
 		t.Fatalf("expected status 400 for non-JSON request, got %d: body: %s", rr.Code, rr.Body.String())
 	}
 }
+
+func TestExpensesLegacyAliasesReturnNotFound(t *testing.T) {
+	store := newMockExpensesStore()
+	router := setupExpensesTestRouter(store)
+
+	tests := []struct {
+		name   string
+		method string
+		path   string
+	}{
+		{name: "expense post alias removed", method: http.MethodPost, path: "/api/expenses/expense"},
+		{name: "expense delete alias removed", method: http.MethodDelete, path: "/api/expenses/expense?id=entry-1"},
+		{name: "checklist post alias removed", method: http.MethodPost, path: "/api/expenses/checklist"},
+		{name: "checklist delete alias removed", method: http.MethodDelete, path: "/api/expenses/checklist?id=template-1"},
+		{name: "checklist complete alias removed", method: http.MethodPost, path: "/api/expenses/checklist/complete"},
+		{name: "close alias removed", method: http.MethodPost, path: "/api/expenses/close"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, tt.path, nil)
+			req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
+
+			rr := httptest.NewRecorder()
+			router.ServeHTTP(rr, req)
+
+			if rr.Code != http.StatusNotFound {
+				t.Fatalf("expected status 404, got %d: body: %s", rr.Code, rr.Body.String())
+			}
+		})
+	}
+}

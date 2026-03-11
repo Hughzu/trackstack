@@ -31,7 +31,7 @@ test.describe('Expenses Logging Flow', () => {
 
         // 3. Submit the form
         const responsePromise = page.waitForResponse(response =>
-            response.url().includes('/api/expenses/expense') && response.request().method() === 'POST'
+            response.url().includes('/api/expenses/entries') && response.request().method() === 'POST'
         );
 
         await page.click('button[type="submit"]');
@@ -73,7 +73,7 @@ test.describe('Expenses Logging Flow', () => {
         const recurringCount = await page.locator('[data-recurring-delete]').count();
 
         const checklistPostPromise = page.waitForResponse(response =>
-            response.url().includes('/api/expenses/checklist') && response.request().method() === 'POST'
+            response.url().includes('/api/expenses/checklists') && response.request().method() === 'POST'
         );
 
         await page.locator('input[form="expense-checklist-form"][name="title"]').fill('Checklist Test');

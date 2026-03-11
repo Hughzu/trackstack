@@ -85,6 +85,7 @@ The current Go transport is JSON-over-HTTP under `/api/*`.
 - OpenAPI: `GET /openapi.yaml`
 - Auth middleware: cookie-based session auth in `apps/server/internal/transport/http/middleware_auth.go`, applied only to protected route groups under `/api/*`
 - Response helpers: `apps/server/internal/transport/http/response.go`
+- Canonical expenses routes: `/api/expenses/settings`, `/api/expenses/sheet/current`, `/api/expenses/entries`, `/api/expenses/checklists`, `/api/expenses/checklists/complete`, `/api/expenses/recurring`, `/api/expenses/sheet/close`
 
 Current error contract is intentionally simple:
 

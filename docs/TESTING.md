@@ -59,10 +59,17 @@ This is the default local loop after changing Astro API routes, Go handlers, or 
 
 - `apps/server/internal/transport/http/calories_test.go`
   - Authenticated `POST /api/calories/log` JSON request
-  - Authenticated `POST /api/calories/log` form request
+  - Authenticated non-JSON `POST /api/calories/log` rejection
   - Authenticated `POST /api/calories/target` JSON request
   - Authenticated `DELETE /api/calories/log?id=...` request
-  - Assert created vs redirect behavior at the HTTP transport boundary
+  - Assert JSON-only transport behavior at the HTTP boundary
+
+- `apps/server/internal/transport/http/expenses_test.go`
+  - Authenticated `POST /api/expenses/settings` JSON request
+  - Authenticated `POST /api/expenses/checklists` JSON request
+  - Authenticated `POST /api/expenses/recurring` JSON request
+  - Authenticated non-JSON `POST /api/expenses/entries` rejection
+  - Assert removed legacy expense aliases return `404`
 
 - `apps/server/internal/modules/heat/service_test.go`
   - Basic service validation and season behavior regression checks
@@ -86,7 +93,7 @@ This is the default local loop after changing Astro API routes, Go handlers, or 
   - Save expense settings
   - Add monthly checklist template
   - Add recurring template
-  - Assert `POST /api/expenses/expense` succeeds
+  - Assert canonical Astro expense routes (`/api/expenses/entries`, `/api/expenses/checklists`) succeed
   - Assert settings and template mutations still work through Astro -> Go
 
 - `apps/web/tests/e2e/heat.spec.ts`

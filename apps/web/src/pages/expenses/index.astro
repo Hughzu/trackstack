@@ -75,7 +75,7 @@ const viewModel = await expensesService.getDashboardViewModel(currentUserId);
   confirmLoadingLabel="Deleting..."
   triggerAttribute="data-expense-delete"
   idAttribute="data-expense-id"
-  endpoint="/api/expenses/expense"
+  endpoint="/api/expenses/entries"
   method="DELETE"
   errorMessage="Unable to delete expense."
 />
@@ -87,7 +87,7 @@ const viewModel = await expensesService.getDashboardViewModel(currentUserId);
   confirmLabel="Close month"
   confirmLoadingLabel="Closing..."
   triggerAttribute="data-expense-close"
-  endpoint="/api/expenses/close"
+  endpoint="/api/expenses/sheet/close"
   method="POST"
   sendPayload={false}
   errorMessage="Unable to close month."

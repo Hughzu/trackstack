@@ -52,7 +52,7 @@ const pendingObligations = Astro.props.pendingObligations ?? [];
               <div slot="left" class="flex items-center gap-3">
                 <form
                   data-api-form
-                  action="/api/expenses/checklist/complete"
+                  action="/api/expenses/checklists/complete"
                   method="POST"
                 >
                   <input type="hidden" name="id" value={item.id} />

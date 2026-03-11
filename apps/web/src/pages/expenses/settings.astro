@@ -333,7 +333,7 @@ const formatCategory = (category: string) => {
 <form
   id="expense-checklist-form"
   data-api-form
-  action="/api/expenses/checklist"
+  action="/api/expenses/checklists"
   method="POST"
 >
 </form>
@@ -353,7 +353,7 @@ const formatCategory = (category: string) => {
   confirmLoadingLabel="Deleting..."
   triggerAttribute="data-checklist-delete"
   idAttribute="data-checklist-id"
-  endpoint="/api/expenses/checklist"
+  endpoint="/api/expenses/checklists"
   method="DELETE"
   errorMessage="Unable to delete checklist item."
 />

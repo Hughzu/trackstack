@@ -63,7 +63,7 @@ describe('SigV4 Form Attributes', () => {
       path: 'pages/expenses/new.astro',
       expects: [
         'data-api-form',
-        'action="/api/expenses/expense"',
+        'action="/api/expenses/entries"',
         'method="POST"',
         'data-redirect="/expenses"',
       ],
@@ -84,7 +84,7 @@ describe('SigV4 Form Attributes', () => {
       expects: [
         'id="expense-checklist-form"',
         'data-api-form',
-        'action="/api/expenses/checklist"',
+        'action="/api/expenses/checklists"',
         'method="POST"',
       ],
     },
@@ -92,7 +92,7 @@ describe('SigV4 Form Attributes', () => {
       name: 'expenses checklist delete modal',
       path: 'pages/expenses/settings.astro',
       expects: [
-        'endpoint="/api/expenses/checklist"',
+        'endpoint="/api/expenses/checklists"',
         'method="DELETE"',
         'data-checklist-delete',
       ],
@@ -121,7 +121,7 @@ describe('SigV4 Form Attributes', () => {
       path: 'modules/expenses/components/ObligationsList.astro',
       expects: [
         'data-api-form',
-        'action="/api/expenses/checklist/complete"',
+        'action="/api/expenses/checklists/complete"',
         'method="POST"',
       ],
     },
