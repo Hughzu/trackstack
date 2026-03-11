@@ -1,23 +1,27 @@
-- go backend  
-    - audit rest best practices
-    - audit hexagonal / go architecture guartraild (make a script to validate that that llm will use afterward ?)
-    - validate that we can spit go code into microservices
-        - big docker compose
-    - deploy lambda in go and new Astro front ? (astro should be pwa in prod also)
-    - audit go code on security / perfm (same make a script ?)
-        - guardrails
-    - do the same for frontend
-        - guardrails
-    - monitor perf  
+- backend 
+    - hexagonal architecture guardrails
+        - script ? CICD ? cli ? 
+    - split code into microservices
+        - first docker compose a big thingy ? change docker compose files place into environments ?
+
+- frontend
+    - fix expenses bar
+    - fix loaders, ugly as hell here
+    - pwa is good ? 
+
+- deploy new setup to aws. 
+
+- Security audit CICD ? 
+- Perf audit CICD ? 
+- Dependabot audit CICD ? 
+- Frontend guardrails ... ? 
+
+- VPS ? 
+
     
-    - docker-compose VPS ? 
-    
-    - quid migration up/down -> right now we need to pay to use migration down with atlas
-    
-    
-    - dependabot ? How can I make sure my dependencies are not too hold (npm, go, terraform)
-    - checkmarx free alternatives ? 
-    - loki / grafana ? 
+Legacy : 
+- quid migration up/down -> right now we need to pay to use migration down with atlas
+- loki / grafana ? 
 - blog post ? about features idea project into architecutre into infra/cicd into next steps
 - SRL module ?
 - Fargate infra ? 
