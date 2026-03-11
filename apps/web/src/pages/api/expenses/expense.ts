@@ -65,24 +65,30 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 export const DELETE: APIRoute = async ({ request }) => {
-  // Proxy DELETE directly to Go backend
-  let id: string | null = null;
-  try {
-    const data = await request.json();
+	let id: string | null = null;
+	try {
+		const data = await request.json();
     if (data?.id) id = String(data.id);
   } catch {
     // ignore
   }
 
-  if (!id) {
-    const url = new URL(request.url);
-    id = url.searchParams.get("id");
-  }
+	if (!id) {
+		const url = new URL(request.url);
+		id = url.searchParams.get("id");
+	}
 
-  try {
-    await fetchApi(`/expenses/expense?id=${id}`, { method: "DELETE" });
-    return new Response(null, { status: 204 });
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 400 });
+	if (!id) {
+		return new Response(JSON.stringify({ error: "Missing expense id" }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" }
+		});
+	}
+
+	try {
+		await fetchApi(`/expenses/expense?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+		return new Response(null, { status: 204 });
+	} catch (err: any) {
+		return new Response(JSON.stringify({ error: err.message }), { status: 400 });
   }
 };

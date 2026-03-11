@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/auth"
@@ -265,5 +266,26 @@ func TestExpensesUpsertRecurringAPI_JSON(t *testing.T) {
 	}
 	if !store.recurringCreated {
 		t.Fatalf("expected recurring template to be created")
+	}
+}
+
+func TestExpensesAddExpenseAPI_FormRejected(t *testing.T) {
+	store := newMockExpensesStore()
+	router := setupExpensesTestRouter(store)
+
+	form := url.Values{}
+	form.Set("title", "Groceries")
+	form.Set("amount", "42.50")
+	form.Set("category", "fund")
+
+	req := httptest.NewRequest(http.MethodPost, "/api/expenses/expense", bytes.NewBufferString(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400 for non-JSON request, got %d: body: %s", rr.Code, rr.Body.String())
 	}
 }

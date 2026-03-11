@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
-import { expensesService } from "@/modules/expenses/services/expensesService";
-import { getCurrentUserId } from "@/server/auth/currentUser";
+import { fetchApi } from "@/server/auth/fetchApi";
 import { withErrorParam } from "@/server/http/redirects";
 
 export const prerender = false;
@@ -45,20 +44,13 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const entry = await expensesService.completeChecklistItem({
-      id: data.id,
-      userId: getCurrentUserId(),
-      date: data.date
-    });
-
-    if (!entry) {
-      return new Response(JSON.stringify({ error: "Checklist item not found" }), {
-        status: 404,
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-    }
+		const entry = await fetchApi("/expenses/checklist/complete", {
+			method: "POST",
+			body: JSON.stringify({
+				id: data.id,
+				date: data.date
+			})
+		});
 
     if (!isJson) {
       return new Response(null, { status: 303, headers: { Location: "/expenses" } });
@@ -70,13 +62,13 @@ export const POST: APIRoute = async ({ request }) => {
         "Content-Type": "application/json"
       }
     });
-  } catch (error) {
-    console.error("Error in POST /api/expenses/checklist/complete:", error);
-    return new Response(JSON.stringify({ error: "Server Error" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json"
-      }
+	} catch (error) {
+		console.error("Error in POST /api/expenses/checklist/complete:", error);
+		return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Server Error" }), {
+			status: 400,
+			headers: {
+				"Content-Type": "application/json"
+			}
     });
   }
 };

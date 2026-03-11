@@ -34,7 +34,6 @@ func (h *ExpensesHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	isJSON := isJSONRequest(r)
 	var payload struct {
 		Income      *float64 `json:"income"`
 		RatioFund   *int     `json:"ratioFund"`
@@ -42,25 +41,12 @@ func (h *ExpensesHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 		RatioFuture *int     `json:"ratioFuture"`
 	}
 
-	if isJSON {
-		if err := decodeJSON(r, &payload); err != nil {
-			writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
-			return
-		}
-	} else {
-		if err := r.ParseForm(); err == nil {
-			payload.Income = parseOptionalFloatString(r.FormValue("income"))
-			payload.RatioFund = parseOptionalIntString(r.FormValue("ratioFund"))
-			payload.RatioFun = parseOptionalIntString(r.FormValue("ratioFun"))
-			payload.RatioFuture = parseOptionalIntString(r.FormValue("ratioFuture"))
-		}
+	if err := decodeJSON(r, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
+		return
 	}
 
 	if payload.Income == nil || payload.RatioFund == nil || payload.RatioFun == nil || payload.RatioFuture == nil {
-		if !isJSON {
-			redirectWithError(w, r, "/expenses/settings")
-			return
-		}
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing required fields"})
 		return
 	}
@@ -74,10 +60,6 @@ func (h *ExpensesHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 	})
 	if err != nil {
 		writeExpensesError(w, err)
-		return
-	}
-	if !isJSON {
-		redirect(w, "/expenses")
 		return
 	}
 	writeJSON(w, http.StatusOK, settings)
@@ -104,7 +86,6 @@ func (h *ExpensesHandler) AddExpense(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isJSON := isJSONRequest(r)
 	var payload struct {
 		Title    string   `json:"title"`
 		Amount   *float64 `json:"amount"`
@@ -112,25 +93,12 @@ func (h *ExpensesHandler) AddExpense(w http.ResponseWriter, r *http.Request) {
 		Date     *string  `json:"date"`
 	}
 
-	if isJSON {
-		if err := decodeJSON(r, &payload); err != nil {
-			writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
-			return
-		}
-	} else {
-		if err := r.ParseForm(); err == nil {
-			payload.Title = r.FormValue("title")
-			payload.Amount = parseOptionalFloatString(r.FormValue("amount"))
-			payload.Category = parseOptionalStringPtr(r.FormValue("category"))
-			payload.Date = parseOptionalStringPtr(r.FormValue("date"))
-		}
+	if err := decodeJSON(r, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
+		return
 	}
 
 	if payload.Amount == nil {
-		if !isJSON {
-			redirectWithError(w, r, "/expenses/new")
-			return
-		}
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing required fields"})
 		return
 	}
@@ -146,10 +114,6 @@ func (h *ExpensesHandler) AddExpense(w http.ResponseWriter, r *http.Request) {
 		writeExpensesError(w, err)
 		return
 	}
-	if !isJSON {
-		redirect(w, "/expenses")
-		return
-	}
 	writeJSON(w, http.StatusCreated, entry)
 }
 
@@ -159,9 +123,6 @@ func (h *ExpensesHandler) DeleteExpense(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		id = extractIDFromBody(r)
-	}
 
 	if id == "" {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing expense id"})
@@ -189,7 +150,6 @@ func (h *ExpensesHandler) UpsertChecklist(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	isJSON := isJSONRequest(r)
 	var payload struct {
 		ID       *string  `json:"id"`
 		Title    string   `json:"title"`
@@ -197,25 +157,12 @@ func (h *ExpensesHandler) UpsertChecklist(w http.ResponseWriter, r *http.Request
 		Category *string  `json:"category"`
 	}
 
-	if isJSON {
-		if err := decodeJSON(r, &payload); err != nil {
-			writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
-			return
-		}
-	} else {
-		if err := r.ParseForm(); err == nil {
-			payload.ID = parseOptionalStringPtr(r.FormValue("id"))
-			payload.Title = r.FormValue("title")
-			payload.Amount = parseOptionalFloatString(r.FormValue("amount"))
-			payload.Category = parseOptionalStringPtr(r.FormValue("category"))
-		}
+	if err := decodeJSON(r, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
+		return
 	}
 
 	if strings.TrimSpace(payload.Title) == "" || payload.Amount == nil {
-		if !isJSON {
-			redirectWithError(w, r, "/expenses/settings")
-			return
-		}
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing required fields"})
 		return
 	}
@@ -231,10 +178,6 @@ func (h *ExpensesHandler) UpsertChecklist(w http.ResponseWriter, r *http.Request
 		writeExpensesError(w, err)
 		return
 	}
-	if !isJSON {
-		redirect(w, "/expenses/settings")
-		return
-	}
 	writeJSON(w, http.StatusOK, template)
 }
 
@@ -244,9 +187,6 @@ func (h *ExpensesHandler) DeleteChecklist(w http.ResponseWriter, r *http.Request
 		return
 	}
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		id = extractIDFromBody(r)
-	}
 	if id == "" {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing template id"})
 		return
@@ -273,29 +213,17 @@ func (h *ExpensesHandler) CompleteChecklistItem(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	isJSON := isJSONRequest(r)
 	var payload struct {
 		ID   string  `json:"id"`
 		Date *string `json:"date"`
 	}
 
-	if isJSON {
-		if err := decodeJSON(r, &payload); err != nil {
-			writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
-			return
-		}
-	} else {
-		if err := r.ParseForm(); err == nil {
-			payload.ID = r.FormValue("id")
-			payload.Date = parseOptionalStringPtr(r.FormValue("date"))
-		}
+	if err := decodeJSON(r, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
+		return
 	}
 
 	if strings.TrimSpace(payload.ID) == "" {
-		if !isJSON {
-			redirectWithError(w, r, "/expenses")
-			return
-		}
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing checklist item id"})
 		return
 	}
@@ -309,10 +237,6 @@ func (h *ExpensesHandler) CompleteChecklistItem(w http.ResponseWriter, r *http.R
 		writeExpensesError(w, err)
 		return
 	}
-	if !isJSON {
-		redirect(w, "/expenses")
-		return
-	}
 	writeJSON(w, http.StatusCreated, entry)
 }
 
@@ -322,7 +246,6 @@ func (h *ExpensesHandler) UpsertRecurring(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	isJSON := isJSONRequest(r)
 	var payload struct {
 		ID       *string  `json:"id"`
 		Title    string   `json:"title"`
@@ -330,25 +253,12 @@ func (h *ExpensesHandler) UpsertRecurring(w http.ResponseWriter, r *http.Request
 		Category *string  `json:"category"`
 	}
 
-	if isJSON {
-		if err := decodeJSON(r, &payload); err != nil {
-			writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
-			return
-		}
-	} else {
-		if err := r.ParseForm(); err == nil {
-			payload.ID = parseOptionalStringPtr(r.FormValue("id"))
-			payload.Title = r.FormValue("title")
-			payload.Amount = parseOptionalFloatString(r.FormValue("amount"))
-			payload.Category = parseOptionalStringPtr(r.FormValue("category"))
-		}
+	if err := decodeJSON(r, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
+		return
 	}
 
 	if strings.TrimSpace(payload.Title) == "" || payload.Amount == nil {
-		if !isJSON {
-			redirectWithError(w, r, "/expenses/settings")
-			return
-		}
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing required fields"})
 		return
 	}
@@ -364,10 +274,6 @@ func (h *ExpensesHandler) UpsertRecurring(w http.ResponseWriter, r *http.Request
 		writeExpensesError(w, err)
 		return
 	}
-	if !isJSON {
-		redirect(w, "/expenses/settings")
-		return
-	}
 	writeJSON(w, http.StatusOK, template)
 }
 
@@ -377,9 +283,6 @@ func (h *ExpensesHandler) DeleteRecurring(w http.ResponseWriter, r *http.Request
 		return
 	}
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		id = extractIDFromBody(r)
-	}
 	if id == "" {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing template id"})
 		return

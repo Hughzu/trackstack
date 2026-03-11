@@ -87,4 +87,5 @@
 - **Rule:** New domain behavior should be added in Go first; Astro adapters should only normalize browser input, forward auth cookies, and map redirects/errors.
 - **Rule:** Transport code in Go stays thin: parse request, call service, map status/error, serialize JSON. Redirect and browser-form behavior belong in frontend adapters, not Go handlers.
 - **Rule:** Mutating Go endpoints should prefer a single JSON request contract; browser form posts should be normalized by frontend adapters before they reach Go.
+- **Rule:** Expenses mutations and command-like actions (`close sheet`, `complete checklist`, template upserts/deletes) should call Go over HTTP rather than reimplementing logic in Astro routes.
 - **Rule:** When changing a Go endpoint contract, update the Astro adapter, transport tests, and e2e coverage together.
