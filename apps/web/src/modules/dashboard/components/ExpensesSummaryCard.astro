@@ -1,6 +1,7 @@
 ---
 import Card from "@/components/Card.astro";
 import PercentageBar from "@/components/PercentageBar.astro";
+import { formatEuro } from "@/utils/format";
 
 interface Props {
   dashboard: {
@@ -32,13 +33,13 @@ const { dashboard } = Astro.props;
     <div>
       <span class="text-xs text-text-muted uppercase tracking-widest">Remaining</span>
       <div class="text-3xl font-bold text-text-main">
-        €{dashboard.expenses.balance.remaining}
+        {formatEuro(dashboard.expenses.balance.remaining)}
       </div>
     </div>
     <div class="text-right">
       <span class="text-xs text-text-muted uppercase tracking-widest">Income</span>
       <div class="text-sm font-mono text-text-muted">
-        €{dashboard.expenses.balance.income}
+        {formatEuro(dashboard.expenses.balance.income)}
       </div>
     </div>
   </div>
@@ -50,23 +51,23 @@ const { dashboard } = Astro.props;
   <div class="flex justify-between text-center divide-x divide-white/10">
     <div class="flex-1 px-1">
       <div class="text-[10px] text-text-muted uppercase">Fund.</div>
-      <div class="text-xs font-bold">€{dashboard.expenses.spent.fund}</div>
+      <div class="text-xs font-bold">{formatEuro(dashboard.expenses.spent.fund)}</div>
       <div class="text-[10px] text-text-muted">
-        / €{dashboard.expenses.budget.fund}
+        / {formatEuro(dashboard.expenses.budget.fund)}
       </div>
     </div>
     <div class="flex-1 px-1">
       <div class="text-[10px] text-text-muted uppercase">Fun</div>
-      <div class="text-xs font-bold">€{dashboard.expenses.spent.fun}</div>
+      <div class="text-xs font-bold">{formatEuro(dashboard.expenses.spent.fun)}</div>
       <div class="text-[10px] text-text-muted">
-        / €{dashboard.expenses.budget.fun}
+        / {formatEuro(dashboard.expenses.budget.fun)}
       </div>
     </div>
     <div class="flex-1 px-1">
       <div class="text-[10px] text-text-muted uppercase">Future</div>
-      <div class="text-xs font-bold">€{dashboard.expenses.spent.future}</div>
+      <div class="text-xs font-bold">{formatEuro(dashboard.expenses.spent.future)}</div>
       <div class="text-[10px] text-text-muted">
-        / €{dashboard.expenses.budget.future}
+        / {formatEuro(dashboard.expenses.budget.future)}
       </div>
     </div>
   </div>
