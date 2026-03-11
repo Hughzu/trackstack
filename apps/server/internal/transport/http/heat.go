@@ -92,9 +92,6 @@ func (h *HeatHandler) DeleteRefill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.URL.Query().Get("id")
-	if id == "" {
-		id = extractIDFromBody(r)
-	}
 
 	if id == "" {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing refill id"})

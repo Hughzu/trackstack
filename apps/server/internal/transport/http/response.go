@@ -23,13 +23,3 @@ func decodeJSON(r *http.Request, dst any) error {
 	decoder.DisallowUnknownFields()
 	return decoder.Decode(dst)
 }
-
-func extractIDFromBody(r *http.Request) string {
-	var payload struct {
-		ID string `json:"id"`
-	}
-	if err := decodeJSON(r, &payload); err == nil {
-		return payload.ID
-	}
-	return ""
-}

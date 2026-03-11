@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/auth"
@@ -107,5 +108,24 @@ func TestHeatDeleteRefillAPI_Query(t *testing.T) {
 	}
 	if store.deleted != "refill-123" {
 		t.Fatalf("expected refill id to be deleted, got %q", store.deleted)
+	}
+}
+
+func TestHeatDeleteRefillAPI_BodyRejected(t *testing.T) {
+	store := &mockHeatStore{}
+	router := setupHeatTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/heat/refills", strings.NewReader(`{"id":"refill-123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400 when id missing from query, got %d: body: %s", rr.Code, rr.Body.String())
+	}
+	if store.deleted != "" {
+		t.Fatalf("expected delete not to be called, got %q", store.deleted)
 	}
 }

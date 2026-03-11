@@ -104,7 +104,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     return new Response(null, { status: 204 });
   } catch (error: any) {
     console.error('Failed to proxy heat DELETE:', error);
-    return new Response(JSON.stringify({ error: 'Server Error' }), {
+    return new Response(JSON.stringify({ error: error?.message ?? 'Server Error' }), {
       status: 400,
       headers: {
         'Content-Type': 'application/json'
