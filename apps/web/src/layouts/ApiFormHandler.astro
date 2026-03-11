@@ -1,26 +1,43 @@
 ---
-// Global API Form Interceptor & SigV4 Content Hash
-const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
+import { apiConfig } from "@/config/api";
 ---
 
-<script define:vars={{ apiBaseUrl }}>
-  const API_BASE_URL = apiBaseUrl;
+<script define:vars={{ directBrowserCalls: apiConfig.directBrowserCalls, publicApiBaseUrl: apiConfig.publicBaseUrl }}>
+  const browserDirectApiCalls = directBrowserCalls;
+  const apiBaseUrl = publicApiBaseUrl;
 
-  const resolveApiUrl = (input) => {
-    if (!input || typeof input !== "string") return input;
-    if (input.startsWith("/api")) return input;
-    if (!API_BASE_URL) return input;
-    if (input.startsWith("http://") || input.startsWith("https://"))
-      return input;
+  const shouldUseDirectBrowserApi = (input) => {
+    if (!input || typeof input !== "string") return false;
+    if (input.startsWith("http://") || input.startsWith("https://")) {
+      return false;
+    }
 
     const normalizedPath = input.startsWith("/api")
       ? input
       : `/api${input.startsWith("/") ? input : `/${input}`}`;
 
-    // Avoid /api/api duplication when API_BASE_URL already includes /api.
-    const base = API_BASE_URL.replace(/\/+$/, "").replace(/\/api$/, "");
+    return !normalizedPath.startsWith("/api/auth/");
+  };
+
+  const resolveApiUrl = (input) => {
+    if (!input || typeof input !== "string") return input;
+    if (input.startsWith("http://") || input.startsWith("https://")) {
+      return input;
+    }
+
+    const normalizedPath = input.startsWith("/api")
+      ? input
+      : `/api${input.startsWith("/") ? input : `/${input}`}`;
+
+    if (!browserDirectApiCalls || !shouldUseDirectBrowserApi(normalizedPath)) {
+      return normalizedPath;
+    }
+
+    const base = apiBaseUrl.replace(/\/+$/, "").replace(/\/api$/, "");
     return `${base}${normalizedPath}`;
   };
+
+  const resolveFormAction = (action) => resolveApiUrl(action);
 
   const ensureSignedFetch = () => {
     if (window.signedFetch) return;
@@ -115,7 +132,7 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
 
         try {
           const fetcher = window.signedFetch || window.fetch;
-          const response = await fetcher(resolveApiUrl(action), {
+          const response = await fetcher(resolveFormAction(action), {
             method: method,
             headers: {
               "Content-Type": "application/json",
@@ -125,6 +142,16 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
           });
 
           if (response.ok) {
+            if (action === "/api/auth/logout") {
+              window.location.href = redirectUrl || "/login";
+              return;
+            }
+
+            if (action === "/api/auth/login") {
+              window.location.href = redirectUrl || "/";
+              return;
+            }
+
             if (redirectUrl) window.location.href = redirectUrl;
             else window.location.reload();
             return;
@@ -136,8 +163,12 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
             if (errEl) {
               let msg = "Request failed.";
               try {
-                const data = await response.json();
-                if (data?.error) msg = data.error;
+                if (action === "/api/auth/login" && response.status === 401) {
+                  msg = "Invalid email or password.";
+                } else {
+                  const data = await response.json();
+                  if (data?.error) msg = data.error;
+                }
               } catch {}
               errEl.textContent = msg;
               errEl.classList.remove("hidden");
@@ -167,6 +198,8 @@ const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
     ensureSignedFetch();
     bindApiForms();
   };
+
+  window.__TRACKSTACK_DIRECT_BROWSER_API__ = browserDirectApiCalls;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

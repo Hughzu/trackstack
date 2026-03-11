@@ -12,8 +12,8 @@
 ## 📂 Architecture Rules
 
 ### 1. `src/pages/` (Routing)
-- **Role:** Astro pages plus thin frontend-facing API adapters.
-- **Rule:** Map URLs to views or small adapter endpoints. Handle query params, cookies, headers, redirects, and Go API proxying.
+- **Role:** Astro pages plus temporary auth-facing adapter endpoints.
+- **Rule:** Map URLs to views and only the remaining auth adapter endpoints. Handle query params, cookies, headers, redirects, and frontend navigation concerns.
 - **Rule:** NO complex business logic here. Defer to `src/modules/`, `src/server/`, or the Go backend.
 
 ### 2. `src/components/` & `src/layouts/` (UI Elements)
@@ -52,9 +52,10 @@
   - **Serialization:** It extracts the form inputs via the `FormData` API and serializes them into a clean JSON object.
   - **SigV4 Signing Prep:** AWS SigV4 requires the request payload to be hashed. The script uses the browser's native `window.crypto.subtle` API to calculate the `SHA-256` hash of the JSON body and injects it into the `x-amz-content-sha256` header.
   - **Fetching & UI Feedback:** Finally, it performs an AJAX `fetch` request using `window.signedFetch` (which is configured elsewhere in `AppShell` to handle the final AWS signing). Based on the HTTP response status, it either reloads the page, navigates to `data-redirect`, or automatically reveals a hidden error element defined by `data-error-target` containing the JSON error message sent back by the server.
-- **Rule [API Mutations Only]:** UI components must never mutate data directly. Mutations must go through `src/pages/api/`, which may proxy to Go.
+- **Rule [API Mutations Only]:** UI components must never mutate data directly. Browser mutations must target canonical `/api/*` endpoints owned by Go.
+- **Migration note:** Astro auth routes stay temporarily for login/logout, but calorie, heat, expenses, and health no longer have Astro adapter files. Browser-side non-auth form and modal actions call Go `/api/*` directly when `PUBLIC_API_BASE_URL` is set or when local dev proxying is active.
 - **Rule [SigV4 Forms - CRITICAL]:** ANY form triggering a mutation must use the `data-api-form` attribute to be intercepted by `ApiFormHandler.astro`.
-- **Rule [Go Boundary]:** For migrated domains, Astro API routes are adapters only. They normalize form payloads, forward cookies to Go, and translate Go responses into browser-friendly redirects or JSON.
+- **Rule [Go Boundary]:** For migrated domains, the browser should call Go-owned `/api/*` endpoints directly. Astro adapters are temporary and currently limited to auth flows.
 - **Usage:**
   - `data-redirect="/path"` controls the success destination. 
   - `data-error-target="element-id"` injects the API error message softly on failure avoiding a full page crash.

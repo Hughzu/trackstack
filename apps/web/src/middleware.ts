@@ -4,7 +4,6 @@ import { runWithAuthContext } from "@/server/auth/currentUser";
 import { verifySession } from "@/server/auth/verifySession";
 
 const isAllowedApiPath = (pathname: string) => {
-  if (pathname === "/api/health") return true;
   if (pathname.startsWith("/api/auth")) return true;
   return false;
 };

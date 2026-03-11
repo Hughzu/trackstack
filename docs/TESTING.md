@@ -8,7 +8,7 @@ Use three test layers:
 
 1. `Go tests` to catch backend and transport regressions quickly.
 2. `Vitest` to validate frontend contracts and form wiring.
-3. `Playwright e2e` to verify real browser flows across the Astro -> Go boundary.
+3. `Playwright e2e` to verify real browser flows across the frontend -> Go boundary.
 
 ## Test Commands
 
@@ -47,7 +47,7 @@ docker compose exec -T astro-frontend sh -lc 'pnpm test'
 docker compose exec -T astro-frontend sh -lc 'pnpm test:e2e'
 ```
 
-This is the default local loop after changing Astro API routes, Go handlers, or request/response contracts between them.
+This is the default local loop after changing Astro auth routes, Go handlers, or request/response contracts between them.
 
 ## Current Regression Coverage
 
@@ -85,7 +85,7 @@ This is the default local loop after changing Astro API routes, Go handlers, or 
   - Update calorie targets
   - Delete a calorie log
   - Assert `POST /api/calories/log` succeeds
-  - Assert target updates and delete flow still work through Astro -> Go
+  - Assert target updates and delete flow work against canonical Go-owned `/api/calories/*` endpoints
 
 - `apps/web/tests/e2e/expenses.spec.ts`
   - Login through Astro
@@ -93,20 +93,15 @@ This is the default local loop after changing Astro API routes, Go handlers, or 
   - Save expense settings
   - Add monthly checklist template
   - Add recurring template
-  - Assert canonical Astro expense routes (`/api/expenses/entries`, `/api/expenses/checklists`) succeed
-  - Assert settings and template mutations still work through Astro -> Go
-
-- Canonical Astro expense adapter files now live at:
-  - `apps/web/src/pages/api/expenses/entries.ts`
-  - `apps/web/src/pages/api/expenses/checklists.ts`
-  - `apps/web/src/pages/api/expenses/checklists/complete.ts`
-  - `apps/web/src/pages/api/expenses/sheet/close.ts`
+  - Assert canonical Go-owned expense endpoints (`/api/expenses/entries`, `/api/expenses/checklists`) succeed
+  - Assert settings and template mutations work against Go-owned `/api/expenses/*`
 
 - `apps/web/tests/e2e/heat.spec.ts`
   - Login through Astro
   - Create a refill
   - Delete a refill from the heat history list
   - Assert `DELETE /api/heat/refills` succeeds and the list shrinks
+  - Assert heat mutations target canonical Go-owned `/api/heat/refills`
 
 ## Adding Regression Tests
 

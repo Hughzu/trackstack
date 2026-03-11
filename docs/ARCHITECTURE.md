@@ -9,8 +9,8 @@ flowchart LR
   U[User Browser] --> CF[CloudFront Distribution]
   CF -->|/assets/* or /_astro/*| S3[Assets S3 Bucket]
   CF -->|HTML pages and auth routes| AFL[Astro Frontend Lambda]
-  CF -->|Migrated API routes| GFL[Go API Lambda]
-  AFL -->|Auth and non-migrated domain data| TU[Turso DBs: users, calories, expenses, heat]
+  CF -->|API routes and health| GFL[Go API Lambda]
+  AFL -->|Auth/session verification only| TU[Turso DBs: users, calories, expenses, heat]
   GFL -->|LibSQL domain data| TU
 
   CF -. custom header .-> AFL
@@ -23,7 +23,7 @@ Key points:
 - CloudFront is the single public entrypoint.
 - Static assets (`/assets/*`, `/_astro/*`) are served from S3 with optimized caching.
 - Page rendering and frontend auth stay in the Astro runtime.
-- Migrated business routes are served by the Go runtime; remaining domain routes still live in Astro until each slice is moved.
+- Business routes and health checks are served by the Go runtime.
 - CloudFront adds origin verification headers and the Lambda entrypoints remain private behind CloudFront.
 
 ## Go Backend Shape
@@ -188,7 +188,7 @@ The deploy workflow loads infra outputs from SSM:
 ## Architecture Boundaries (Macro)
 
 - CloudFront is the only public ingress.
-- Astro owns page rendering, frontend-facing auth flows, and any domain routes not migrated yet.
-- Go owns the migrated business API routes and their transport tests.
+- Astro owns page rendering and temporary frontend-facing auth flows.
+- Go owns health plus the business API routes and their transport tests.
 - Turso is the only persistent store; all compute is stateless.
 - Runtime secrets come from SSM; no hardcoded secrets in code or Terraform.

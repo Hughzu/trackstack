@@ -4,10 +4,6 @@ import { appConfig } from "@/config/app";
 import "@/styles/global.css";
 import AuthShell from "@/components/AuthShell.astro";
 import Button from "@/components/Button.astro";
-
-export const prerender = false;
-
-const error = Astro.url.searchParams.get("error");
 ---
 
 <Layout title="Sign in">
@@ -53,14 +49,6 @@ const error = Astro.url.searchParams.get("error");
         aria-live="polite"
       >
       </p>
-      {error && (
-        <p
-          class="text-xs text-red-200"
-          aria-live="polite"
-        >
-          Invalid email or password.
-        </p>
-      )}
     </form>
   </AuthShell>
 </Layout>

@@ -157,6 +157,12 @@ describe('SigV4 Form Attributes', () => {
 });
 
 describe('Form Safety Checks', () => {
+  test('login page no longer depends on request-time error query state', () => {
+    const content = getSourceContent('pages/login.astro');
+    expect(content).not.toContain('Astro.url.searchParams.get("error")');
+    expect(content).not.toContain('export const prerender = false');
+  });
+
   test('calories form uses ApiFormHandler pattern', () => {
     const content = getSourceContent('pages/calories/new.astro');
     expect(content).toContain('FormShell');

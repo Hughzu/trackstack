@@ -1,6 +1,7 @@
 /// <reference path="../.astro/types.d.ts" />
 
 interface ImportMetaEnv {
+    readonly PUBLIC_API_BASE_URL?: string;
     readonly DATA_DIR?: string;
     readonly TURSO_EXPENSES_URL?: string;
     readonly TURSO_EXPENSES_TOKEN?: string;
