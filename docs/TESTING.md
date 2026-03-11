@@ -96,6 +96,12 @@ This is the default local loop after changing Astro API routes, Go handlers, or 
   - Assert canonical Astro expense routes (`/api/expenses/entries`, `/api/expenses/checklists`) succeed
   - Assert settings and template mutations still work through Astro -> Go
 
+- Canonical Astro expense adapter files now live at:
+  - `apps/web/src/pages/api/expenses/entries.ts`
+  - `apps/web/src/pages/api/expenses/checklists.ts`
+  - `apps/web/src/pages/api/expenses/checklists/complete.ts`
+  - `apps/web/src/pages/api/expenses/sheet/close.ts`
+
 - `apps/web/tests/e2e/heat.spec.ts`
   - Login through Astro
   - Create a refill

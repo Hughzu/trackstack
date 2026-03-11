@@ -17,8 +17,8 @@ export const POST: APIRoute = async ({ request }) => {
         return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
           status: 400,
           headers: {
-            "Content-Type": "application/json"
-          }
+            "Content-Type": "application/json",
+          },
         });
       }
     } else {
@@ -27,7 +27,7 @@ export const POST: APIRoute = async ({ request }) => {
       const date = form.get("date");
       data = {
         id: typeof id === "string" ? id : undefined,
-        date: typeof date === "string" ? date : undefined
+        date: typeof date === "string" ? date : undefined,
       };
     }
 
@@ -39,18 +39,18 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: "Missing checklist item id" }), {
         status: 400,
         headers: {
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       });
     }
 
-		const entry = await fetchApi("/expenses/checklists/complete", {
-			method: "POST",
-			body: JSON.stringify({
-				id: data.id,
-				date: data.date
-			})
-		});
+    const entry = await fetchApi("/expenses/checklists/complete", {
+      method: "POST",
+      body: JSON.stringify({
+        id: data.id,
+        date: data.date,
+      }),
+    });
 
     if (!isJson) {
       return new Response(null, { status: 303, headers: { Location: "/expenses" } });
@@ -59,16 +59,16 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify(entry), {
       status: 201,
       headers: {
-        "Content-Type": "application/json"
-      }
+        "Content-Type": "application/json",
+      },
     });
-	} catch (error) {
-		console.error("Error in POST /api/expenses/checklist/complete:", error);
-		return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Server Error" }), {
-			status: 400,
-			headers: {
-				"Content-Type": "application/json"
-			}
+  } catch (error) {
+    console.error("Error in POST /api/expenses/checklists/complete:", error);
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Server Error" }), {
+      status: 400,
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
   }
 };

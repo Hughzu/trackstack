@@ -22,8 +22,8 @@ export const POST: APIRoute = async ({ request }) => {
         return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
           status: 400,
           headers: {
-            "Content-Type": "application/json"
-          }
+            "Content-Type": "application/json",
+          },
         });
       }
     } else {
@@ -34,7 +34,7 @@ export const POST: APIRoute = async ({ request }) => {
       data = {
         title: typeof title === "string" ? title : undefined,
         amount: typeof amount === "string" ? amount : undefined,
-        category: typeof category === "string" ? category : undefined
+        category: typeof category === "string" ? category : undefined,
       };
     }
 
@@ -47,22 +47,22 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: {
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       });
     }
 
-		const payload = {
-			id: data.id,
-			title: data.title.trim(),
-			amount: Number(amount),
-			category: data.category
-		};
+    const payload = {
+      id: data.id,
+      title: data.title.trim(),
+      amount: Number(amount),
+      category: data.category,
+    };
 
-		const template = await fetchApi("/expenses/checklists", {
-			method: "POST",
-			body: JSON.stringify(payload)
-		});
+    const template = await fetchApi("/expenses/checklists", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
 
     if (!isJson) {
       return new Response(null, { status: 303, headers: { Location: "/expenses/settings" } });
@@ -71,16 +71,16 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify(template), {
       status: 200,
       headers: {
-        "Content-Type": "application/json"
-      }
+        "Content-Type": "application/json",
+      },
     });
   } catch (error) {
-    console.error("Failed to proxy expenses checklist POST:", error);
+    console.error("Failed to proxy expenses checklists POST:", error);
     return new Response(JSON.stringify({ error: "Server Error" }), {
       status: 400,
       headers: {
-        "Content-Type": "application/json"
-      }
+        "Content-Type": "application/json",
+      },
     });
   }
 };
@@ -104,20 +104,20 @@ export const DELETE: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: "Missing template id" }), {
         status: 400,
         headers: {
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       });
     }
 
-		await fetchApi(`/expenses/checklists?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-		return new Response(null, { status: 204 });
-	} catch (error) {
-		console.error("Failed to proxy expenses checklist DELETE:", error);
+    await fetchApi(`/expenses/checklists?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    return new Response(null, { status: 204 });
+  } catch (error) {
+    console.error("Failed to proxy expenses checklists DELETE:", error);
     return new Response(JSON.stringify({ error: "Server Error" }), {
       status: 400,
       headers: {
-        "Content-Type": "application/json"
-      }
+        "Content-Type": "application/json",
+      },
     });
   }
 };
