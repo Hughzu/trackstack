@@ -56,4 +56,17 @@ describe('client-loaded read paths', () => {
     expect(heatContent).toContain('resolveBrowserApiUrl("/api/heat/dashboard?page=1&limit=20")');
     expect(heatContent).toContain('waitForAuthReady');
   });
+
+  test('calories settings page no longer depends on SSR auth context', () => {
+    const caloriesSettings = readSource('pages/calories/settings.astro');
+    expect(caloriesSettings).toContain('CaloriesSettingsClient');
+    expect(caloriesSettings).not.toContain('getCurrentUserId');
+    expect(caloriesSettings).not.toContain('caloriesService');
+  });
+
+  test('calories settings client fetches browser data from Go', () => {
+    const caloriesSettingsClient = readSource('modules/calories/components/CaloriesSettingsClient.astro');
+    expect(caloriesSettingsClient).toContain('resolveBrowserApiUrl("/api/calories/target")');
+    expect(caloriesSettingsClient).toContain('waitForAuthReady');
+  });
 });

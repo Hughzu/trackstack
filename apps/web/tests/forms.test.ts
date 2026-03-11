@@ -32,7 +32,7 @@ describe('SigV4 Form Attributes', () => {
     },
     {
       name: 'calories/settings form',
-      path: 'pages/calories/settings.astro',
+      path: 'modules/calories/components/CaloriesSettingsClient.astro',
       expects: [
         'data-api-form',
         'action="/api/calories/target"',
@@ -70,7 +70,7 @@ describe('SigV4 Form Attributes', () => {
     },
     {
       name: 'expenses/settings form',
-      path: 'pages/expenses/settings.astro',
+      path: 'modules/expenses/components/ExpensesSettingsClient.astro',
       expects: [
         'data-api-form',
         'action="/api/expenses/settings"',
@@ -80,7 +80,7 @@ describe('SigV4 Form Attributes', () => {
     },
     {
       name: 'expenses checklist form',
-      path: 'pages/expenses/settings.astro',
+      path: 'modules/expenses/components/ExpensesSettingsClient.astro',
       expects: [
         'id="expense-checklist-form"',
         'data-api-form',
@@ -90,7 +90,7 @@ describe('SigV4 Form Attributes', () => {
     },
     {
       name: 'expenses checklist delete modal',
-      path: 'pages/expenses/settings.astro',
+      path: 'modules/expenses/components/ExpensesSettingsClient.astro',
       expects: [
         'endpoint="/api/expenses/checklists"',
         'method="DELETE"',
@@ -99,7 +99,7 @@ describe('SigV4 Form Attributes', () => {
     },
     {
       name: 'expenses recurring form',
-      path: 'pages/expenses/settings.astro',
+      path: 'modules/expenses/components/ExpensesSettingsClient.astro',
       expects: [
         'id="expense-recurring-form"',
         'data-api-form',
@@ -109,7 +109,7 @@ describe('SigV4 Form Attributes', () => {
     },
     {
       name: 'expenses recurring delete modal',
-      path: 'pages/expenses/settings.astro',
+      path: 'modules/expenses/components/ExpensesSettingsClient.astro',
       expects: [
         'endpoint="/api/expenses/recurring"',
         'method="DELETE"',
@@ -180,10 +180,10 @@ describe('Form Safety Checks', () => {
     const files = [
       'pages/login.astro',
       'pages/calories/new.astro',
-      'pages/calories/settings.astro',
+      'modules/calories/components/CaloriesSettingsClient.astro',
       'modules/calories/components/QuickAdd.astro',
       'pages/expenses/new.astro',
-      'pages/expenses/settings.astro',
+      'modules/expenses/components/ExpensesSettingsClient.astro',
       'modules/expenses/components/ObligationsList.astro',
       'pages/heat/new.astro',
     ];
