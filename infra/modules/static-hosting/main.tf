@@ -146,28 +146,29 @@ resource "aws_cloudfront_distribution" "ssr" {
     compress                   = true
   }
 
-  ordered_cache_behavior {
-    path_pattern               = "/assets/*"
-    target_origin_id           = local.assets_origin_id
-    viewer_protocol_policy     = "redirect-to-https"
-    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
-    cached_methods             = ["GET", "HEAD", "OPTIONS"]
-    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
-    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.cors_s3.id
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
-    compress                   = true
-  }
-
-  ordered_cache_behavior {
-    path_pattern               = "/_astro/*"
-    target_origin_id           = local.assets_origin_id
-    viewer_protocol_policy     = "redirect-to-https"
-    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
-    cached_methods             = ["GET", "HEAD", "OPTIONS"]
-    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
-    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.cors_s3.id
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
-    compress                   = true
+  dynamic "ordered_cache_behavior" {
+    for_each = [
+      "/_astro/*",
+      "/assets/*",
+      "/sw.js",
+      "/manifest.webmanifest",
+      "/registerSW.js",
+      "/workbox-*.js",
+      "/favicon.svg",
+      "/android/*",
+      "/ios/*"
+    ]
+    content {
+      path_pattern               = ordered_cache_behavior.value
+      target_origin_id           = local.assets_origin_id
+      viewer_protocol_policy     = "redirect-to-https"
+      allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+      cached_methods             = ["GET", "HEAD", "OPTIONS"]
+      cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
+      origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.cors_s3.id
+      response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
+      compress                   = true
+    }
   }
 
   restrictions {

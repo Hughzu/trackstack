@@ -98,6 +98,7 @@ Responsibilities:
 Notes:
 - Price class defaults to `PriceClass_100` to reduce cost.
 - Origin verification header is passed to Lambda origin.
+- Maps multiple paths (`/_astro/*`, `/assets/*`, `/sw.js`, and PWA manifest assets) directly to the S3 bucket via dynamic ordered cache behaviors so the Go API Lambda can be the default CloudFront origin.
 
 ### cost-guardrails
 
