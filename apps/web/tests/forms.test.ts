@@ -161,6 +161,13 @@ describe('Form Safety Checks', () => {
     const content = getSourceContent('pages/login.astro');
     expect(content).not.toContain('Astro.url.searchParams.get("error")');
     expect(content).not.toContain('export const prerender = false');
+    expect(content).toContain('<Layout title="Sign in" authMode="public-only">');
+  });
+
+  test('protected form pages opt into client auth bootstrap', () => {
+    expect(getSourceContent('pages/expenses/new.astro')).toContain('<Layout authMode="required">');
+    expect(getSourceContent('pages/calories/new.astro')).toContain('<Layout authMode="required">');
+    expect(getSourceContent('pages/heat/new.astro')).toContain('<Layout authMode="required">');
   });
 
   test('calories form uses ApiFormHandler pattern', () => {

@@ -1,27 +1,8 @@
 ---
 import AppShell from "@/layouts/AppShell.astro";
-import ExpensesSummaryCard from "@/modules/dashboard/components/ExpensesSummaryCard.astro";
-import CaloriesSummaryCard from "@/modules/dashboard/components/CaloriesSummaryCard.astro";
-import HeatSummaryCard from "@/modules/dashboard/components/HeatSummaryCard.astro";
-import { dashboardService } from "@/modules/dashboard/services/dashboardService";
-import { getCurrentUserId } from "@/server/auth/currentUser";
-
-const currentUserId = getCurrentUserId();
-const dashboard = await dashboardService.getDashboardViewModel(currentUserId);
+import DashboardOverviewClient from "@/modules/dashboard/components/DashboardOverviewClient.astro";
 ---
 
 <AppShell title="Overview" currentDomain="home">
-  <div class="flex flex-col gap-5 pb-24">
-    <section>
-      <ExpensesSummaryCard dashboard={dashboard} />
-    </section>
-
-    <section>
-      <CaloriesSummaryCard dashboard={dashboard} />
-    </section>
-
-    <section>
-      <HeatSummaryCard dashboard={dashboard} />
-    </section>
-  </div>
+  <DashboardOverviewClient />
 </AppShell>

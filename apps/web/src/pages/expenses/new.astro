@@ -32,7 +32,7 @@ const today = new Date().toISOString().split("T")[0];
 const error = Astro.url.searchParams.get("error");
 ---
 
-<Layout>
+<Layout authMode="required">
   <FormShell
     title="New Expense"
     cancelHref="/expenses"

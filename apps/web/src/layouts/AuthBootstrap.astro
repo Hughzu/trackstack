@@ -1,0 +1,79 @@
+---
+import { apiConfig } from "@/config/api";
+
+interface Props {
+  authMode?: "none" | "required" | "public-only";
+}
+
+const { authMode = "none" } = Astro.props;
+---
+
+<script define:vars={{ authMode, directBrowserCalls: apiConfig.directBrowserCalls, publicApiBaseUrl: apiConfig.publicBaseUrl }}>
+  const bootstrapAuthMode = authMode;
+  const browserDirectApiCalls = directBrowserCalls;
+  const apiBaseUrl = publicApiBaseUrl;
+
+  const resolveSessionUrl = () => {
+    const path = "/api/auth/session";
+    if (!browserDirectApiCalls) {
+      return path;
+    }
+
+    const base = apiBaseUrl.replace(/\/+$/, "").replace(/\/api$/, "");
+    return `${base}${path}`;
+  };
+
+  const publishAuthState = (state) => {
+    window.__TRACKSTACK_AUTH__ = state;
+    document.documentElement.dataset.authReady = "true";
+    document.documentElement.dataset.authenticated = state.authenticated ? "true" : "false";
+    document.dispatchEvent(new CustomEvent("trackstack:auth-ready", { detail: state }));
+  };
+
+  const handleUnauthenticated = () => {
+    const state = { authenticated: false };
+    publishAuthState(state);
+
+    // Middleware still owns authoritative page protection during the transition.
+    // Do not redirect protected pages from the browser bootstrap yet, or a false
+    // negative session check can cause a login loop after a successful sign-in.
+  };
+
+  const bootstrapAuth = async () => {
+    if (bootstrapAuthMode === "none") return;
+
+    try {
+      const response = await fetch(resolveSessionUrl(), {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        handleUnauthenticated();
+        return;
+      }
+
+      const payload = await response.json();
+      const state = {
+        authenticated: true,
+        userId: payload.userId,
+        sessionId: payload.sessionId,
+      };
+
+      publishAuthState(state);
+
+      if (bootstrapAuthMode === "public-only") {
+        window.location.replace("/");
+      }
+    } catch {
+      handleUnauthenticated();
+    }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootstrapAuth, { once: true });
+  } else {
+    bootstrapAuth();
+  }
+
+  document.addEventListener("astro:page-load", bootstrapAuth);
+</script>

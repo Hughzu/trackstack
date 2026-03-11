@@ -37,6 +37,7 @@
 ### UI & Styling
 - **Rule [Tailwind]:** ALWAYS use Tailwind CSS. NEVER use inline `style="..."` or external `.css` files unless Tailwind absolutely cannot handle dynamic calculations.
 - **Rule [Content Separation]:** Data fetching occurs ONLY in the Astro Frontmatter (`---`). The template renders validated data without DB queries.
+- **Migration exception:** as protected pages move off SSR, some read paths may bootstrap in the browser after auth readiness instead of using Astro frontmatter. The current example is the home dashboard overview.
 
 ### Client Interactivity & Global State
 *The problem: Astro is incredible for fast, zero-JS page loads. But interactive UI features (like modals or dropdowns) need global state management without pulling in a heavy framework like React.*
@@ -53,7 +54,7 @@
   - **SigV4 Signing Prep:** AWS SigV4 requires the request payload to be hashed. The script uses the browser's native `window.crypto.subtle` API to calculate the `SHA-256` hash of the JSON body and injects it into the `x-amz-content-sha256` header.
   - **Fetching & UI Feedback:** Finally, it performs an AJAX `fetch` request using `window.signedFetch` (which is configured elsewhere in `AppShell` to handle the final AWS signing). Based on the HTTP response status, it either reloads the page, navigates to `data-redirect`, or automatically reveals a hidden error element defined by `data-error-target` containing the JSON error message sent back by the server.
 - **Rule [API Mutations Only]:** UI components must never mutate data directly. Browser mutations must target canonical `/api/*` endpoints owned by Go.
-- **Migration note:** Astro auth routes stay temporarily for login/logout, but calorie, heat, expenses, and health no longer have Astro adapter files. Browser-side non-auth form and modal actions call Go `/api/*` directly when `PUBLIC_API_BASE_URL` is set or when local dev proxying is active.
+- **Migration note:** Astro auth routes stay temporarily for login/logout, but calorie, heat, expenses, and health no longer have Astro adapter files. In development, browser calls should stay same-origin and use the Astro/Vite `/api` proxy. Direct browser calls to `PUBLIC_API_BASE_URL` are enabled only for production-style builds.
 - **Rule [SigV4 Forms - CRITICAL]:** ANY form triggering a mutation must use the `data-api-form` attribute to be intercepted by `ApiFormHandler.astro`.
 - **Rule [Go Boundary]:** For migrated domains, the browser should call Go-owned `/api/*` endpoints directly. Astro adapters are temporary and currently limited to auth flows.
 - **Usage:**
@@ -73,9 +74,11 @@
 - **How it works (`middleware.ts`):**
   - `apps/web/src/middleware.ts` is the bouncer. It intercepts every request. If you hit an API route without a session, it returns a 401. If you hit a Page, it redirects to `/login`.
   - Session validation for page requests is now delegated to the Go backend through `GET /api/auth/session`. If Go rotates the session, Astro forwards the returned `Set-Cookie` header back to the browser.
+- **How it works (`AuthBootstrap.astro`):** `apps/web/src/layouts/AuthBootstrap.astro` now performs a browser-side session bootstrap against `GET /api/auth/session` and publishes auth readiness into the client runtime. This is the first migration step away from middleware-owned page auth.
 - **How it works (`currentUser.ts`):** To solve the prop-drilling problem, the middleware wraps the entire request lifecycle inside Node.js `AsyncLocalStorage`.
 - **How it works (`login.ts` / `logout.ts`):** `apps/web/src/pages/api/auth/login.ts` and `apps/web/src/pages/api/auth/logout.ts` adapt browser form posts into JSON calls to Go and keep browser redirects in the frontend layer.
-- **Current split:** Go is the source of truth for login, logout, and session verification. Astro still owns request-local auth context for SSR through `AsyncLocalStorage`.
+- **Current split:** Go is the source of truth for login, logout, and session verification. Astro still owns request-local auth context for SSR through `AsyncLocalStorage`, while the browser now also bootstraps session state directly from Go for future static-client routing.
+- **Milestone reached:** the home dashboard page now loads its authenticated read model in the browser after auth bootstrap, so it no longer depends on `getCurrentUserId()` or SSR request-local auth context.
 - **Rule [AsyncLocalStorage]:** Do NOT pass `userId` as arguments to functions if the action is being performed by the currently logged-in user. 
 - **Usage:** Deep inside any backend logic, securely grab the context: `import { getCurrentUserId } from "@/server/auth/currentUser"; const userId = getCurrentUserId();`
 

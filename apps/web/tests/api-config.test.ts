@@ -11,6 +11,7 @@ describe('api routing config', () => {
   test('keeps auth routes on Astro during migration', () => {
     expect(shouldUseDirectBrowserApi('/api/auth/login')).toBe(false);
     expect(shouldUseDirectBrowserApi('/api/auth/logout')).toBe(false);
+    expect(shouldUseDirectBrowserApi('/api/auth/session')).toBe(true);
   });
 
   test('allows non-auth browser mutations to go direct to Go', () => {

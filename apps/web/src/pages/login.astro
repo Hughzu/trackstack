@@ -6,7 +6,7 @@ import AuthShell from "@/components/AuthShell.astro";
 import Button from "@/components/Button.astro";
 ---
 
-<Layout title="Sign in">
+<Layout title="Sign in" authMode="public-only">
   <AuthShell appName={appConfig.appName} title="Sign in">
     <form
       method="POST"

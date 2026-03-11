@@ -1,0 +1,232 @@
+---
+---
+
+<div class="flex flex-col gap-5 pb-24" data-dashboard-overview>
+  <p
+    class="hidden rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100"
+    data-dashboard-error
+    role="alert"
+  >
+    Unable to load your dashboard right now.
+  </p>
+
+  <a
+    href="/expenses"
+    class="relative flex flex-col overflow-hidden rounded-2xl border border-primary/20 bg-surface p-5 text-text-main shadow-lg shadow-black/40 ring-1 ring-primary/20"
+    data-dashboard-card="expenses"
+  >
+    <div class="mb-4">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Expenses</h3>
+    </div>
+    <div class="flex justify-between items-start mb-4">
+      <div>
+        <span class="text-xs uppercase tracking-widest text-text-muted">Remaining</span>
+        <div class="text-3xl font-bold text-text-main" data-expenses-remaining>Loading...</div>
+      </div>
+      <div class="text-right">
+        <span class="text-xs uppercase tracking-widest text-text-muted">Income</span>
+        <div class="text-sm font-mono text-text-muted" data-expenses-income>--</div>
+      </div>
+    </div>
+    <div class="mb-2 h-2 overflow-hidden rounded-full bg-gray-800" data-expenses-bar></div>
+    <div class="mb-3 flex justify-between text-[10px] font-mono text-text-muted" data-expenses-ratios></div>
+    <div class="flex justify-between text-center divide-x divide-white/10">
+      <div class="flex-1 px-1">
+        <div class="text-[10px] uppercase text-text-muted">Fund.</div>
+        <div class="text-xs font-bold" data-expenses-fund-spent>--</div>
+        <div class="text-[10px] text-text-muted" data-expenses-fund-budget>--</div>
+      </div>
+      <div class="flex-1 px-1">
+        <div class="text-[10px] uppercase text-text-muted">Fun</div>
+        <div class="text-xs font-bold" data-expenses-fun-spent>--</div>
+        <div class="text-[10px] text-text-muted" data-expenses-fun-budget>--</div>
+      </div>
+      <div class="flex-1 px-1">
+        <div class="text-[10px] uppercase text-text-muted">Future</div>
+        <div class="text-xs font-bold" data-expenses-future-spent>--</div>
+        <div class="text-[10px] text-text-muted" data-expenses-future-budget>--</div>
+      </div>
+    </div>
+  </a>
+
+  <a
+    href="/calories"
+    class="relative flex flex-col overflow-hidden rounded-2xl border border-primary/20 bg-surface p-5 text-text-main shadow-lg shadow-black/40 ring-1 ring-primary/20"
+    data-dashboard-card="calories"
+  >
+    <div class="mb-4">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Daily Intake</h3>
+    </div>
+    <div class="flex justify-between items-start mb-4">
+      <div>
+        <span class="text-xs uppercase tracking-widest text-text-muted">Consumed</span>
+        <div class="flex items-baseline gap-2">
+          <span class="text-3xl font-bold text-text-main" data-calories-consumed>Loading...</span>
+          <span class="text-sm font-mono text-text-muted" data-calories-target>/ -- kcal</span>
+        </div>
+      </div>
+      <div class="text-right">
+        <span class="text-xs uppercase tracking-widest text-text-muted">Protein</span>
+        <div class="text-sm font-bold text-primary" data-calories-protein>--</div>
+      </div>
+    </div>
+    <div class="mb-1 h-2 overflow-hidden rounded-full bg-gray-800">
+      <div class="h-full bg-primary transition-all duration-300" data-calories-bar style="width: 0%"></div>
+    </div>
+  </a>
+
+  <a
+    href="/heat"
+    class="relative flex flex-col overflow-hidden rounded-2xl border border-primary/20 bg-surface p-5 text-text-main shadow-lg shadow-black/40 ring-1 ring-primary/20"
+    data-dashboard-card="heat"
+  >
+    <div class="mb-4">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Heating</h3>
+    </div>
+    <div class="flex items-center justify-between">
+      <div>
+        <span class="text-xs uppercase tracking-widest text-text-muted">Days Since Refill</span>
+        <div class="text-3xl font-bold text-text-main" data-heat-days>Loading...</div>
+      </div>
+      <div class="text-right">
+        <span class="text-xs uppercase tracking-widest text-text-muted">Season</span>
+        <div class="text-sm font-mono text-text-muted" data-heat-season-label>--</div>
+      </div>
+    </div>
+    <div class="mt-4 flex justify-between text-xs text-text-muted">
+      <span>
+        This Season:
+        <span class="font-semibold text-text-main" data-heat-season-current>--</span>
+      </span>
+      <span>
+        Last Season:
+        <span class="font-semibold text-text-main" data-heat-season-last>--</span>
+      </span>
+    </div>
+  </a>
+</div>
+
+<script>
+  import { resolveBrowserApiUrl } from "@/config/api";
+
+  const euroFormatter = new Intl.NumberFormat("en-IE", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  const formatEuro = (value) => euroFormatter.format(Number(value ?? 0));
+
+  const renderSegments = (container, segments) => {
+    if (!container) return;
+    container.innerHTML = "";
+    segments.forEach((segment) => {
+      const bar = document.createElement("div");
+      bar.className = `${segment.color} h-full`;
+      bar.style.width = `${segment.percent}%`;
+      container.appendChild(bar);
+    });
+  };
+
+  const renderRatioLabels = (container, segments) => {
+    if (!container) return;
+    container.innerHTML = "";
+    segments
+      .filter((segment) => segment.label)
+      .forEach((segment) => {
+        const label = document.createElement("span");
+        label.className = segment.over ? "font-semibold text-red-400" : "text-text-muted";
+        label.textContent = `${segment.label} ${segment.percent}%`;
+        container.appendChild(label);
+      });
+  };
+
+  const renderDashboard = (dashboard) => {
+    document.querySelector("[data-expenses-remaining]").textContent = formatEuro(dashboard.expenses.balance.remaining);
+    document.querySelector("[data-expenses-income]").textContent = formatEuro(dashboard.expenses.balance.income);
+    renderSegments(document.querySelector("[data-expenses-bar]"), dashboard.expenses.ratios);
+    renderRatioLabels(document.querySelector("[data-expenses-ratios]"), dashboard.expenses.ratios);
+    document.querySelector("[data-expenses-fund-spent]").textContent = formatEuro(dashboard.expenses.spent.fund);
+    document.querySelector("[data-expenses-fund-budget]").textContent = `/ ${formatEuro(dashboard.expenses.budget.fund)}`;
+    document.querySelector("[data-expenses-fun-spent]").textContent = formatEuro(dashboard.expenses.spent.fun);
+    document.querySelector("[data-expenses-fun-budget]").textContent = `/ ${formatEuro(dashboard.expenses.budget.fun)}`;
+    document.querySelector("[data-expenses-future-spent]").textContent = formatEuro(dashboard.expenses.spent.future);
+    document.querySelector("[data-expenses-future-budget]").textContent = `/ ${formatEuro(dashboard.expenses.budget.future)}`;
+
+    document.querySelector("[data-calories-consumed]").textContent = String(dashboard.calories.summary.consumed);
+    document.querySelector("[data-calories-target]").textContent = `/ ${dashboard.calories.summary.target.targetKcal} kcal`;
+    document.querySelector("[data-calories-protein]").innerHTML = `${dashboard.calories.summary.protein}g <span class="font-normal text-text-muted">/ ${dashboard.calories.summary.target.targetProteinG}g</span>`;
+    const percent = dashboard.calories.summary.target.targetKcal
+      ? Math.min((dashboard.calories.summary.consumed / dashboard.calories.summary.target.targetKcal) * 100, 100)
+      : 0;
+    document.querySelector("[data-calories-bar]").style.width = `${percent}%`;
+
+    const season = dashboard.heat.seasonSnapshot ?? dashboard.heat.season;
+    document.querySelector("[data-heat-days]").textContent = String(dashboard.heat.daysSinceRefill);
+    document.querySelector("[data-heat-season-label]").textContent = season?.seasonLabel ?? season?.label ?? "--";
+    document.querySelector("[data-heat-season-current]").textContent = String(season?.seasonToDate ?? season?.current ?? "--");
+    document.querySelector("[data-heat-season-last]").textContent = String(season?.lastSeasonToDate ?? season?.last ?? "--");
+  };
+
+  const showError = () => {
+    const error = document.querySelector("[data-dashboard-error]");
+    if (error) {
+      error.classList.remove("hidden");
+    }
+  };
+
+  const waitForAuthReady = () => {
+    if (document.documentElement.dataset.authReady === "true") {
+      return Promise.resolve(window.__TRACKSTACK_AUTH__);
+    }
+
+    return new Promise((resolve) => {
+      const handler = (event) => {
+        document.removeEventListener("trackstack:auth-ready", handler);
+        resolve(event.detail);
+      };
+      document.addEventListener("trackstack:auth-ready", handler);
+    });
+  };
+
+  const loadDashboard = async () => {
+    const root = document.querySelector("[data-dashboard-overview]");
+    if (!root || root.dataset.bound === "true") return;
+    root.dataset.bound = "true";
+
+    const auth = await waitForAuthReady();
+    if (!auth?.authenticated) {
+      return;
+    }
+
+    try {
+      const response = await fetch(resolveBrowserApiUrl("/api/dashboard"), {
+        credentials: "include",
+      });
+
+      if (response.status === 401) {
+        window.location.replace("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        showError();
+        return;
+      }
+
+      const dashboard = await response.json();
+      renderDashboard(dashboard);
+    } catch {
+      showError();
+    }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadDashboard, { once: true });
+  } else {
+    loadDashboard();
+  }
+
+  document.addEventListener("astro:page-load", loadDashboard);
+</script>

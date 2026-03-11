@@ -5,6 +5,7 @@ import TopBar from "@/components/TopBar.astro";
 import Head from "@/layouts/Head.astro";
 import ClientRuntime from "@/layouts/ClientRuntime.astro";
 import ApiFormHandler from "@/layouts/ApiFormHandler.astro";
+import AuthBootstrap from "@/layouts/AuthBootstrap.astro";
 import { appConfig, type AppDomain, type AppProfile } from "@/config/app";
 import "@/styles/global.css";
 
@@ -61,5 +62,6 @@ rounded-full p-1 bg-surface/5 backdrop-blur-sm"
 
     <ClientRuntime />
     <ApiFormHandler />
+    <AuthBootstrap authMode="required" />
   </body>
 </html>

@@ -12,7 +12,7 @@ const target = await caloriesService.getTarget(currentUserId);
 const error = Astro.url.searchParams.get("error");
 ---
 
-<Layout>
+<Layout authMode="required">
   <FormShell
     title="Calories Settings"
     cancelHref="/calories"

@@ -2,12 +2,14 @@
 import Head from "@/layouts/Head.astro";
 import ClientRuntime from "@/layouts/ClientRuntime.astro";
 import ApiFormHandler from "@/layouts/ApiFormHandler.astro";
+import AuthBootstrap from "@/layouts/AuthBootstrap.astro";
 
 interface Props {
   title?: string;
+  authMode?: "none" | "required" | "public-only";
 }
 
-const { title = "App" } = Astro.props;
+const { title = "App", authMode = "none" } = Astro.props;
 ---
 
 <!doctype html>
@@ -19,6 +21,7 @@ const { title = "App" } = Astro.props;
     <slot />
     <ClientRuntime />
     <ApiFormHandler />
+    <AuthBootstrap authMode={authMode} />
   </body>
 </html>
 

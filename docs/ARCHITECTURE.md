@@ -104,7 +104,7 @@ Go is now the source of truth for:
 - `GET /api/auth/session`
 - authenticated API access under `/api/*`
 
-Astro still owns request-local SSR auth context, but page-session verification now delegates to Go.
+Astro still owns request-local SSR auth context for most protected pages, but page-session verification now delegates to Go and the browser can bootstrap session state directly from `GET /api/auth/session`. The home dashboard is the first protected read path already loading directly from Go in the browser.
 
 ## Environment Variables
 
@@ -138,6 +138,8 @@ Runtime SSM prefix (serverless):
 Public or local frontend integration variables:
 - `PUBLIC_API_BASE_URL` for browser-side API submission targets when needed
 - `API_PROXY_URL` for Astro server-side proxying to the Go backend in local/container workflows
+
+In local/container development, browser requests should keep using same-origin `/api` paths and rely on the frontend dev proxy. `PUBLIC_API_BASE_URL` is for production-style direct browser access.
 
 ### Go API runtime
 

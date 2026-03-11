@@ -78,6 +78,11 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Required `data-api-form` attributes across mutation forms
   - Redirect contract checks
   - Guard against inline fetch logic bypassing the shared form runtime
+  - Guard the client auth bootstrap wiring for login/public-only vs protected pages
+
+- `apps/web/tests/read-paths.test.ts`
+  - Guard that the home dashboard no longer imports SSR auth context
+  - Guard that the dashboard overview reads `/api/dashboard` in the browser after auth bootstrap
 
 - `apps/web/tests/e2e/calories.spec.ts`
   - Login through Astro

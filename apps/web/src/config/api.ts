@@ -1,10 +1,14 @@
 const publicApiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL ?? "").trim();
+const enableDirectBrowserCalls = publicApiBaseUrl.length > 0 && import.meta.env.PROD;
 
-const AUTH_API_PREFIX = "/api/auth/";
+const ASTRO_AUTH_ROUTES = new Set([
+  "/api/auth/login",
+  "/api/auth/logout",
+]);
 
 export const apiConfig = {
   publicBaseUrl: publicApiBaseUrl,
-  directBrowserCalls: publicApiBaseUrl.length > 0,
+  directBrowserCalls: enableDirectBrowserCalls,
 };
 
 export const normalizeApiPath = (input?: string | null) => {
@@ -22,7 +26,7 @@ export const shouldUseDirectBrowserApi = (input?: string | null) => {
     return false;
   }
 
-  return !normalizedPath.startsWith(AUTH_API_PREFIX);
+  return !ASTRO_AUTH_ROUTES.has(normalizedPath);
 };
 
 export const resolveBrowserApiUrl = (input?: string | null) => {
