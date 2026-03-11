@@ -102,6 +102,8 @@ describe('client-loaded read paths', () => {
     expect(existsSync(resolve(srcDir, 'server/auth/fetchApi.ts'))).toBe(false);
     expect(existsSync(resolve(srcDir, 'server/auth/verifySession.ts'))).toBe(false);
     expect(existsSync(resolve(srcDir, 'server/auth/config.ts'))).toBe(false);
+    expect(existsSync(resolve(srcDir, 'server/auth/client.ts'))).toBe(false);
+    expect(existsSync(resolve(srcDir, 'server/http/redirects.ts'))).toBe(false);
   });
 
   test('legacy SSR service wrappers are removed', () => {
