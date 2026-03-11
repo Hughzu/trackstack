@@ -1,13 +1,14 @@
+- frontend
+    - fix expenses bar
+    - fix loaders, ugly as hell here
+    - pwa is good ? 
+
 - backend 
     - hexagonal architecture guardrails
         - script ? CICD ? cli ? 
     - split code into microservices
         - first docker compose a big thingy ? change docker compose files place into environments ?
 
-- frontend
-    - fix expenses bar
-    - fix loaders, ugly as hell here
-    - pwa is good ? 
 
 - deploy new setup to aws. 
 
