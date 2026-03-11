@@ -24,10 +24,16 @@ export type DashboardViewModel = {
     }>;
   };
   calories: {
-    consumed: number;
-    target: number;
-    percent: number;
-    protein: number;
+    summary: {
+      consumed: number;
+      protein: number;
+      carbs: number;
+      fat: number;
+      target: {
+        targetKcal: number;
+        targetProteinG: number;
+      };
+    };
   };
   heat: {
     daysSinceRefill: number;

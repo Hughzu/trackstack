@@ -5,15 +5,27 @@ import PercentageBar from "@/components/PercentageBar.astro";
 interface Props {
   dashboard: {
     calories: {
-      consumed: number;
-      target: number;
-      percent: number;
-      protein: number;
+      summary: {
+        consumed: number;
+        protein: number;
+        target: {
+          targetKcal: number;
+          targetProteinG: number;
+        };
+      };
     };
   };
 }
 
 const { dashboard } = Astro.props;
+
+const percent = dashboard.calories.summary.target.targetKcal
+  ? Math.min(
+      (dashboard.calories.summary.consumed /
+        dashboard.calories.summary.target.targetKcal) * 100,
+      100,
+    )
+  : 0;
 ---
 
 <Card variant="highlight" title="Daily Intake" href="/calories">
@@ -22,24 +34,27 @@ const { dashboard } = Astro.props;
       <span class="text-xs text-text-muted uppercase tracking-widest">Consumed</span>
       <div class="flex items-baseline gap-2">
         <span class="text-3xl font-bold text-text-main">
-          {dashboard.calories.consumed}
+          {dashboard.calories.summary.consumed}
         </span>
         <span class="text-sm font-mono text-text-muted">
-          / {dashboard.calories.target} kcal
+          / {dashboard.calories.summary.target.targetKcal} kcal
         </span>
       </div>
     </div>
     <div class="text-right">
       <span class="text-xs text-text-muted uppercase tracking-widest">Protein</span>
       <div class="text-sm font-bold text-primary">
-        {dashboard.calories.protein}g
+        {dashboard.calories.summary.protein}g
+        <span class="text-text-muted font-normal">
+          / {dashboard.calories.summary.target.targetProteinG}g
+        </span>
       </div>
     </div>
   </div>
 
   <div class="mb-1">
     <PercentageBar
-      segments={[{ percent: dashboard.calories.percent, color: "bg-primary" }]}
+      segments={[{ percent, color: "bg-primary" }]}
     />
   </div>
 </Card>
