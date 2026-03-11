@@ -29,3 +29,4 @@ Update guidelines:
 2026-03-10 — Make Go the source of truth for auth login, logout, and session verification while Astro keeps request-local auth context for SSR during the migration.
 2026-03-10 — Keep Go as an in-process modular monolith first; only introduce `cmd/lambda` or domain-scoped services when deployment shape requires them.
 2026-03-10 — Treat consumer-owned ports and outbound adapters as the cross-domain rule so future service extraction does not change module boundaries.
+2026-03-11 — Treat the Go backend as a frontend-agnostic JSON API and keep browser form/redirect adaptation in the web client so runtime or frontend changes do not alter backend contracts.

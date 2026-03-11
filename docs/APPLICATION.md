@@ -76,7 +76,7 @@
   - `apps/web/src/middleware.ts` is the bouncer. It intercepts every request. If you hit an API route without a session, it returns a 401. If you hit a Page, it redirects to `/login`.
   - Session validation for page requests is now delegated to the Go backend through `GET /api/auth/session`. If Go rotates the session, Astro forwards the returned `Set-Cookie` header back to the browser.
 - **How it works (`currentUser.ts`):** To solve the prop-drilling problem, the middleware wraps the entire request lifecycle inside Node.js `AsyncLocalStorage`.
-- **How it works (`login.ts` / `logout.ts`):** `apps/web/src/pages/api/auth/login.ts` and `apps/web/src/pages/api/auth/logout.ts` are thin adapters that proxy directly to the Go auth endpoints.
+- **How it works (`login.ts` / `logout.ts`):** `apps/web/src/pages/api/auth/login.ts` and `apps/web/src/pages/api/auth/logout.ts` adapt browser form posts into JSON calls to Go and keep browser redirects in the frontend layer.
 - **Current split:** Go is the source of truth for login, logout, and session verification. Astro still owns request-local auth context for SSR through `AsyncLocalStorage`.
 - **Rule [AsyncLocalStorage]:** Do NOT pass `userId` as arguments to functions if the action is being performed by the currently logged-in user. 
 - **Usage:** Deep inside any backend logic, securely grab the context: `import { getCurrentUserId } from "@/server/auth/currentUser"; const userId = getCurrentUserId();`
@@ -85,5 +85,6 @@
 
 - **Role:** `apps/server/internal/modules/**` owns domain rules, DTOs, and persistence contracts.
 - **Rule:** New domain behavior should be added in Go first; Astro adapters should only normalize browser input, forward auth cookies, and map redirects/errors.
-- **Rule:** Transport code in Go stays thin: parse request, call service, map status/error, serialize JSON.
+- **Rule:** Transport code in Go stays thin: parse request, call service, map status/error, serialize JSON. Redirect and browser-form behavior belong in frontend adapters, not Go handlers.
+- **Rule:** Mutating Go endpoints should prefer a single JSON request contract; browser form posts should be normalized by frontend adapters before they reach Go.
 - **Rule:** When changing a Go endpoint contract, update the Astro adapter, transport tests, and e2e coverage together.

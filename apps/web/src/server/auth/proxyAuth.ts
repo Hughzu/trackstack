@@ -8,19 +8,40 @@ const buildAuthApiUrl = (path: string) => {
   return `${resolveAuthApiBaseUrl()}${normalizedPath}`;
 };
 
-export const proxyAuthRequest = async (request: Request, path: string) => {
-  const headers = new Headers();
-  const contentType = request.headers.get("content-type");
-  if (contentType) {
-    headers.set("Content-Type", contentType);
+const collectSetCookieHeaders = (response: Response) => {
+  const maybeGetSetCookie = response.headers as Headers & {
+    getSetCookie?: () => string[];
+  };
+
+  if (typeof maybeGetSetCookie.getSetCookie === "function") {
+    return maybeGetSetCookie.getSetCookie();
   }
+
+  const single = response.headers.get("set-cookie");
+  return single ? [single] : [];
+};
+
+type ProxiedAuthResponse = {
+  status: number;
+  contentType: string | null;
+  body: string | null;
+  setCookieHeaders: string[];
+};
+
+export const proxyAuthRequest = async (request: Request, path: string, payload?: unknown): Promise<ProxiedAuthResponse> => {
+  const headers = new Headers();
+  headers.set("Content-Type", "application/json");
 
   const cookie = request.headers.get("cookie");
   if (cookie) {
     headers.set("Cookie", cookie);
   }
 
-  const bodyText = request.method === "GET" || request.method === "HEAD" ? undefined : await request.text();
+  const bodyText = request.method === "GET" || request.method === "HEAD"
+    ? undefined
+    : payload === undefined
+      ? undefined
+      : JSON.stringify(payload);
 
   const response = await fetch(buildAuthApiUrl(path), {
     method: request.method,
@@ -28,25 +49,10 @@ export const proxyAuthRequest = async (request: Request, path: string) => {
     body: bodyText,
   });
 
-  const outgoingHeaders = new Headers();
-  const setCookie = response.headers.get("set-cookie");
-  if (setCookie) {
-    outgoingHeaders.set("set-cookie", setCookie);
-  }
-
-  const location = response.headers.get("location");
-  if (location) {
-    outgoingHeaders.set("location", location);
-  }
-
-  const body = response.status === 204 || response.status === 303 ? null : await response.text();
-  const contentTypeOut = response.headers.get("content-type");
-  if (contentTypeOut) {
-    outgoingHeaders.set("content-type", contentTypeOut);
-  }
-
-  return new Response(body, {
+  return {
     status: response.status,
-    headers: outgoingHeaders,
-  });
+    contentType: response.headers.get("content-type"),
+    body: response.status == 204 ? null : await response.text(),
+    setCookieHeaders: collectSetCookieHeaders(response),
+  };
 };

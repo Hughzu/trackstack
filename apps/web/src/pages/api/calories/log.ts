@@ -70,8 +70,15 @@ export const DELETE: APIRoute = async ({ request }) => {
     id = url.searchParams.get("id");
   }
 
+  if (!id) {
+    return new Response(JSON.stringify({ error: "Missing log id" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+
   try {
-    await fetchApi(`/calories/log?id=${id}`, { method: "DELETE" });
+    await fetchApi(`/calories/log?id=${encodeURIComponent(id)}`, { method: "DELETE" });
     return new Response(null, { status: 204 });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), { status: 400 });

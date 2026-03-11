@@ -111,12 +111,11 @@ func TestCaloriesAddLogAPI_Form(t *testing.T) {
 	rr := httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 
-	// Form submissions successfully redirect back to the app instead of purely returning JSON
-	if rr.Code != http.StatusSeeOther {
-		t.Fatalf("expected status 303 Redirect for form, got %d", rr.Code)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400 for non-JSON request, got %d", rr.Code)
 	}
-	if !store.logAdded {
-		t.Fatalf("expected log to be added to store")
+	if store.logAdded {
+		t.Fatalf("expected non-JSON request to be rejected")
 	}
 }
 

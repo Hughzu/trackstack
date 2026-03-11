@@ -24,10 +24,8 @@ type authSessionResponse struct {
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	isJSON := strings.Contains(r.Header.Get("Content-Type"), "application/json")
-
-	payload, ok := readAuthPayload(r, isJSON)
-	if !ok {
+	payload, err := readAuthPayload(r)
+	if err != nil {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
 		return
 	}
@@ -35,10 +33,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	email := strings.ToLower(strings.TrimSpace(payload.Email))
 	password := payload.Password
 	if email == "" || password == "" {
-		if !isJSON {
-			redirect(w, "/login?error=1")
-			return
-		}
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing credentials"})
 		return
 	}
@@ -49,19 +43,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "Server Error"})
 			return
 		}
-		if !isJSON {
-			redirect(w, "/login?error=1")
-			return
-		}
 		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: "Unauthorized"})
 		return
 	}
 
 	if !auth.VerifyPassword(password, user.PasswordHash) {
-		if !isJSON {
-			redirect(w, "/login?error=1")
-			return
-		}
 		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: "Unauthorized"})
 		return
 	}
@@ -99,11 +85,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	_ = h.usersService.UpdateLastLogin(r.Context(), user.ID, now.Format(time.RFC3339))
 
-	if !isJSON {
-		redirect(w, "/")
-		return
-	}
-
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -122,11 +103,6 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		SameSite: parseSameSite(h.cookieSameSiteRaw),
 		MaxAge:   -1,
 	})
-
-	if !strings.Contains(r.Header.Get("Content-Type"), "application/json") {
-		redirect(w, "/login")
-		return
-	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -180,26 +156,15 @@ type authPayload struct {
 	Password string
 }
 
-func readAuthPayload(r *http.Request, isJSON bool) (authPayload, bool) {
-	if isJSON {
-		var payload struct {
-			Email    string `json:"email"`
-			Password string `json:"password"`
-		}
-		if err := decodeJSON(r, &payload); err != nil {
-			return authPayload{}, false
-		}
-		return authPayload{Email: payload.Email, Password: payload.Password}, true
+func readAuthPayload(r *http.Request) (authPayload, error) {
+	var payload struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
-
-	if err := r.ParseForm(); err != nil {
-		return authPayload{}, true
+	if err := decodeJSON(r, &payload); err != nil {
+		return authPayload{}, err
 	}
-
-	return authPayload{
-		Email:    r.FormValue("email"),
-		Password: r.FormValue("password"),
-	}, true
+	return authPayload{Email: payload.Email, Password: payload.Password}, nil
 }
 
 func parseSameSite(value string) http.SameSite {

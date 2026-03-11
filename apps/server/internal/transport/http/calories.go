@@ -56,18 +56,13 @@ func (h *CaloriesHandler) UpdateTarget(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	isJSON := isJSONRequest(r)
-	data, ok := readCaloriesPayload(r, isJSON)
-	if !ok {
+	data, err := readCaloriesPayload(r)
+	if err != nil {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
 		return
 	}
 
 	if data.TargetKcal == nil || data.TargetProtein == nil {
-		if !isJSON {
-			redirectWithError(w, r, "/calories/settings")
-			return
-		}
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing required fields"})
 		return
 	}
@@ -84,11 +79,6 @@ func (h *CaloriesHandler) UpdateTarget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !isJSON {
-		redirect(w, "/calories")
-		return
-	}
-
 	writeJSON(w, http.StatusOK, target)
 }
 
@@ -97,18 +87,13 @@ func (h *CaloriesHandler) AddLog(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	isJSON := isJSONRequest(r)
-	data, ok := readCaloriesPayload(r, isJSON)
-	if !ok {
+	data, err := readCaloriesPayload(r)
+	if err != nil {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
 		return
 	}
 
 	if data.Calories == nil || data.Protein == nil {
-		if !isJSON {
-			redirectWithError(w, r, "/calories")
-			return
-		}
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing required fields"})
 		return
 	}
@@ -128,11 +113,6 @@ func (h *CaloriesHandler) AddLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !isJSON {
-		redirect(w, "/calories")
-		return
-	}
-
 	writeJSON(w, http.StatusCreated, log)
 }
 
@@ -141,17 +121,7 @@ func (h *CaloriesHandler) DeleteLog(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var id string
-	if payload, ok := readJSONMap(r); ok {
-		if value, ok := payload["id"]; ok {
-			id = parseOptionalString(value)
-		}
-	}
-
-	if id == "" {
-		id = r.URL.Query().Get("id")
-	}
-
+	id := r.URL.Query().Get("id")
 	if id == "" {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing log id"})
 		return
@@ -186,56 +156,32 @@ type caloriesPayload struct {
 	TargetFat     *int
 }
 
-func readCaloriesPayload(r *http.Request, isJSON bool) (caloriesPayload, bool) {
-	if isJSON {
-		payload, ok := readJSONMap(r)
-		if !ok {
-			return caloriesPayload{}, false
-		}
-
-		return caloriesPayload{
-			Calories:      parseOptionalInt(payload["calories"]),
-			Protein:       parseOptionalInt(payload["protein"]),
-			Carbs:         parseOptionalInt(payload["carbs"]),
-			Fat:           parseOptionalInt(payload["fat"]),
-			Title:         parseOptionalStringPtr(payload["title"]),
-			Date:          parseOptionalStringPtr(payload["date"]),
-			TargetKcal:    parseOptionalInt(payload["targetKcal"]),
-			TargetProtein: parseOptionalInt(payload["targetProtein"]),
-			TargetCarbs:   parseOptionalInt(payload["targetCarbs"]),
-			TargetFat:     parseOptionalInt(payload["targetFat"]),
-		}, true
-	}
-
-	if err := r.ParseForm(); err != nil {
-		return caloriesPayload{}, true
+func readCaloriesPayload(r *http.Request) (caloriesPayload, error) {
+	var payload map[string]any
+	if err := decodeJSON(r, &payload); err != nil {
+		return caloriesPayload{}, err
 	}
 
 	return caloriesPayload{
-		Calories:      parseOptionalIntString(r.FormValue("calories")),
-		Protein:       parseOptionalIntString(r.FormValue("protein")),
-		Carbs:         parseOptionalIntString(r.FormValue("carbs")),
-		Fat:           parseOptionalIntString(r.FormValue("fat")),
-		Title:         parseOptionalStringPtr(r.FormValue("title")),
-		Date:          parseOptionalStringPtr(r.FormValue("date")),
-		TargetKcal:    parseOptionalIntString(r.FormValue("targetKcal")),
-		TargetProtein: parseOptionalIntString(r.FormValue("targetProtein")),
-		TargetCarbs:   parseOptionalIntString(r.FormValue("targetCarbs")),
-		TargetFat:     parseOptionalIntString(r.FormValue("targetFat")),
-	}, true
-}
-
-func readJSONMap(r *http.Request) (map[string]any, bool) {
-	var payload map[string]any
-	if err := decodeJSON(r, &payload); err != nil {
-		return nil, false
-	}
-	return payload, true
+		Calories:      parseOptionalInt(payload["calories"]),
+		Protein:       parseOptionalInt(payload["protein"]),
+		Carbs:         parseOptionalInt(payload["carbs"]),
+		Fat:           parseOptionalInt(payload["fat"]),
+		Title:         parseOptionalStringPtr(payload["title"]),
+		Date:          parseOptionalStringPtr(payload["date"]),
+		TargetKcal:    parseOptionalInt(payload["targetKcal"]),
+		TargetProtein: parseOptionalInt(payload["targetProtein"]),
+		TargetCarbs:   parseOptionalInt(payload["targetCarbs"]),
+		TargetFat:     parseOptionalInt(payload["targetFat"]),
+	}, nil
 }
 
 func parseOptionalInt(value any) *int {
 	switch v := value.(type) {
 	case float64:
+		if v != float64(int(v)) {
+			return nil
+		}
 		parsed := int(v)
 		return &parsed
 	case string:
@@ -257,13 +203,6 @@ func parseOptionalIntString(value string) *int {
 	return &parsed
 }
 
-func parseOptionalString(value any) string {
-	if text, ok := value.(string); ok {
-		return strings.TrimSpace(text)
-	}
-	return ""
-}
-
 func parseOptionalStringPtr(value any) *string {
 	if text, ok := value.(string); ok {
 		trimmed := strings.TrimSpace(text)
@@ -273,28 +212,4 @@ func parseOptionalStringPtr(value any) *string {
 		return &trimmed
 	}
 	return nil
-}
-
-func isJSONRequest(r *http.Request) bool {
-	return strings.Contains(r.Header.Get("Content-Type"), "application/json")
-}
-
-func redirectWithError(w http.ResponseWriter, r *http.Request, fallback string) {
-	referrer := strings.TrimSpace(r.Referer())
-	if referrer != "" {
-		fallback = referrer
-	}
-
-	if strings.Contains(fallback, "?") {
-		fallback = fallback + "&error=1"
-	} else {
-		fallback = fallback + "?error=1"
-	}
-
-	redirect(w, fallback)
-}
-
-func redirect(w http.ResponseWriter, location string) {
-	w.Header().Set("Location", location)
-	w.WriteHeader(http.StatusSeeOther)
 }

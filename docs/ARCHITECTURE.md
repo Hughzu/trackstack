@@ -90,6 +90,7 @@ Current error contract is intentionally simple:
 
 - HTTP status carries the main classification
 - JSON errors use `{ "error": "..." }`
+- Go auth endpoints under `/api/auth/*` are JSON API endpoints; frontend redirect/form behavior is handled by the web app adapters
 
 If a richer typed API error contract is introduced later, update this doc and the transport tests together.
 
