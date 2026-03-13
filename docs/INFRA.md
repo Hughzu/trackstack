@@ -192,5 +192,5 @@ Local init:
 
 ## CI/CD Touchpoints
 
-- `.github/workflows/terraform-serverless.yml` runs Terraform with OIDC.
+- `.github/workflows/terraform-serverless.yml` currently manages the temporary `serverless-next` environment with OIDC and can build a bootstrap Go Lambda artifact for first apply.
 - `.github/workflows/deploy-serverless.yml` currently deploys the temporary `serverless-next` environment: it builds static Astro assets, packages the Go Lambda custom runtime artifact, uploads both to S3, updates Lambda, and invalidates CloudFront.

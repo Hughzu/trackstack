@@ -145,8 +145,9 @@ The deploy workflow loads infra outputs from SSM:
 
 ### Infrastructure (Terraform)
 - `infra/environments/serverless` is the production baseline.
-- `terraform-serverless.yml` runs `terraform plan` on main; `apply` and `destroy` are manual via workflow dispatch.
-- Optional bootstrap artifact build produces an initial Lambda zip for first apply.
+- `infra/environments/serverless-next` is the temporary migration validation environment.
+- `terraform-serverless.yml` now targets `serverless-next`, runs `terraform plan` on main, and keeps `apply` and `destroy` manual via workflow dispatch.
+- Optional bootstrap artifact build produces an initial Go Lambda custom-runtime zip from `apps/server/cmd/lambda` for first apply.
 
 ### Application (Static Astro Frontend + Go Backend)
 - `deploy-serverless.yml` runs on main when frontend, backend, or migrations change.

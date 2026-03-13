@@ -1,10 +1,11 @@
-name: Terraform Serverless
+name: Terraform Serverless Next
 
 on:
   push:
     branches: [main]
     paths:
-      - 'infra/environments/serverless/**'
+      - 'infra/environments/serverless-next/**'
+      - 'infra/modules/**'
       - '.github/workflows/terraform-serverless.yml'
   workflow_dispatch:
     inputs:
@@ -18,7 +19,7 @@ on:
           - apply
           - destroy
       bootstrap_artifact:
-        description: 'Build and upload Lambda artifact before apply'
+        description: 'Build Go Lambda bootstrap artifact before plan/apply'
         required: true
         default: 'false'
         type: choice
@@ -36,7 +37,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: infra/environments/serverless
+        working-directory: infra/environments/serverless-next
 
 
     steps:
@@ -49,27 +50,18 @@ jobs:
           terraform_version: ~1.5
           terraform_wrapper: false
 
-      - name: Setup Node
+      - name: Setup Go
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.bootstrap_artifact == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-go@v5
         with:
-          node-version: 20
+          go-version-file: apps/server/go.mod
 
-      - name: Enable pnpm (corepack)
+      - name: Build Go Lambda bootstrap artifact
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.bootstrap_artifact == 'true'
         run: |
-          corepack enable
-          corepack prepare pnpm@9 --activate
-          pnpm --version
-
-      - name: Build Astro (bootstrap artifact)
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.bootstrap_artifact == 'true'
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm build
-          cd dist/server
-          zip -r /tmp/astro-ssr.zip .
-        working-directory: apps/web
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" -o /tmp/bootstrap ./cmd/lambda
+          zip -j /tmp/go-api-lambda.zip /tmp/bootstrap
+        working-directory: apps/server
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -90,6 +82,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
+        if: github.event.inputs.action != 'destroy'
         run: |
           set +e
           terraform plan -detailed-exitcode -no-color -out=tfplan \
@@ -116,4 +109,4 @@ jobs:
           terraform destroy -auto-approve \
             -var="aws_region=${{ secrets.AWS_REGION }}"
     env:
-      BOOTSTRAP_LAMBDA_PATH: ${{ github.event.inputs.bootstrap_artifact == 'true' && '/tmp/astro-ssr.zip' || '' }}
+      BOOTSTRAP_LAMBDA_PATH: ${{ github.event.inputs.bootstrap_artifact == 'true' && '/tmp/go-api-lambda.zip' || '' }}
