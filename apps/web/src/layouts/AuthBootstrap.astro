@@ -12,6 +12,14 @@ const { authMode = "none" } = Astro.props;
   const bootstrapAuthMode = authMode;
   const browserDirectApiCalls = directBrowserCalls;
   const apiBaseUrl = publicApiBaseUrl;
+  const authBootstrapState = window.__TRACKSTACK_AUTH_BOOTSTRAP__ ?? {
+    key: "",
+    promise: null,
+    listenerInstalled: false,
+    run: null,
+  };
+
+  window.__TRACKSTACK_AUTH_BOOTSTRAP__ = authBootstrapState;
 
   const resolveSessionUrl = () => {
     const path = "/api/auth/session";
@@ -39,41 +47,64 @@ const { authMode = "none" } = Astro.props;
     }
   };
 
-  const bootstrapAuth = async () => {
+  authBootstrapState.run = async () => {
     if (bootstrapAuthMode === "none") return;
 
-    try {
-      const response = await fetch(resolveSessionUrl(), {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        handleUnauthenticated();
-        return;
-      }
-
-      const payload = await response.json();
-      const state = {
-        authenticated: true,
-        userId: payload.userId,
-        sessionId: payload.sessionId,
-      };
-
-      publishAuthState(state);
-
-      if (bootstrapAuthMode === "public-only") {
-        window.location.replace("/");
-      }
-    } catch {
-      handleUnauthenticated();
+    const navigationKey = `${bootstrapAuthMode}:${window.location.pathname}${window.location.search}`;
+    if (authBootstrapState.key === navigationKey && authBootstrapState.promise) {
+      return authBootstrapState.promise;
     }
+
+    authBootstrapState.key = navigationKey;
+    authBootstrapState.promise = (async () => {
+      try {
+        const response = await fetch(resolveSessionUrl(), {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          handleUnauthenticated();
+          return;
+        }
+
+        const payload = await response.json();
+        const state = {
+          authenticated: true,
+          userId: payload.userId,
+          sessionId: payload.sessionId,
+        };
+
+        publishAuthState(state);
+
+        if (bootstrapAuthMode === "public-only") {
+          window.location.replace("/");
+        }
+      } catch {
+        handleUnauthenticated();
+      }
+    })();
+
+    return authBootstrapState.promise;
   };
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bootstrapAuth, { once: true });
-  } else {
-    bootstrapAuth();
+  if (!authBootstrapState.listenerInstalled) {
+    document.addEventListener("astro:page-load", () => {
+      const currentBootstrap = window.__TRACKSTACK_AUTH_BOOTSTRAP__;
+      if (currentBootstrap?.run) {
+        void currentBootstrap.run();
+      }
+    });
+    authBootstrapState.listenerInstalled = true;
   }
 
-  document.addEventListener("astro:page-load", bootstrapAuth);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      const currentBootstrap = window.__TRACKSTACK_AUTH_BOOTSTRAP__;
+      if (currentBootstrap?.run) {
+        void currentBootstrap.run();
+      }
+    }, { once: true });
+  } else {
+    void authBootstrapState.run();
+  }
 </script>

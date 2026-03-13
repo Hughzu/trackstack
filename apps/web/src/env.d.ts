@@ -2,6 +2,12 @@
 
 interface Window {
   __TRACKSTACK_AUTH__?: { authenticated: boolean };
+    __TRACKSTACK_AUTH_BOOTSTRAP__?: {
+        key: string;
+        promise: Promise<void> | null;
+        listenerInstalled: boolean;
+        run: (() => Promise<void>) | null;
+    };
 }
 
 interface ImportMetaEnv {

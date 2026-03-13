@@ -90,6 +90,8 @@ describe('client-loaded read paths', () => {
     const authBootstrap = readSource('layouts/AuthBootstrap.astro');
     expect(authBootstrap).toContain('bootstrapAuthMode === "required"');
     expect(authBootstrap).toContain('window.location.replace("/login")');
+    expect(authBootstrap).toContain('authBootstrapState.key === navigationKey');
+    expect(authBootstrap).toContain('if (!authBootstrapState.listenerInstalled)');
   });
 
   test('astro auth adapter routes are removed', () => {
