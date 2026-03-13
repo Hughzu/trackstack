@@ -1,6 +1,7 @@
 package userswiring
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -16,7 +17,7 @@ type UsersDependencies struct {
 	Close   func() error
 }
 
-func BuildUsers(cfg config.Config) (UsersDependencies, error) {
+func OpenUsersDB(cfg config.Config) (*sql.DB, error) {
 	dsn, err := common.BuildTursoDSN(common.TursoConfig{
 		Mode:    cfg.DBConnectionMode,
 		URL:     cfg.TursoUsersURL,
@@ -25,7 +26,7 @@ func BuildUsers(cfg config.Config) (UsersDependencies, error) {
 		Token:   cfg.TursoUsersToken,
 	})
 	if err != nil {
-		return UsersDependencies{}, fmt.Errorf("users dsn: %w", err)
+		return nil, fmt.Errorf("users dsn: %w", err)
 	}
 
 	db, err := coredb.OpenLibSQL(dsn, coredb.PoolConfig{
@@ -35,11 +36,24 @@ func BuildUsers(cfg config.Config) (UsersDependencies, error) {
 		ConnMaxIdleTime: time.Duration(cfg.DBConnMaxIdleTimeSeconds) * time.Second,
 	})
 	if err != nil {
-		return UsersDependencies{}, fmt.Errorf("users db: %w", err)
+		return nil, fmt.Errorf("users db: %w", err)
 	}
 
+	return db, nil
+}
+
+func NewUsersService(db *sql.DB) *users.Service {
 	store := usersdb.NewUsersStore(db)
-	service := users.NewService(store)
+	return users.NewService(store)
+}
+
+func BuildUsers(cfg config.Config) (UsersDependencies, error) {
+	db, err := OpenUsersDB(cfg)
+	if err != nil {
+		return UsersDependencies{}, err
+	}
+
+	service := NewUsersService(db)
 
 	return UsersDependencies{
 		Service: service,

@@ -17,7 +17,10 @@ describe('client-loaded read paths', () => {
 
   test('dashboard overview fetches dashboard in the browser', () => {
     const content = readSource('modules/dashboard/components/DashboardOverviewClient.astro');
-    expect(content).toContain('resolveBrowserApiUrl("/api/dashboard")');
+    expect(content).toContain('resolveBrowserApiUrl(path)');
+    expect(content).toContain('"/api/expenses/sheet/current"');
+    expect(content).toContain('"/api/calories/dashboard?recentLimit=8"');
+    expect(content).toContain('"/api/heat/dashboard?page=1&limit=20"');
     expect(content).toContain('waitForAuthReady');
   });
 

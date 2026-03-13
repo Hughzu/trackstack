@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/auth"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/calories"
@@ -20,7 +21,8 @@ import (
 const testPasswordHash = "$scrypt$N=16384,r=8,p=1$7skQJXQJzB4/K6qW2g6t2A==$MdanxXeVurzvktH6ZpHuqYg6pFVhq89zuAYxug0Tp6VpE4UJ7jfQ9XdDPaZ9Mor/6HYk/m8AKJ3MTXTRVrr19g=="
 
 type authUsersStore struct {
-	updated bool
+	updated   bool
+	updatedCh chan struct{}
 }
 
 func (m *authUsersStore) FindByEmail(ctx context.Context, email string) (users.User, error) {
@@ -32,6 +34,13 @@ func (m *authUsersStore) FindByEmail(ctx context.Context, email string) (users.U
 
 func (m *authUsersStore) UpdateLastLogin(ctx context.Context, userID string, lastLoginAt string) error {
 	m.updated = true
+	if m.updatedCh != nil {
+		select {
+		case <-m.updatedCh:
+		default:
+			close(m.updatedCh)
+		}
+	}
 	return nil
 }
 
@@ -82,7 +91,7 @@ func setupAuthTestRouter(sessionStore auth.SessionStore, usersStore *authUsersSt
 
 func TestAuthLoginAPI_JSON(t *testing.T) {
 	sessionStore := &authSessionStore{}
-	usersStore := &authUsersStore{}
+	usersStore := &authUsersStore{updatedCh: make(chan struct{})}
 	router := setupAuthTestRouter(sessionStore, usersStore)
 
 	body, err := json.Marshal(map[string]any{
@@ -103,6 +112,11 @@ func TestAuthLoginAPI_JSON(t *testing.T) {
 	}
 	if !sessionStore.inserted {
 		t.Fatalf("expected session to be created")
+	}
+	select {
+	case <-usersStore.updatedCh:
+	case <-time.After(time.Second):
+		t.Fatalf("timed out waiting for last login update")
 	}
 	if !usersStore.updated {
 		t.Fatalf("expected last login to be updated")

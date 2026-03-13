@@ -74,34 +74,25 @@ func main() {
 		}
 	}()
 
-	usersDeps, err := userswiring.BuildUsers(cfg)
+	usersDB, err := userswiring.OpenUsersDB(cfg)
 	if err != nil {
-		logger.Error("users db error", "error", err)
+		logger.Error("users/auth db error", "error", err)
 		os.Exit(1)
 	}
 	defer func() {
-		if err := usersDeps.Close(); err != nil {
-			logger.Error("users db close error", "error", err)
+		if err := usersDB.Close(); err != nil {
+			logger.Error("users/auth db close error", "error", err)
 		}
 	}()
-
-	authDeps, err := authwiring.BuildAuth(cfg)
-	if err != nil {
-		logger.Error("auth db error", "error", err)
-		os.Exit(1)
-	}
-	defer func() {
-		if err := authDeps.Close(); err != nil {
-			logger.Error("auth db close error", "error", err)
-		}
-	}()
+	usersService := userswiring.NewUsersService(usersDB)
+	authService := authwiring.NewAuthService(usersDB, cfg)
 
 	handlers := httptransport.NewHandlers(httptransport.Deps{
 		HeatService:        heatDeps.Service,
 		ExpensesService:    expensesDeps.Service,
 		CaloriesService:    caloriesDeps.Service,
-		UsersService:       usersDeps.Service,
-		AuthService:        authDeps.Service,
+		UsersService:       usersService,
+		AuthService:        authService,
 		AuthCookieName:     cfg.AuthCookieName,
 		AuthCookieSecure:   cfg.AuthCookieSecure,
 		AuthCookieSameSite: cfg.AuthCookieSameSite,

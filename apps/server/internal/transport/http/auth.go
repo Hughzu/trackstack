@@ -1,7 +1,9 @@
 package httptransport
 
 import (
+	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -24,6 +26,9 @@ type authSessionResponse struct {
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	defer logAuthHTTPTime(r, "login.total", start, nil)
+
 	payload, err := readAuthPayload(r)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
@@ -37,7 +42,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	findUserStart := time.Now()
 	user, err := h.usersService.FindByEmail(r.Context(), email)
+	logAuthHTTPTime(r, "login.find_user", findUserStart, err)
 	if err != nil {
 		if !errors.Is(err, users.ErrNotFound) {
 			writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "Server Error"})
@@ -47,15 +54,20 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	verifyStart := time.Now()
 	if !auth.VerifyPassword(password, user.PasswordHash) {
+		logAuthHTTPTime(r, "login.verify_password", verifyStart, auth.ErrUnauthorized)
 		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: "Unauthorized"})
 		return
 	}
+	logAuthHTTPTime(r, "login.verify_password", verifyStart, nil)
 
+	createSessionStart := time.Now()
 	rawToken, session, err := h.authService.CreateSession(r.Context(), auth.CreateSessionRequest{
 		UserID:  user.ID,
 		Context: getClientContext(r),
 	})
+	logAuthHTTPTime(r, "login.create_session", createSessionStart, err)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "Server Error"})
 		return
@@ -83,7 +95,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   maxAge,
 	})
 
-	_ = h.usersService.UpdateLastLogin(r.Context(), user.ID, now.Format(time.RFC3339))
+	h.updateLastLoginAsync(r, user.ID, now.Format(time.RFC3339))
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -235,4 +247,24 @@ func hashIPPrefix(ip string) *string {
 
 	value := ip
 	return &value
+}
+
+func logAuthHTTPTime(r *http.Request, step string, start time.Time, err error) {
+	attrs := []any{"step", step, "duration", time.Since(start), "path", r.URL.Path}
+	if err != nil {
+		attrs = append(attrs, "error", err)
+	}
+	slog.DebugContext(r.Context(), "auth http timing", attrs...)
+}
+
+func (h *AuthHandler) updateLastLoginAsync(r *http.Request, userID string, lastLoginAt string) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), 2*time.Second)
+
+	go func() {
+		defer cancel()
+
+		start := time.Now()
+		err := h.usersService.UpdateLastLogin(ctx, userID, lastLoginAt)
+		logAuthHTTPTime(r, "login.update_last_login", start, err)
+	}()
 }

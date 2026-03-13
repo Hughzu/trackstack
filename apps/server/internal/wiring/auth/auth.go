@@ -1,6 +1,7 @@
 package authwiring
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -14,6 +15,17 @@ import (
 type AuthDependencies struct {
 	Service *auth.Service
 	Close   func() error
+}
+
+func NewAuthService(db *sql.DB, cfg config.Config) *auth.Service {
+	store := authdb.NewSessionStore(db)
+	return auth.NewService(store, auth.Config{
+		SessionIdleSeconds:          cfg.AuthSessionIdleSeconds,
+		SessionAbsoluteSeconds:      cfg.AuthSessionAbsoluteSeconds,
+		SessionRotateAfterSeconds:   cfg.AuthSessionRotateAfterSeconds,
+		SessionRotationGraceSeconds: cfg.AuthSessionRotationGraceSeconds,
+		SessionTouchSeconds:         cfg.AuthSessionTouchSeconds,
+	})
 }
 
 func BuildAuth(cfg config.Config) (AuthDependencies, error) {
@@ -38,14 +50,7 @@ func BuildAuth(cfg config.Config) (AuthDependencies, error) {
 		return AuthDependencies{}, fmt.Errorf("auth db: %w", err)
 	}
 
-	store := authdb.NewSessionStore(db)
-	service := auth.NewService(store, auth.Config{
-		SessionIdleSeconds:          cfg.AuthSessionIdleSeconds,
-		SessionAbsoluteSeconds:      cfg.AuthSessionAbsoluteSeconds,
-		SessionRotateAfterSeconds:   cfg.AuthSessionRotateAfterSeconds,
-		SessionRotationGraceSeconds: cfg.AuthSessionRotationGraceSeconds,
-		SessionTouchSeconds:         cfg.AuthSessionTouchSeconds,
-	})
+	service := NewAuthService(db, cfg)
 
 	return AuthDependencies{
 		Service: service,
