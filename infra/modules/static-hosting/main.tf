@@ -6,6 +6,12 @@ locals {
     "/",
     ""
   )
+  default_origin_is_s3             = var.default_origin == "s3"
+  default_target_origin_id         = local.default_origin_is_s3 ? local.assets_origin_id : local.lambda_origin_id
+  default_allowed_methods          = local.default_origin_is_s3 ? ["GET", "HEAD", "OPTIONS"] : ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "POST", "DELETE"]
+  default_cached_methods           = local.default_origin_is_s3 ? ["GET", "HEAD", "OPTIONS"] : ["GET", "HEAD"]
+  default_cache_policy_id          = local.default_origin_is_s3 ? data.aws_cloudfront_cache_policy.caching_optimized.id : data.aws_cloudfront_cache_policy.caching_disabled.id
+  default_origin_request_policy_id = local.default_origin_is_s3 ? data.aws_cloudfront_origin_request_policy.cors_s3.id : data.aws_cloudfront_origin_request_policy.all_viewer.id
 }
 
 resource "aws_s3_bucket" "assets" {
@@ -105,11 +111,42 @@ resource "aws_cloudfront_origin_access_control" "lambda" {
   signing_protocol                  = "sigv4"
 }
 
+resource "aws_cloudfront_function" "directory_index_rewrite" {
+  count   = var.enable_directory_index_rewrite ? 1 : 0
+  name    = "${var.resource_prefix}-directory-index-rewrite"
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  comment = "Rewrite extensionless routes to index.html objects"
+  code    = <<-EOF
+  function handler(event) {
+    var request = event.request;
+    var uri = request.uri || "/";
+
+    if (uri === "/") {
+      request.uri = "/index.html";
+      return request;
+    }
+
+    if (uri.endsWith("/")) {
+      request.uri = uri + "index.html";
+      return request;
+    }
+
+    if (uri.indexOf(".") === -1) {
+      request.uri = uri + "/index.html";
+    }
+
+    return request;
+  }
+  EOF
+}
+
 resource "aws_cloudfront_distribution" "ssr" {
-  enabled         = true
-  is_ipv6_enabled = true
-  comment         = "Trackstack Astro SSR"
-  price_class     = var.price_class
+  enabled             = true
+  is_ipv6_enabled     = true
+  comment             = var.distribution_comment
+  price_class         = var.price_class
+  default_root_object = local.default_origin_is_s3 ? "index.html" : null
 
   origin {
     domain_name              = aws_s3_bucket.assets.bucket_regional_domain_name
@@ -136,28 +173,41 @@ resource "aws_cloudfront_distribution" "ssr" {
   }
 
   default_cache_behavior {
-    target_origin_id           = local.lambda_origin_id
+    target_origin_id           = local.default_target_origin_id
     viewer_protocol_policy     = "redirect-to-https"
-    allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "POST", "DELETE"]
-    cached_methods             = ["GET", "HEAD"]
-    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
-    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_viewer.id
+    allowed_methods            = local.default_allowed_methods
+    cached_methods             = local.default_cached_methods
+    cache_policy_id            = local.default_cache_policy_id
+    origin_request_policy_id   = local.default_origin_request_policy_id
     response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
     compress                   = true
+
+    dynamic "function_association" {
+      for_each = var.enable_directory_index_rewrite ? [1] : []
+      content {
+        event_type   = "viewer-request"
+        function_arn = aws_cloudfront_function.directory_index_rewrite[0].arn
+      }
+    }
   }
 
   dynamic "ordered_cache_behavior" {
-    for_each = [
-      "/_astro/*",
-      "/assets/*",
-      "/sw.js",
-      "/manifest.webmanifest",
-      "/registerSW.js",
-      "/workbox-*.js",
-      "/favicon.svg",
-      "/android/*",
-      "/ios/*"
-    ]
+    for_each = var.lambda_path_patterns
+    content {
+      path_pattern               = ordered_cache_behavior.value
+      target_origin_id           = local.lambda_origin_id
+      viewer_protocol_policy     = "redirect-to-https"
+      allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "POST", "DELETE"]
+      cached_methods             = ["GET", "HEAD"]
+      cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+      origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_viewer.id
+      response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
+      compress                   = true
+    }
+  }
+
+  dynamic "ordered_cache_behavior" {
+    for_each = var.s3_path_patterns
     content {
       path_pattern               = ordered_cache_behavior.value
       target_origin_id           = local.assets_origin_id

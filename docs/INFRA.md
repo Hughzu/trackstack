@@ -78,10 +78,11 @@ Responsibilities:
 - Log group with retention
 - Origin verification secret stored in SSM
 - Lambda artifact upload (optional)
+- Runtime environment hydration from SSM-backed parameters
 
 Notes:
 - Function URL uses IAM auth and is invoked via CloudFront.
-- Runtime config reads Turso secrets from SSM paths.
+- Runtime config for the parallel environment is sourced from SSM parameters and injected into Lambda environment variables during apply.
 
 ### static-hosting
 
@@ -98,7 +99,8 @@ Responsibilities:
 Notes:
 - Price class defaults to `PriceClass_100` to reduce cost.
 - Origin verification header is passed to Lambda origin.
-- Maps multiple paths (`/_astro/*`, `/assets/*`, `/sw.js`, and PWA manifest assets) directly to the S3 bucket via dynamic ordered cache behaviors so the Go API Lambda can be the default CloudFront origin.
+- Supports both legacy Lambda-default routing and static-first S3-default routing via module inputs.
+- Can rewrite extensionless frontend paths to `index.html` object keys through a CloudFront Function for static Astro deployments.
 
 ### cost-guardrails
 
@@ -129,6 +131,22 @@ Composition:
 - `s3.tf`: artifacts bucket used for Lambda package storage.
 - `ssm.tf`: publishes infra outputs to SSM for CI/CD.
 
+### serverless-next
+
+Location: `infra/environments/serverless-next`
+
+Purpose:
+- Parallel validation environment for the static Astro + Go API serverless contract.
+- Keeps the existing production serverless environment untouched during migration testing.
+
+Composition:
+- `module.lambda_api`: Go API Lambda using the custom Go runtime artifact.
+- `module.static_hosting`: S3 default origin, Lambda only for `/api/*`, `/health`, and `/openapi.yaml`.
+- `module.cost_guardrails`: monthly budget.
+- `s3.tf`: artifacts bucket used for Lambda package storage.
+- `ssm.tf`: publishes infra outputs to a dedicated `/trackstack/serverless-next` prefix.
+- `01-set-runtime-ssm.sh`: seeds the serverless-next runtime contract into SSM.
+
 Local init:
 - Uses a local `backend.hcl` (ignored by git) for state backend config.
 
@@ -139,6 +157,15 @@ Local init:
 - 1 Go Lambda function + Function URL
 - 1 IAM role for Lambda execution
 - SSM parameters for origin verification and deployment outputs
+- AWS Budget for cost guardrail
+
+## Resource Inventory (Serverless-Next)
+
+- 1 CloudFront distribution with S3 as default origin
+- 2 S3 buckets (assets, artifacts)
+- 1 Go Lambda function + Function URL for API and health traffic
+- 1 IAM role for Lambda execution
+- SSM parameters for runtime config, origin verification, and deployment outputs
 - AWS Budget for cost guardrail
 
 ## Security Boundaries
@@ -161,6 +188,7 @@ Local init:
 - Run bootstrap scripts in `infra/bootstrap/bootstrap` once per account.
 - Create local `backend.hcl` files for Terraform init (not committed).
 - Set runtime secrets in SSM using `infra/environments/serverless/01-set-runtime-ssm.sh`.
+- For the migration environment, seed runtime config with `infra/environments/serverless-next/01-set-runtime-ssm.sh` before deploy validation.
 
 ## CI/CD Touchpoints
 

@@ -1,3 +1,11 @@
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+    }
+  }
+}
+
 locals {
   billing_alarm_enabled = var.billing_alarm_email != null && var.billing_alarm_email != ""
 }

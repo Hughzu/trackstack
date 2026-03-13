@@ -2,6 +2,22 @@ data "aws_caller_identity" "current" {}
 
 locals {
   account_id = data.aws_caller_identity.current.account_id
+  legacy_runtime_env = {
+    TURSO_USERS_URL      = "/${var.ssm_prefix}/runtime/TURSO_USERS_URL"
+    TURSO_USERS_TOKEN    = "/${var.ssm_prefix}/runtime/TURSO_USERS_TOKEN"
+    TURSO_CALORIES_URL   = "/${var.ssm_prefix}/runtime/TURSO_CALORIES_URL"
+    TURSO_CALORIES_TOKEN = "/${var.ssm_prefix}/runtime/TURSO_CALORIES_TOKEN"
+    TURSO_EXPENSES_URL   = "/${var.ssm_prefix}/runtime/TURSO_EXPENSES_URL"
+    TURSO_EXPENSES_TOKEN = "/${var.ssm_prefix}/runtime/TURSO_EXPENSES_TOKEN"
+    TURSO_HEAT_URL       = "/${var.ssm_prefix}/runtime/TURSO_HEAT_URL"
+    TURSO_HEAT_TOKEN     = "/${var.ssm_prefix}/runtime/TURSO_HEAT_TOKEN"
+    AUTH_COOKIE_SECURE   = "true"
+    AUTH_COOKIE_SAMESITE = "lax"
+    AUTH_COOKIE_NAME     = "session"
+  }
+  runtime_env_from_ssm = {
+    for key, parameter in data.aws_ssm_parameter.runtime : key => parameter.value
+  }
 }
 
 resource "random_password" "origin_secret" {
@@ -18,6 +34,12 @@ resource "aws_ssm_parameter" "origin_secret" {
 
 data "aws_ssm_parameter" "origin_secret" {
   name            = aws_ssm_parameter.origin_secret.name
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "runtime" {
+  for_each        = var.runtime_ssm_parameters
+  name            = each.value
   with_decryption = true
 }
 
@@ -106,21 +128,15 @@ resource "aws_lambda_function" "ssr" {
   timeout     = var.lambda_timeout
 
   environment {
-    variables = merge(var.lambda_env, {
-      ORIGIN_VERIFY_HEADER = var.origin_header_name
-      ORIGIN_VERIFY_VALUE  = data.aws_ssm_parameter.origin_secret.value
-      TURSO_USERS_URL      = "/${var.ssm_prefix}/runtime/TURSO_USERS_URL"
-      TURSO_USERS_TOKEN    = "/${var.ssm_prefix}/runtime/TURSO_USERS_TOKEN"
-      TURSO_CALORIES_URL   = "/${var.ssm_prefix}/runtime/TURSO_CALORIES_URL"
-      TURSO_CALORIES_TOKEN = "/${var.ssm_prefix}/runtime/TURSO_CALORIES_TOKEN"
-      TURSO_EXPENSES_URL   = "/${var.ssm_prefix}/runtime/TURSO_EXPENSES_URL"
-      TURSO_EXPENSES_TOKEN = "/${var.ssm_prefix}/runtime/TURSO_EXPENSES_TOKEN"
-      TURSO_HEAT_URL       = "/${var.ssm_prefix}/runtime/TURSO_HEAT_URL"
-      TURSO_HEAT_TOKEN     = "/${var.ssm_prefix}/runtime/TURSO_HEAT_TOKEN"
-      AUTH_COOKIE_SECURE   = "true"
-      AUTH_COOKIE_SAMESITE = "lax"
-      AUTH_COOKIE_NAME     = "session"
-    })
+    variables = merge(
+      local.legacy_runtime_env,
+      var.lambda_env,
+      local.runtime_env_from_ssm,
+      {
+        ORIGIN_VERIFY_HEADER = var.origin_header_name
+        ORIGIN_VERIFY_VALUE  = data.aws_ssm_parameter.origin_secret.value
+      }
+    )
   }
 
   lifecycle {

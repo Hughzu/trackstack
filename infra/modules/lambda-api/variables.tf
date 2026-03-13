@@ -1,75 +1,99 @@
 variable "aws_region" {
-  type = string
+  description = "AWS region where the Lambda function and SSM parameters live."
+  type        = string
 }
 
 variable "resource_prefix" {
-  type = string
+  description = "Prefix applied to IAM, logs, and related Lambda resources."
+  type        = string
 }
 
 variable "lambda_function_name" {
-  type = string
+  description = "Name of the Lambda function to create or update."
+  type        = string
 }
 
 variable "lambda_handler" {
-  type = string
+  description = "Lambda handler value for the deployed runtime."
+  type        = string
 }
 
 variable "lambda_runtime" {
-  type = string
+  description = "Lambda runtime identifier, for example provided.al2023 or nodejs20.x."
+  type        = string
 }
 
 variable "lambda_architectures" {
-  type    = list(string)
-  default = ["arm64"]
+  description = "Instruction set architectures supported by the Lambda function."
+  type        = list(string)
+  default     = ["arm64"]
 }
 
 variable "lambda_memory_size" {
-  type = number
+  description = "Lambda memory size in MB."
+  type        = number
 }
 
 variable "lambda_timeout" {
-  type = number
+  description = "Lambda timeout in seconds."
+  type        = number
 }
 
 variable "log_retention_days" {
-  type = number
+  description = "CloudWatch log retention period in days."
+  type        = number
 }
 
 variable "artifact_bucket" {
-  type = string
+  description = "S3 bucket that stores deployable Lambda artifacts."
+  type        = string
 }
 
 variable "artifact_key" {
-  type = string
+  description = "S3 key used for the Lambda artifact object."
+  type        = string
 }
 
 variable "artifact_path" {
-  type    = string
-  default = null
+  description = "Optional local artifact path uploaded during Terraform apply."
+  type        = string
+  default     = null
 }
 
 variable "artifact_version" {
-  type    = string
-  default = null
+  description = "Optional existing S3 object version to deploy when artifact_path is not used."
+  type        = string
+  default     = null
 }
 
 variable "origin_header_name" {
-  type = string
+  description = "Header name expected by the Lambda origin for CloudFront verification."
+  type        = string
 }
 
 variable "origin_header_ssm_name" {
-  type = string
+  description = "SSM parameter name that stores the shared CloudFront origin verification secret."
+  type        = string
 }
 
 variable "ssm_prefix" {
-  type = string
+  description = "Base SSM prefix for runtime parameters used by the Lambda function."
+  type        = string
+}
+
+variable "runtime_ssm_parameters" {
+  description = "Map of Lambda environment variable names to SSM parameter names that should be resolved at apply time."
+  type        = map(string)
+  default     = {}
 }
 
 variable "lambda_env" {
-  type    = map(string)
-  default = {}
+  description = "Additional plain Lambda environment variables merged into the runtime configuration."
+  type        = map(string)
+  default     = {}
 }
 
 variable "tags" {
-  type = map(string)
+  description = "Tags applied to all resources created by this module."
+  type        = map(string)
 }
