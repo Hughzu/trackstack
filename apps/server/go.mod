@@ -3,6 +3,7 @@ module github.com/Hughzu/trackstack/apps/server
 go 1.26
 
 require (
+	github.com/aws/aws-lambda-go v1.48.0
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1

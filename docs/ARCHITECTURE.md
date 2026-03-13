@@ -32,18 +32,18 @@ Current implemented layout in `apps/server/`:
 ```text
 apps/server/
 ├── cmd/
+│   ├── lambda/              # Lambda Function URL entrypoint for serverless runs
 │   └── server/              # HTTP server entrypoint used in local/container runs
 ├── internal/
-│   ├── core/                # config, db, logging
+│   ├── core/                # shared runtime bootstrap, config, db, logging
 │   ├── modules/             # domain logic, DTOs, ports, db adapters
 │   ├── transport/
 │   │   └── http/            # router, middleware, handlers, OpenAPI
 │   └── wiring/              # composition helpers per domain
 ```
 
-Target expansion path for later phases:
+Possible expansion path for later phases:
 
-- `cmd/lambda/` for the serverless production entrypoint
 - `cmd/service/<domain>/` only if domains are extracted into separate services
 
 ### Backend Principles
