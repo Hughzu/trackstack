@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,6 +15,7 @@ import (
 	httptransport "github.com/Hughzu/trackstack/apps/server/internal/transport/http"
 	authwiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/auth"
 	calorieswiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/calories"
+	commonwiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/common"
 	expenseswiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/expenses"
 	heatwiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/heat"
 	userswiring "github.com/Hughzu/trackstack/apps/server/internal/wiring/users"
@@ -33,6 +35,10 @@ func main() {
 	}
 
 	logger := logging.New(cfg.LogLevel)
+	logTursoSelection(logger, "calories", commonwiring.TursoConfig{Mode: cfg.DBConnectionMode, URL: cfg.TursoCaloriesURL, URLHTTP: cfg.TursoCaloriesURLHTTP, URLWS: cfg.TursoCaloriesURLWS})
+	logTursoSelection(logger, "expenses", commonwiring.TursoConfig{Mode: cfg.DBConnectionMode, URL: cfg.TursoExpensesURL, URLHTTP: cfg.TursoExpensesURLHTTP, URLWS: cfg.TursoExpensesURLWS})
+	logTursoSelection(logger, "heat", commonwiring.TursoConfig{Mode: cfg.DBConnectionMode, URL: cfg.TursoHeatURL, URLHTTP: cfg.TursoHeatURLHTTP, URLWS: cfg.TursoHeatURLWS})
+	logTursoSelection(logger, "users", commonwiring.TursoConfig{Mode: cfg.DBConnectionMode, URL: cfg.TursoUsersURL, URLHTTP: cfg.TursoUsersURLHTTP, URLWS: cfg.TursoUsersURLWS})
 
 	heatDeps, err := heatwiring.BuildHeat(cfg)
 	if err != nil {
@@ -128,4 +134,14 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Error("server error", "error", err)
 	}
+}
+
+func logTursoSelection(logger *slog.Logger, domain string, cfg commonwiring.TursoConfig) {
+	selection, err := commonwiring.ResolveTursoSelection(cfg)
+	if err != nil {
+		logger.Error("turso config error", "domain", domain, "error", err)
+		return
+	}
+
+	logger.Info("turso connection selected", "domain", domain, "mode", selection.Mode, "scheme", selection.Scheme, "host", selection.Host)
 }

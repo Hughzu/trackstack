@@ -33,3 +33,4 @@ Update guidelines:
 2026-03-11 — Build Astro as a static frontend/PWA served from S3 and route all auth, health, and business API traffic directly to the Go runtime.
 2026-03-11 — Enforce Go backend hexagonal boundaries with `cmd/archguard` so structural regressions fail like tests before modular-monolith drift blocks service extraction.
 2026-03-11 — Enforce dumb-repository guardrails with `cmd/lintguard` so `adapters/db` stays focused on persistence mapping instead of domain decisions.
+2026-03-13 — Make Turso transport selection explicit by requiring `*_URL_HTTP` or `*_URL_WS` for the chosen `DB_CONNECTION_MODE`, so benchmarks and serverless behavior do not silently fall back to `libsql://` URLs.

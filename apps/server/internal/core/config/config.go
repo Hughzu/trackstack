@@ -91,8 +91,48 @@ func Load() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	if err := cfg.Validate(); err != nil {
+		return Config{}, err
+	}
 
 	return cfg, nil
+}
+
+func (cfg Config) Validate() error {
+	mode := strings.ToUpper(strings.TrimSpace(cfg.DBConnectionMode))
+	switch mode {
+	case "", "HTTP":
+		if err := requireModeURLs("HTTP", [][2]string{
+			{"TURSO_CALORIES_URL_HTTP", cfg.TursoCaloriesURLHTTP},
+			{"TURSO_EXPENSES_URL_HTTP", cfg.TursoExpensesURLHTTP},
+			{"TURSO_HEAT_URL_HTTP", cfg.TursoHeatURLHTTP},
+			{"TURSO_USERS_URL_HTTP", cfg.TursoUsersURLHTTP},
+		}); err != nil {
+			return err
+		}
+	case "WS":
+		if err := requireModeURLs("WS", [][2]string{
+			{"TURSO_CALORIES_URL_WS", cfg.TursoCaloriesURLWS},
+			{"TURSO_EXPENSES_URL_WS", cfg.TursoExpensesURLWS},
+			{"TURSO_HEAT_URL_WS", cfg.TursoHeatURLWS},
+			{"TURSO_USERS_URL_WS", cfg.TursoUsersURLWS},
+		}); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("invalid DB_CONNECTION_MODE %q: expected HTTP or WS", cfg.DBConnectionMode)
+	}
+
+	return nil
+}
+
+func requireModeURLs(mode string, values [][2]string) error {
+	for _, item := range values {
+		if strings.TrimSpace(item[1]) == "" {
+			return fmt.Errorf("%s requires %s to be set", mode, item[0])
+		}
+	}
+	return nil
 }
 
 func getEnv(key, fallback string) string {

@@ -14,35 +14,69 @@ type TursoConfig struct {
 	Token   string
 }
 
+type TursoSelection struct {
+	Mode   string
+	URL    string
+	Scheme string
+	Host   string
+}
+
 func BuildTursoDSN(cfg TursoConfig) (string, error) {
-	urlValue := selectURL(cfg)
-	if urlValue == "" {
-		return "", errors.New("missing turso url")
+	selection, err := ResolveTursoSelection(cfg)
+	if err != nil {
+		return "", err
 	}
 
 	if cfg.Token == "" {
-		return urlValue, nil
+		return selection.URL, nil
 	}
 
-	if strings.Contains(urlValue, "authToken=") {
-		return urlValue, nil
+	if strings.Contains(selection.URL, "authToken=") {
+		return selection.URL, nil
 	}
 
 	sep := "?"
-	if strings.Contains(urlValue, "?") {
+	if strings.Contains(selection.URL, "?") {
 		sep = "&"
 	}
 
-	return urlValue + sep + "authToken=" + url.QueryEscape(cfg.Token), nil
+	return selection.URL + sep + "authToken=" + url.QueryEscape(cfg.Token), nil
 }
 
-func selectURL(cfg TursoConfig) string {
+func ResolveTursoSelection(cfg TursoConfig) (TursoSelection, error) {
 	mode := strings.ToUpper(strings.TrimSpace(cfg.Mode))
-	if mode == "HTTP" && cfg.URLHTTP != "" {
-		return cfg.URLHTTP
+	var selected string
+	switch mode {
+	case "", "HTTP":
+		selected = strings.TrimSpace(cfg.URLHTTP)
+		if selected == "" {
+			return TursoSelection{}, errors.New("missing turso http url")
+		}
+	case "WS":
+		selected = strings.TrimSpace(cfg.URLWS)
+		if selected == "" {
+			return TursoSelection{}, errors.New("missing turso ws url")
+		}
+	default:
+		return TursoSelection{}, errors.New("invalid turso mode")
 	}
-	if mode == "WS" && cfg.URLWS != "" {
-		return cfg.URLWS
+
+	parsed, err := url.Parse(selected)
+	if err != nil {
+		return TursoSelection{}, err
 	}
-	return cfg.URL
+
+	return TursoSelection{
+		Mode:   normalizeMode(mode),
+		URL:    selected,
+		Scheme: parsed.Scheme,
+		Host:   parsed.Host,
+	}, nil
+}
+
+func normalizeMode(mode string) string {
+	if mode == "" {
+		return "HTTP"
+	}
+	return mode
 }
