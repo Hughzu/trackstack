@@ -21,10 +21,18 @@ import (
 type mockHeatStore struct {
 	created bool
 	deleted string
+	recent  []heat.Refill
 }
 
 func (m *mockHeatStore) ListByRange(ctx context.Context, userID string, from string, to string) ([]heat.Refill, error) {
 	return nil, nil
+}
+
+func (m *mockHeatStore) ListRecent(ctx context.Context, userID string, limit int, offset int) ([]heat.Refill, error) {
+	if m.recent == nil {
+		return []heat.Refill{}, nil
+	}
+	return m.recent, nil
 }
 
 func (m *mockHeatStore) Create(ctx context.Context, refill heat.Refill) error {

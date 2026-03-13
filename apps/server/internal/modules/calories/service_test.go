@@ -13,6 +13,7 @@ type mockStore struct {
 	target        *calories.Target
 	getTargetErr  error
 	createdTarget *calories.Target
+	logsLimit     int
 }
 
 func (m *mockStore) GetTarget(ctx context.Context, userID string) (calories.Target, error) {
@@ -49,6 +50,11 @@ func (m *mockStore) GetSummaryByRange(ctx context.Context, userID string, from s
 
 func (m *mockStore) GetLogsByRange(ctx context.Context, userID string, from string, to string) ([]calories.Log, error) {
 	return nil, nil
+}
+
+func (m *mockStore) GetLogsByRangeLimited(ctx context.Context, userID string, from string, to string, limit int) ([]calories.Log, error) {
+	m.logsLimit = limit
+	return []calories.Log{}, nil
 }
 
 func (m *mockStore) GetRecentLogs(ctx context.Context, userID string, limit int) ([]calories.Log, error) {
@@ -103,4 +109,17 @@ func TestUpdateTargetValidation(t *testing.T) {
 
 	errCase(calories.UpdateTargetRequest{})
 	errCase(calories.UpdateTargetRequest{UserID: "user-1"})
+}
+
+func TestGetDashboardUsesBoundedLogs(t *testing.T) {
+	store := &mockStore{target: &calories.Target{ID: "target-1", UserID: "user-1", TargetKcal: 2300, TargetProteinG: 120}}
+	svc := calories.NewService(store)
+
+	_, err := svc.GetDashboard(context.Background(), calories.GetDashboardRequest{UserID: "user-1", LogsLimit: 12})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if store.logsLimit != 12 {
+		t.Fatalf("expected logs limit 12, got %d", store.logsLimit)
+	}
 }

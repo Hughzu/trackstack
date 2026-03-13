@@ -3,6 +3,7 @@ package calories
 import (
 	"context"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,7 @@ type DashboardViewModel struct {
 type GetDashboardRequest struct {
 	UserID      string
 	RecentLimit int
+	LogsLimit   int
 }
 
 func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (DashboardViewModel, error) {
@@ -33,10 +35,8 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 	if req.RecentLimit <= 0 {
 		req.RecentLimit = 8
 	}
-
-	target, err := s.GetTarget(ctx, GetTargetRequest{UserID: req.UserID})
-	if err != nil {
-		return DashboardViewModel{}, err
+	if req.LogsLimit <= 0 {
+		req.LogsLimit = 50
 	}
 
 	now := time.Now().UTC()
@@ -46,14 +46,47 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 	from := startOfDay.Format(time.RFC3339)
 	to := endOfDay.Format(time.RFC3339)
 
-	summaryData, _ := s.store.GetSummaryByRange(ctx, req.UserID, from, to)
-	logs, err := s.store.GetLogsByRange(ctx, req.UserID, from, to)
-	if err != nil {
-		logs = []Log{}
-	}
-	recentMeals, err := s.store.GetRecentLogs(ctx, req.UserID, req.RecentLimit)
-	if err != nil {
-		recentMeals = []Log{}
+	var target Target
+	var targetErr error
+	var summaryData Summary
+	logs := []Log{}
+	recentMeals := []Log{}
+
+	var wg sync.WaitGroup
+	wg.Add(4)
+
+	go func() {
+		defer wg.Done()
+		target, targetErr = s.GetTarget(ctx, GetTargetRequest{UserID: req.UserID})
+	}()
+
+	go func() {
+		defer wg.Done()
+		summary, err := s.store.GetSummaryByRange(ctx, req.UserID, from, to)
+		if err == nil {
+			summaryData = summary
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		result, err := s.store.GetLogsByRangeLimited(ctx, req.UserID, from, to, req.LogsLimit)
+		if err == nil {
+			logs = result
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		result, err := s.store.GetRecentLogs(ctx, req.UserID, req.RecentLimit)
+		if err == nil {
+			recentMeals = result
+		}
+	}()
+
+	wg.Wait()
+	if targetErr != nil {
+		return DashboardViewModel{}, targetErr
 	}
 
 	summary := DashboardSummary{

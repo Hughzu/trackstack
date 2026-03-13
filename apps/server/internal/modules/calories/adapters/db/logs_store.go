@@ -101,6 +101,48 @@ func (s *CaloriesStore) GetLogsByRange(ctx context.Context, userID string, from 
 	return logs, nil
 }
 
+func (s *CaloriesStore) GetLogsByRangeLimited(ctx context.Context, userID string, from string, to string, limit int) ([]calories.Log, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+
+	rows, err := s.db.QueryContext(
+		ctx,
+		"SELECT id, user_id, date_time, calories, protein_g, carbs_g, fat_g, title FROM calorie_logs WHERE user_id = ? AND date_time >= ? AND date_time < ? ORDER BY date_time DESC LIMIT ?",
+		userID, from, to, limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query limited logs: %w", err)
+	}
+	defer rows.Close()
+
+	var logs []calories.Log
+	for rows.Next() {
+		var log calories.Log
+		var carbs sql.NullInt64
+		var fat sql.NullInt64
+		var title sql.NullString
+		if err := rows.Scan(&log.ID, &log.UserID, &log.DateTime, &log.Calories, &log.ProteinG, &carbs, &fat, &title); err != nil {
+			return nil, fmt.Errorf("scan limited log: %w", err)
+		}
+		if carbs.Valid {
+			val := int(carbs.Int64)
+			log.CarbsG = &val
+		}
+		if fat.Valid {
+			val := int(fat.Int64)
+			log.FatG = &val
+		}
+		if title.Valid {
+			val := title.String
+			log.Title = &val
+		}
+		logs = append(logs, log)
+	}
+
+	return logs, nil
+}
+
 func (s *CaloriesStore) GetRecentLogs(ctx context.Context, userID string, limit int) ([]calories.Log, error) {
 	rows, err := s.db.QueryContext(
 		ctx,

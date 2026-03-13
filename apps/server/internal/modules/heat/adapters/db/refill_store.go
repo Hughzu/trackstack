@@ -12,6 +12,10 @@ type RefillStore struct {
 	db *sql.DB
 }
 
+type refillScanner interface {
+	Scan(dest ...any) error
+}
+
 func NewRefillStore(db *sql.DB) *RefillStore {
 	return &RefillStore{db: db}
 }
@@ -42,35 +46,59 @@ WHERE user_id = ?`
 
 	var refills []heat.Refill
 	for rows.Next() {
-		var refill heat.Refill
-		var temperature sql.NullFloat64
-		var season sql.NullString
-		if err := rows.Scan(
-			&refill.ID,
-			&refill.UserID,
-			&refill.Date,
-			&refill.WeightKg,
-			&refill.Bags,
-			&temperature,
-			&season,
-		); err != nil {
+		refill, err := scanRefill(rows)
+		if err != nil {
 			return nil, fmt.Errorf("scan refill: %w", err)
 		}
-
-		if temperature.Valid {
-			value := temperature.Float64
-			refill.Temperature = &value
-		}
-		if season.Valid {
-			value := season.String
-			refill.Season = &value
-		}
-
 		refills = append(refills, refill)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("list refills rows: %w", err)
+	}
+
+	return refills, nil
+}
+
+func (s *RefillStore) ListRecent(ctx context.Context, userID string, limit int, offset int) ([]heat.Refill, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	rows, err := s.db.QueryContext(
+		ctx,
+		`SELECT id, user_id, date, weight_kg, bags, temperature, season
+		FROM refills
+		WHERE user_id = ?
+		ORDER BY date DESC
+		LIMIT ? OFFSET ?`,
+		userID,
+		limit,
+		offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list recent refills: %w", err)
+	}
+	defer rows.Close()
+
+	var refills []heat.Refill
+	for rows.Next() {
+		refill, err := scanRefill(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan recent refill: %w", err)
+		}
+		refills = append(refills, refill)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("list recent refills rows: %w", err)
+	}
+
+	if refills == nil {
+		refills = []heat.Refill{}
 	}
 
 	return refills, nil
@@ -167,4 +195,34 @@ func (s *RefillStore) Delete(ctx context.Context, userID string, id string) (boo
 	}
 
 	return rows > 0, nil
+}
+
+func scanRefill(scanner refillScanner) (heat.Refill, error) {
+	var refill heat.Refill
+	var temperature sql.NullFloat64
+	var season sql.NullString
+
+	err := scanner.Scan(
+		&refill.ID,
+		&refill.UserID,
+		&refill.Date,
+		&refill.WeightKg,
+		&refill.Bags,
+		&temperature,
+		&season,
+	)
+	if err != nil {
+		return heat.Refill{}, err
+	}
+
+	if temperature.Valid {
+		value := temperature.Float64
+		refill.Temperature = &value
+	}
+	if season.Valid {
+		value := season.String
+		refill.Season = &value
+	}
+
+	return refill, nil
 }

@@ -161,5 +161,6 @@ type CloseSheetRequest struct {
 }
 
 type GetCurrentSheetRequest struct {
-	UserID string
+	UserID       string
+	HistoryLimit int
 }

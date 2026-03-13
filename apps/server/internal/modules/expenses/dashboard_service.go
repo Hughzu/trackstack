@@ -16,6 +16,9 @@ func (s *Service) GetDashboard(ctx context.Context, req GetCurrentSheetRequest) 
 	if strings.TrimSpace(req.UserID) == "" {
 		return ViewDashboard{}, ErrInvalidInput
 	}
+	if req.HistoryLimit <= 0 {
+		req.HistoryLimit = 50
+	}
 
 	settingsRes, err := s.GetSettings(ctx, GetSettingsRequest{UserID: req.UserID})
 	if err != nil {
@@ -34,7 +37,7 @@ func (s *Service) GetDashboard(ctx context.Context, req GetCurrentSheetRequest) 
 	if err != nil {
 		pendingChecklist = []ChecklistItem{}
 	}
-	history, err := s.store.GetSheetHistory(ctx, sheet.ID)
+	history, err := s.store.GetRecentSheetHistory(ctx, sheet.ID, req.HistoryLimit, 0)
 	if err != nil {
 		history = []Entry{}
 	}
@@ -59,28 +62,28 @@ func (s *Service) GetDashboard(ctx context.Context, req GetCurrentSheetRequest) 
 			Percent:    safePercent(spent.Fund, balance.Income),
 			CategoryId: "fund",
 			Label:      "Fund.",
-			Value:   spent.Fund,
-			Budget:  budget.Fund,
-			Target:  settings.RatioFund,
-			Over:    spent.Fund > float64(budget.Fund),
+			Value:      spent.Fund,
+			Budget:     budget.Fund,
+			Target:     settings.RatioFund,
+			Over:       spent.Fund > float64(budget.Fund),
 		},
 		{
 			Percent:    safePercent(spent.Fun, balance.Income),
 			CategoryId: "fun",
 			Label:      "Fun",
-			Value:   spent.Fun,
-			Budget:  budget.Fun,
-			Target:  settings.RatioFun,
-			Over:    spent.Fun > float64(budget.Fun),
+			Value:      spent.Fun,
+			Budget:     budget.Fun,
+			Target:     settings.RatioFun,
+			Over:       spent.Fun > float64(budget.Fun),
 		},
 		{
 			Percent:    safePercent(spent.Future, balance.Income),
 			CategoryId: "future",
 			Label:      "Future",
-			Value:   spent.Future,
-			Budget:  budget.Future,
-			Target:  settings.RatioFuture,
-			Over:    spent.Future > float64(budget.Future),
+			Value:      spent.Future,
+			Budget:     budget.Future,
+			Target:     settings.RatioFuture,
+			Over:       spent.Future > float64(budget.Future),
 		},
 	}
 

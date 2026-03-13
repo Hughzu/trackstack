@@ -39,9 +39,17 @@ func (h *CaloriesHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	logsLimit := 50
+	if limitStr := r.URL.Query().Get("logsLimit"); limitStr != "" {
+		if val, err := strconv.Atoi(limitStr); err == nil && val > 0 {
+			logsLimit = val
+		}
+	}
+
 	dashboard, err := h.svc.GetDashboard(r.Context(), calories.GetDashboardRequest{
 		UserID:      userID,
 		RecentLimit: recentLimit,
+		LogsLimit:   logsLimit,
 	})
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "Server Error"})

@@ -3,6 +3,7 @@ package httptransport
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/heat"
 )
@@ -49,8 +50,24 @@ func (h *HeatHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	page := 1
+	if pageValue := r.URL.Query().Get("page"); pageValue != "" {
+		if parsed, err := strconv.Atoi(pageValue); err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+
+	limit := 20
+	if limitValue := r.URL.Query().Get("limit"); limitValue != "" {
+		if parsed, err := strconv.Atoi(limitValue); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+
 	dashboard, err := h.svc.GetDashboard(r.Context(), heat.GetDashboardRequest{
 		UserID: userID,
+		Page:   page,
+		Limit:  limit,
 	})
 	if err != nil {
 		writeError(w, err)

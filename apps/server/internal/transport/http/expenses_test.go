@@ -157,6 +157,10 @@ func (m *mockExpensesStore) GetSheetHistory(ctx context.Context, sheetID string)
 	return nil, nil
 }
 
+func (m *mockExpensesStore) GetRecentSheetHistory(ctx context.Context, sheetID string, limit int, offset int) ([]expenses.Entry, error) {
+	return []expenses.Entry{}, nil
+}
+
 func (m *mockExpensesStore) GetTotalSpentBySheet(ctx context.Context, sheetID string) (float64, error) {
 	return 0, nil
 }

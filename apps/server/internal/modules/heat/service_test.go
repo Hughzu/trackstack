@@ -9,10 +9,22 @@ import (
 )
 
 type mockRefillStore struct {
+	recent       []heat.Refill
+	recentLimit  int
+	recentOffset int
 }
 
 func (m *mockRefillStore) ListByRange(ctx context.Context, userID string, from string, to string) ([]heat.Refill, error) {
 	return []heat.Refill{}, nil
+}
+
+func (m *mockRefillStore) ListRecent(ctx context.Context, userID string, limit int, offset int) ([]heat.Refill, error) {
+	m.recentLimit = limit
+	m.recentOffset = offset
+	if m.recent == nil {
+		return []heat.Refill{}, nil
+	}
+	return m.recent, nil
 }
 
 func (m *mockRefillStore) Create(ctx context.Context, refill heat.Refill) error {
@@ -112,5 +124,31 @@ func TestListRefills(t *testing.T) {
 	})
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func TestGetDashboardUsesRecentSlice(t *testing.T) {
+	store := &mockRefillStore{
+		recent: []heat.Refill{{ID: "refill-1"}},
+	}
+	svc := heat.NewService(store)
+
+	viewModel, err := svc.GetDashboard(context.Background(), heat.GetDashboardRequest{
+		UserID: "user-1",
+		Page:   2,
+		Limit:  10,
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if store.recentLimit != 10 {
+		t.Fatalf("expected recent limit 10, got %d", store.recentLimit)
+	}
+	if store.recentOffset != 10 {
+		t.Fatalf("expected recent offset 10, got %d", store.recentOffset)
+	}
+	if len(viewModel.History) != 1 || viewModel.History[0].ID != "refill-1" {
+		t.Fatalf("expected dashboard history to come from recent query, got %+v", viewModel.History)
 	}
 }

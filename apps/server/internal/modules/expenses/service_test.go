@@ -9,7 +9,9 @@ import (
 )
 
 type mockStore struct {
-	settings *expenses.Settings
+	settings      *expenses.Settings
+	historyLimit  int
+	historyOffset int
 }
 
 // Settings
@@ -96,6 +98,11 @@ func (m *mockStore) GetSpentByCategory(ctx context.Context, sheetID string) (map
 func (m *mockStore) GetSheetHistory(ctx context.Context, sheetID string) ([]expenses.Entry, error) {
 	return nil, nil
 }
+func (m *mockStore) GetRecentSheetHistory(ctx context.Context, sheetID string, limit int, offset int) ([]expenses.Entry, error) {
+	m.historyLimit = limit
+	m.historyOffset = offset
+	return []expenses.Entry{}, nil
+}
 
 // Expenses
 func (m *mockStore) CreateExpense(ctx context.Context, entry expenses.Entry) error {
@@ -155,5 +162,24 @@ func TestAddExpenseValidation(t *testing.T) {
 	}
 	if entry.Title != "Untitled" {
 		t.Errorf("expected title to fallback to Untitled, got %s", entry.Title)
+	}
+}
+
+func TestGetDashboardUsesBoundedHistory(t *testing.T) {
+	store := &mockStore{settings: &expenses.Settings{Income: 2000, RatioFund: 60, RatioFun: 20, RatioFuture: 20}}
+	svc := expenses.NewService(store)
+
+	_, err := svc.GetDashboard(context.Background(), expenses.GetCurrentSheetRequest{
+		UserID:       "user-1",
+		HistoryLimit: 25,
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if store.historyLimit != 25 {
+		t.Fatalf("expected bounded history limit 25, got %d", store.historyLimit)
+	}
+	if store.historyOffset != 0 {
+		t.Fatalf("expected bounded history offset 0, got %d", store.historyOffset)
 	}
 }

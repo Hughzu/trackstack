@@ -40,6 +40,7 @@ type ExpensesStore interface {
 	CreateExpense(ctx context.Context, entry Entry) error
 	DeleteExpense(ctx context.Context, entryID string, userID string) (bool, error)
 	GetSheetHistory(ctx context.Context, sheetID string) ([]Entry, error)
+	GetRecentSheetHistory(ctx context.Context, sheetID string, limit int, offset int) ([]Entry, error)
 
 	// Aggregation
 	GetTotalSpentBySheet(ctx context.Context, sheetID string) (float64, error)

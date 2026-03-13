@@ -102,3 +102,37 @@ func (s *ExpensesStore) GetSheetHistory(ctx context.Context, sheetID string) ([]
 	}
 	return history, nil
 }
+
+func (s *ExpensesStore) GetRecentSheetHistory(ctx context.Context, sheetID string, limit int, offset int) ([]expenses.Entry, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	rows, err := s.db.QueryContext(
+		ctx,
+		"SELECT id, sheet_id, user_id, title, amount, category, date, type, created_at FROM expense_entries WHERE sheet_id = ? ORDER BY date DESC, created_at DESC LIMIT ? OFFSET ?",
+		sheetID,
+		limit,
+		offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("get recent sheet history: %w", err)
+	}
+	defer rows.Close()
+
+	var history []expenses.Entry
+	for rows.Next() {
+		var entry expenses.Entry
+		if err := rows.Scan(&entry.ID, &entry.SheetID, &entry.UserID, &entry.Title, &entry.Amount, &entry.Category, &entry.Date, &entry.Type, &entry.CreatedAt); err != nil {
+			return nil, err
+		}
+		history = append(history, entry)
+	}
+	if history == nil {
+		history = []expenses.Entry{}
+	}
+	return history, nil
+}

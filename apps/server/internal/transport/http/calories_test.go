@@ -46,6 +46,9 @@ func (m *mockCaloriesStore) GetSummaryByRange(ctx context.Context, userID string
 func (m *mockCaloriesStore) GetLogsByRange(ctx context.Context, userID string, from string, to string) ([]calories.Log, error) {
 	return nil, nil
 }
+func (m *mockCaloriesStore) GetLogsByRangeLimited(ctx context.Context, userID string, from string, to string, limit int) ([]calories.Log, error) {
+	return []calories.Log{}, nil
+}
 func (m *mockCaloriesStore) GetRecentLogs(ctx context.Context, userID string, limit int) ([]calories.Log, error) {
 	return nil, nil
 }

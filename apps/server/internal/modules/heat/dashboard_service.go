@@ -37,6 +37,7 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 	if req.Limit <= 0 {
 		req.Limit = 20
 	}
+	offset := (req.Page - 1) * req.Limit
 
 	daysSinceRefill := 0
 	latest, err := s.store.GetLatest(ctx, req.UserID)
@@ -98,11 +99,9 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 		DeltaPct:         deltaPct,
 	}
 
-	// Fast offset history fallback (fetch 20 list by range hack as history not fully implemented with pagination in store yet)
-	limit := req.Limit
-	history, _ := s.store.ListByRange(ctx, req.UserID, "", "")
-	if len(history) > limit {
-		history = history[:limit]
+	history, err := s.store.ListRecent(ctx, req.UserID, req.Limit, offset)
+	if err != nil {
+		history = []Refill{}
 	}
 
 	return DashboardViewModel{

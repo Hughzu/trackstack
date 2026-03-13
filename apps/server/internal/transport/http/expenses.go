@@ -70,8 +70,15 @@ func (h *ExpensesHandler) GetCurrentSheet(w http.ResponseWriter, r *http.Request
 	if !ok {
 		return
 	}
+	historyLimit := 50
+	if limitValue := r.URL.Query().Get("historyLimit"); limitValue != "" {
+		if parsed, err := strconv.Atoi(limitValue); err == nil && parsed > 0 {
+			historyLimit = parsed
+		}
+	}
 	dashboard, err := h.svc.GetDashboard(r.Context(), expenses.GetCurrentSheetRequest{
-		UserID: userID,
+		UserID:       userID,
+		HistoryLimit: historyLimit,
 	})
 	if err != nil {
 		writeExpensesError(w, err)
