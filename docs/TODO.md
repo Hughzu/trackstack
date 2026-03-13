@@ -1,10 +1,18 @@
-- backend 
-    - split code into microservices
-        - first docker compose a big thingy ? change docker compose files place into environments ?
-
 - deploy new setup to aws. 
+- optimize performance on AWS. 
 
 - CODE DEEEEEEP DIVE BREATH MF 
+    - review bootstrap for AWS
+    - review terraform for AWS
+        - domain name ? 
+    - backend 
+        - check hexagonal make sens, folder structures with ports and adapters, ...
+        - make sure tests make sense
+        - split code into microservices
+            - first docker compose a big thingy ? change docker compose files place into environments ?
+    - frontend 
+        - check folder structure make sense
+        - make sure tests make sense
 
 - Security audit CICD ? 
 - Perf audit CICD ? 
