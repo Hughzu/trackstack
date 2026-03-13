@@ -62,7 +62,12 @@ func run(email string, password string) error {
 		return fmt.Errorf("build users dsn: %w", err)
 	}
 
-	db, err := coredb.OpenLibSQL(dsn)
+	db, err := coredb.OpenLibSQL(dsn, coredb.PoolConfig{
+		MaxOpenConns:    cfg.DBMaxOpenConns,
+		MaxIdleConns:    cfg.DBMaxIdleConns,
+		ConnMaxLifetime: time.Duration(cfg.DBConnMaxLifetimeSeconds) * time.Second,
+		ConnMaxIdleTime: time.Duration(cfg.DBConnMaxIdleTimeSeconds) * time.Second,
+	})
 	if err != nil {
 		return fmt.Errorf("open users db: %w", err)
 	}

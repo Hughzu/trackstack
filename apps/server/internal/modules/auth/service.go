@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
+	"log/slog"
 	"strings"
 	"time"
 )
@@ -24,6 +25,9 @@ func NewService(store SessionStore, cfg Config) *Service {
 }
 
 func (s *Service) CreateSession(ctx context.Context, req CreateSessionRequest) (string, Session, error) {
+	start := time.Now()
+	defer logAuthTiming(ctx, "create_session.total", start, nil)
+
 	if strings.TrimSpace(req.UserID) == "" {
 		return "", Session{}, ErrInvalidInput
 	}
@@ -57,9 +61,12 @@ func (s *Service) CreateSession(ctx context.Context, req CreateSessionRequest) (
 		IPPrefix:          req.Context.IPPrefix,
 	}
 
+	insertStart := time.Now()
 	if err := s.store.InsertSession(ctx, session); err != nil {
+		logAuthTiming(ctx, "create_session.insert", insertStart, err)
 		return "", Session{}, err
 	}
+	logAuthTiming(ctx, "create_session.insert", insertStart, nil)
 
 	return rawToken, session, nil
 }
@@ -74,12 +81,17 @@ func (s *Service) RevokeSessionByRawToken(ctx context.Context, req RevokeSession
 }
 
 func (s *Service) Authenticate(ctx context.Context, req AuthenticateRequest) (AuthenticateResponse, error) {
+	start := time.Now()
+	defer logAuthTiming(ctx, "authenticate.total", start, nil)
+
 	rawToken := strings.TrimSpace(req.RawToken)
 	if rawToken == "" {
 		return AuthenticateResponse{}, ErrUnauthorized
 	}
 
+	findStart := time.Now()
 	session, err := s.store.FindSessionByID(ctx, hashToken(rawToken))
+	logAuthTiming(ctx, "authenticate.find_session", findStart, err)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return AuthenticateResponse{}, ErrUnauthorized
@@ -116,7 +128,9 @@ func (s *Service) Authenticate(ctx context.Context, req AuthenticateRequest) (Au
 		absoluteExpiresAt, err := time.Parse(time.RFC3339, session.AbsoluteExpiresAt)
 		if err == nil {
 			expiresAt := resolveIdleExpiry(now, absoluteExpiresAt, s.cfg.SessionIdleSeconds)
-			_ = s.store.TouchSession(ctx, session.ID, now.Format(time.RFC3339), expiresAt.Format(time.RFC3339))
+			touchStart := time.Now()
+			err = s.store.TouchSession(ctx, session.ID, now.Format(time.RFC3339), expiresAt.Format(time.RFC3339))
+			logAuthTiming(ctx, "authenticate.touch_session", touchStart, err)
 		}
 	}
 
@@ -197,15 +211,19 @@ func (s *Service) rotateSession(ctx context.Context, session Session, context Cl
 		replacement.IPPrefix = session.IPPrefix
 	}
 
+	insertStart := time.Now()
 	if err := s.store.InsertSession(ctx, replacement); err != nil {
+		logAuthTiming(ctx, "authenticate.rotate.insert_replacement", insertStart, err)
 		return "", Session{}, err
 	}
+	logAuthTiming(ctx, "authenticate.rotate.insert_replacement", insertStart, nil)
 
 	graceExpiry := now.Add(time.Duration(s.cfg.SessionRotationGraceSeconds) * time.Second)
 	if graceExpiry.After(absoluteExpiresAt) {
 		graceExpiry = absoluteExpiresAt
 	}
 
+	rotateStart := time.Now()
 	if err := s.store.RotateOutSession(
 		ctx,
 		session.ID,
@@ -213,10 +231,20 @@ func (s *Service) rotateSession(ctx context.Context, session Session, context Cl
 		graceExpiry.Format(time.RFC3339),
 		now.Format(time.RFC3339),
 	); err != nil {
+		logAuthTiming(ctx, "authenticate.rotate.rotate_out", rotateStart, err)
 		return "", Session{}, err
 	}
+	logAuthTiming(ctx, "authenticate.rotate.rotate_out", rotateStart, nil)
 
 	return replacementRaw, replacement, nil
+}
+
+func logAuthTiming(ctx context.Context, step string, start time.Time, err error) {
+	attrs := []any{"step", step, "duration", time.Since(start)}
+	if err != nil {
+		attrs = append(attrs, "error", err)
+	}
+	slog.DebugContext(ctx, "auth timing", attrs...)
 }
 
 func hashToken(value string) string {

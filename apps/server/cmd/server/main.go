@@ -35,6 +35,7 @@ func main() {
 	}
 
 	logger := logging.New(cfg.LogLevel)
+	slog.SetDefault(logger)
 	logTursoSelection(logger, "calories", commonwiring.TursoConfig{Mode: cfg.DBConnectionMode, URL: cfg.TursoCaloriesURL, URLHTTP: cfg.TursoCaloriesURLHTTP, URLWS: cfg.TursoCaloriesURLWS})
 	logTursoSelection(logger, "expenses", commonwiring.TursoConfig{Mode: cfg.DBConnectionMode, URL: cfg.TursoExpensesURL, URLHTTP: cfg.TursoExpensesURLHTTP, URLWS: cfg.TursoExpensesURLWS})
 	logTursoSelection(logger, "heat", commonwiring.TursoConfig{Mode: cfg.DBConnectionMode, URL: cfg.TursoHeatURL, URLHTTP: cfg.TursoHeatURLHTTP, URLWS: cfg.TursoHeatURLWS})

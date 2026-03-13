@@ -2,6 +2,7 @@ package calories
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -28,6 +29,9 @@ type GetDashboardRequest struct {
 }
 
 func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (DashboardViewModel, error) {
+	start := time.Now()
+	defer logCaloriesTiming(ctx, "dashboard.total", start, nil)
+
 	if strings.TrimSpace(req.UserID) == "" {
 		return DashboardViewModel{}, ErrInvalidInput
 	}
@@ -57,12 +61,16 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 
 	go func() {
 		defer wg.Done()
+		timedStart := time.Now()
 		target, targetErr = s.GetTarget(ctx, GetTargetRequest{UserID: req.UserID})
+		logCaloriesTiming(ctx, "dashboard.target", timedStart, targetErr)
 	}()
 
 	go func() {
 		defer wg.Done()
+		timedStart := time.Now()
 		summary, err := s.store.GetSummaryByRange(ctx, req.UserID, from, to)
+		logCaloriesTiming(ctx, "dashboard.summary", timedStart, err)
 		if err == nil {
 			summaryData = summary
 		}
@@ -70,7 +78,9 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 
 	go func() {
 		defer wg.Done()
+		timedStart := time.Now()
 		result, err := s.store.GetLogsByRangeLimited(ctx, req.UserID, from, to, req.LogsLimit)
+		logCaloriesTiming(ctx, "dashboard.logs", timedStart, err)
 		if err == nil {
 			logs = result
 		}
@@ -78,7 +88,9 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 
 	go func() {
 		defer wg.Done()
+		timedStart := time.Now()
 		result, err := s.store.GetRecentLogs(ctx, req.UserID, req.RecentLimit)
+		logCaloriesTiming(ctx, "dashboard.recent_meals", timedStart, err)
 		if err == nil {
 			recentMeals = result
 		}
@@ -102,4 +114,12 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 		Logs:        logs,
 		RecentMeals: recentMeals,
 	}, nil
+}
+
+func logCaloriesTiming(ctx context.Context, step string, start time.Time, err error) {
+	attrs := []any{"step", step, "duration", time.Since(start)}
+	if err != nil {
+		attrs = append(attrs, "error", err)
+	}
+	slog.DebugContext(ctx, "calories timing", attrs...)
 }

@@ -2,6 +2,7 @@ package heatwiring
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/core/config"
 	coredb "github.com/Hughzu/trackstack/apps/server/internal/core/db"
@@ -27,7 +28,12 @@ func BuildHeat(cfg config.Config) (HeatDependencies, error) {
 		return HeatDependencies{}, fmt.Errorf("heat dsn: %w", err)
 	}
 
-	heatDB, err := coredb.OpenLibSQL(refillDSN)
+	heatDB, err := coredb.OpenLibSQL(refillDSN, coredb.PoolConfig{
+		MaxOpenConns:    cfg.DBMaxOpenConns,
+		MaxIdleConns:    cfg.DBMaxIdleConns,
+		ConnMaxLifetime: time.Duration(cfg.DBConnMaxLifetimeSeconds) * time.Second,
+		ConnMaxIdleTime: time.Duration(cfg.DBConnMaxIdleTimeSeconds) * time.Second,
+	})
 	if err != nil {
 		return HeatDependencies{}, fmt.Errorf("heat db: %w", err)
 	}

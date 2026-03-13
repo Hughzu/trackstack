@@ -2,6 +2,7 @@ package userswiring
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/core/config"
 	coredb "github.com/Hughzu/trackstack/apps/server/internal/core/db"
@@ -27,7 +28,12 @@ func BuildUsers(cfg config.Config) (UsersDependencies, error) {
 		return UsersDependencies{}, fmt.Errorf("users dsn: %w", err)
 	}
 
-	db, err := coredb.OpenLibSQL(dsn)
+	db, err := coredb.OpenLibSQL(dsn, coredb.PoolConfig{
+		MaxOpenConns:    cfg.DBMaxOpenConns,
+		MaxIdleConns:    cfg.DBMaxIdleConns,
+		ConnMaxLifetime: time.Duration(cfg.DBConnMaxLifetimeSeconds) * time.Second,
+		ConnMaxIdleTime: time.Duration(cfg.DBConnMaxIdleTimeSeconds) * time.Second,
+	})
 	if err != nil {
 		return UsersDependencies{}, fmt.Errorf("users db: %w", err)
 	}

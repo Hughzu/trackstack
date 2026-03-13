@@ -12,6 +12,10 @@ type Config struct {
 	Port                            string
 	LogLevel                        string
 	DBConnectionMode                string
+	DBMaxOpenConns                  int
+	DBMaxIdleConns                  int
+	DBConnMaxLifetimeSeconds        int
+	DBConnMaxIdleTimeSeconds        int
 	TursoCaloriesURL                string
 	TursoCaloriesURLHTTP            string
 	TursoCaloriesURLWS              string
@@ -43,10 +47,27 @@ type Config struct {
 
 func Load() (Config, error) {
 	var cfg Config
+	var err error
 	cfg.Env = getEnv("APP_ENV", "local")
 	cfg.Port = getEnv("PORT", "8080")
 	cfg.LogLevel = getEnv("LOG_LEVEL", "info")
 	cfg.DBConnectionMode = getEnv("DB_CONNECTION_MODE", "HTTP")
+	cfg.DBMaxOpenConns, err = getEnvInt("DB_MAX_OPEN_CONNS", 4)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.DBMaxIdleConns, err = getEnvInt("DB_MAX_IDLE_CONNS", 4)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.DBConnMaxLifetimeSeconds, err = getEnvInt("DB_CONN_MAX_LIFETIME_SECONDS", 300)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.DBConnMaxIdleTimeSeconds, err = getEnvInt("DB_CONN_MAX_IDLE_TIME_SECONDS", 120)
+	if err != nil {
+		return Config{}, err
+	}
 	cfg.TursoCaloriesURL = getEnv("TURSO_CALORIES_URL", "")
 	cfg.TursoCaloriesURLHTTP = getEnv("TURSO_CALORIES_URL_HTTP", "")
 	cfg.TursoCaloriesURLWS = getEnv("TURSO_CALORIES_URL_WS", "")
@@ -70,7 +91,6 @@ func Load() (Config, error) {
 	cfg.AuthCookieSecure = getEnvBool("AUTH_COOKIE_SECURE", false)
 	cfg.AuthCookieSameSite = getEnv("AUTH_COOKIE_SAMESITE", "lax")
 
-	var err error
 	cfg.AuthSessionIdleSeconds, err = getEnvInt("AUTH_SESSION_IDLE_SECONDS", 1800)
 	if err != nil {
 		return Config{}, err
@@ -99,6 +119,10 @@ func Load() (Config, error) {
 }
 
 func (cfg Config) Validate() error {
+	if cfg.DBMaxOpenConns < 0 || cfg.DBMaxIdleConns < 0 || cfg.DBConnMaxLifetimeSeconds < 0 || cfg.DBConnMaxIdleTimeSeconds < 0 {
+		return fmt.Errorf("database pool settings must be non-negative")
+	}
+
 	mode := strings.ToUpper(strings.TrimSpace(cfg.DBConnectionMode))
 	switch mode {
 	case "", "HTTP":

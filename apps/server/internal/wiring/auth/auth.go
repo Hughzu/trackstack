@@ -2,6 +2,7 @@ package authwiring
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/core/config"
 	coredb "github.com/Hughzu/trackstack/apps/server/internal/core/db"
@@ -27,7 +28,12 @@ func BuildAuth(cfg config.Config) (AuthDependencies, error) {
 		return AuthDependencies{}, fmt.Errorf("auth dsn: %w", err)
 	}
 
-	db, err := coredb.OpenLibSQL(dsn)
+	db, err := coredb.OpenLibSQL(dsn, coredb.PoolConfig{
+		MaxOpenConns:    cfg.DBMaxOpenConns,
+		MaxIdleConns:    cfg.DBMaxIdleConns,
+		ConnMaxLifetime: time.Duration(cfg.DBConnMaxLifetimeSeconds) * time.Second,
+		ConnMaxIdleTime: time.Duration(cfg.DBConnMaxIdleTimeSeconds) * time.Second,
+	})
 	if err != nil {
 		return AuthDependencies{}, fmt.Errorf("auth db: %w", err)
 	}

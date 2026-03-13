@@ -2,6 +2,7 @@ package expenseswiring
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/core/config"
 	coredb "github.com/Hughzu/trackstack/apps/server/internal/core/db"
@@ -27,7 +28,12 @@ func BuildExpenses(cfg config.Config) (ExpensesDependencies, error) {
 		return ExpensesDependencies{}, fmt.Errorf("expenses dsn: %w", err)
 	}
 
-	db, err := coredb.OpenLibSQL(dsn)
+	db, err := coredb.OpenLibSQL(dsn, coredb.PoolConfig{
+		MaxOpenConns:    cfg.DBMaxOpenConns,
+		MaxIdleConns:    cfg.DBMaxIdleConns,
+		ConnMaxLifetime: time.Duration(cfg.DBConnMaxLifetimeSeconds) * time.Second,
+		ConnMaxIdleTime: time.Duration(cfg.DBConnMaxIdleTimeSeconds) * time.Second,
+	})
 	if err != nil {
 		return ExpensesDependencies{}, fmt.Errorf("expenses db: %w", err)
 	}

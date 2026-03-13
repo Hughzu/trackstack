@@ -12,6 +12,8 @@ type mockStore struct {
 	settings      *expenses.Settings
 	historyLimit  int
 	historyOffset int
+	checklistReads int
+	recurringReads int
 }
 
 // Settings
@@ -26,6 +28,7 @@ func (m *mockStore) UpdateSettings(ctx context.Context, settings expenses.Settin
 
 // Checklist Templates
 func (m *mockStore) GetChecklistTemplates(ctx context.Context, userID string) ([]expenses.Template, error) {
+	m.checklistReads++
 	return []expenses.Template{}, nil
 }
 func (m *mockStore) GetChecklistTemplate(ctx context.Context, id string, userID string) (expenses.Template, error) {
@@ -63,6 +66,7 @@ func (m *mockStore) GetPendingChecklistItems(ctx context.Context, sheetID string
 
 // Recurring Templates
 func (m *mockStore) GetRecurringTemplates(ctx context.Context, userID string) ([]expenses.Template, error) {
+	m.recurringReads++
 	return []expenses.Template{}, nil
 }
 func (m *mockStore) GetRecurringTemplate(ctx context.Context, id string, userID string) (expenses.Template, error) {
@@ -181,5 +185,11 @@ func TestGetDashboardUsesBoundedHistory(t *testing.T) {
 	}
 	if store.historyOffset != 0 {
 		t.Fatalf("expected bounded history offset 0, got %d", store.historyOffset)
+	}
+	if store.checklistReads != 0 {
+		t.Fatalf("expected dashboard to avoid checklist template reads, got %d", store.checklistReads)
+	}
+	if store.recurringReads != 0 {
+		t.Fatalf("expected dashboard to avoid recurring template reads, got %d", store.recurringReads)
 	}
 }

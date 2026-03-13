@@ -2,6 +2,7 @@ package heat
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 	"time"
 )
@@ -27,6 +28,9 @@ type GetDashboardRequest struct {
 }
 
 func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (DashboardViewModel, error) {
+	start := time.Now()
+	defer logHeatTiming(ctx, "dashboard.total", start, nil)
+
 	if strings.TrimSpace(req.UserID) == "" {
 		return DashboardViewModel{}, ErrInvalidInput
 	}
@@ -40,7 +44,9 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 	offset := (req.Page - 1) * req.Limit
 
 	daysSinceRefill := 0
+	latestStart := time.Now()
 	latest, err := s.store.GetLatest(ctx, req.UserID)
+	logHeatTiming(ctx, "dashboard.latest", latestStart, err)
 	if err != nil {
 		return DashboardViewModel{}, err
 	}
@@ -81,8 +87,18 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 		lastEnd = lastSeasonEndSamePeriod
 	}
 
-	seasonToDate, _ := s.store.GetSumByRange(ctx, req.UserID, currentSeasonStart.Format(time.RFC3339), currentEnd.Format(time.RFC3339))
-	lastSeasonToDate, _ := s.store.GetSumByRange(ctx, req.UserID, lastSeasonStart.Format(time.RFC3339), lastEnd.Format(time.RFC3339))
+	currentSeasonStartTime := time.Now()
+	seasonToDate, err := s.store.GetSumByRange(ctx, req.UserID, currentSeasonStart.Format(time.RFC3339), currentEnd.Format(time.RFC3339))
+	logHeatTiming(ctx, "dashboard.current_season_sum", currentSeasonStartTime, err)
+	if err != nil {
+		seasonToDate = 0
+	}
+	lastSeasonStartTime := time.Now()
+	lastSeasonToDate, err := s.store.GetSumByRange(ctx, req.UserID, lastSeasonStart.Format(time.RFC3339), lastEnd.Format(time.RFC3339))
+	logHeatTiming(ctx, "dashboard.last_season_sum", lastSeasonStartTime, err)
+	if err != nil {
+		lastSeasonToDate = 0
+	}
 
 	delta := seasonToDate - lastSeasonToDate
 	var deltaPct *int
@@ -99,7 +115,9 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 		DeltaPct:         deltaPct,
 	}
 
+	historyStart := time.Now()
 	history, err := s.store.ListRecent(ctx, req.UserID, req.Limit, offset)
+	logHeatTiming(ctx, "dashboard.history", historyStart, err)
 	if err != nil {
 		history = []Refill{}
 	}
@@ -109,4 +127,12 @@ func (s *Service) GetDashboard(ctx context.Context, req GetDashboardRequest) (Da
 		SeasonSnapshot:  snapshot,
 		History:         history,
 	}, nil
+}
+
+func logHeatTiming(ctx context.Context, step string, start time.Time, err error) {
+	attrs := []any{"step", step, "duration", time.Since(start)}
+	if err != nil {
+		attrs = append(attrs, "error", err)
+	}
+	slog.DebugContext(ctx, "heat timing", attrs...)
 }

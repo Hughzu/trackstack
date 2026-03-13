@@ -8,31 +8,41 @@ import (
 	"github.com/google/uuid"
 )
 
+func (s *Service) getOrCreateSettings(ctx context.Context, userID string) (Settings, error) {
+	settings, err := s.store.GetSettings(ctx, userID)
+	if err == nil {
+		return settings, nil
+	}
+	if !strings.Contains(err.Error(), "no rows") {
+		return Settings{}, err
+	}
+
+	now := time.Now().UTC().Format(time.RFC3339)
+	settings = Settings{
+		ID:          uuid.NewString(),
+		UserID:      userID,
+		Income:      2215,
+		RatioFund:   60,
+		RatioFun:    20,
+		RatioFuture: 20,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	if err := s.store.CreateSettings(ctx, settings); err != nil {
+		return Settings{}, err
+	}
+
+	return settings, nil
+}
+
 func (s *Service) GetSettings(ctx context.Context, req GetSettingsRequest) (ViewSettings, error) {
 	if strings.TrimSpace(req.UserID) == "" {
 		return ViewSettings{}, ErrInvalidInput
 	}
 
-	settings, err := s.store.GetSettings(ctx, req.UserID)
+	settings, err := s.getOrCreateSettings(ctx, req.UserID)
 	if err != nil {
-		if strings.Contains(err.Error(), "no rows") {
-			now := time.Now().UTC().Format(time.RFC3339)
-			settings = Settings{
-				ID:          uuid.NewString(),
-				UserID:      req.UserID,
-				Income:      2215,
-				RatioFund:   60,
-				RatioFun:    20,
-				RatioFuture: 20,
-				CreatedAt:   now,
-				UpdatedAt:   now,
-			}
-			if err := s.store.CreateSettings(ctx, settings); err != nil {
-				return ViewSettings{}, err
-			}
-		} else {
-			return ViewSettings{}, err
-		}
+		return ViewSettings{}, err
 	}
 
 	checklist, err := s.store.GetChecklistTemplates(ctx, req.UserID)
