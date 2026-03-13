@@ -1,32 +1,29 @@
-- deploy new setup to aws. 
-- optimize performance on AWS. 
-
-- CODE DEEEEEEP DIVE BREATH MF 
-    - review bootstrap for AWS
-    - review terraform for AWS
-        - domain name ? 
-    - backend 
-        - check hexagonal make sens, folder structures with ports and adapters, ...
+- perf check turso etc
+- deploy new astro / go backend to aws for the serverless environment
+- make a cli to understand what the heck is going on in bootstrap 
+    - idea is to have an AWS cli set up (with root access)
+    - github cli set up
+    - turso cli set up
+    - then create mine that uses them in order to setup everything how I want (maybe create another AWS account for the rest, init the pipelines for terraform and things like that ?)
+- modify agents.md with docs about how many clis is available + the doc for my cli
+- AWS / terraform code deep dive
+- backend code deep dive 
+    - check hexagonal make sens, folder structures with ports and adapters, ...
         - make sure tests make sense
         - split code into microservices
             - first docker compose a big thingy ? change docker compose files place into environments ?
-    - frontend 
-        - check folder structure make sense
-        - make sure tests make sense
+- frontend code deepdive
+    - frontend design system ? implement skills to implement new UIs ? 
+    - clean folder architecture ?
 
-- Security audit CICD ? 
-- Perf audit CICD ? 
-- Dependabot audit CICD ? 
-- Frontend guardrails ... ? 
+- quid dependabot and security audits ? 
 
-- VPS ? 
+- ECS Fargate
 
-    
-Legacy : 
-- quid migration up/down -> right now we need to pay to use migration down with atlas
-- loki / grafana ? 
-- blog post ? about features idea project into architecutre into infra/cicd into next steps
-- SRL module ?
-- Fargate infra ? 
-- EKS infra ? 
-- VPS infra ? 
+- SRL Module ? (vacancy days, checklist per month with reminders, ...)
+
+- EKS
+
+- Observability
+
+- Other cloud platform ?
