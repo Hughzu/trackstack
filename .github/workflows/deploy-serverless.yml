@@ -1,4 +1,4 @@
-name: Deploy Serverless
+name: Deploy Serverless Next
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-serverless
+  group: deploy-serverless-next
   cancel-in-progress: true
 
 jobs:
@@ -18,7 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       web: ${{ steps.filter.outputs.web }}
+      server: ${{ steps.filter.outputs.server }}
       migrations: ${{ steps.filter.outputs.migrations }}
+      deploy: ${{ steps.filter.outputs.deploy }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,8 +32,14 @@ jobs:
           filters: |
             web:
               - 'apps/web/**'
+            server:
+              - 'apps/server/**'
             migrations:
               - 'packages/db/migrations/**'
+            deploy:
+              - 'apps/web/**'
+              - 'apps/server/**'
+              - '.github/workflows/deploy-serverless.yml'
 
   migrate:
     runs-on: ubuntu-latest
@@ -88,9 +96,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [changes, migrate]
-    if: needs.migrate.result == 'success' || needs.migrate.result == 'skipped'
+    if: (needs.migrate.result == 'success' || needs.migrate.result == 'skipped') && (needs.changes.outputs.deploy == 'true' || github.event_name == 'workflow_dispatch')
     env:
-      SSM_PREFIX: /trackstack/serverless
+      SSM_PREFIX: /trackstack/serverless-next
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -99,6 +107,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/server/go.mod
 
       - name: Enable pnpm (corepack)
         run: |
@@ -114,10 +127,13 @@ jobs:
         run: pnpm build
         working-directory: apps/web
 
-      - name: Package SSR bundle
+      - name: Build Go Lambda bootstrap
         run: |
-          cd apps/web/dist/server
-          zip -r /tmp/astro-ssr.zip .
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags="-s -w" -o /tmp/bootstrap ./cmd/lambda
+        working-directory: apps/server
+
+      - name: Package Go Lambda artifact
+        run: zip -j /tmp/go-api-lambda.zip /tmp/bootstrap
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -129,39 +145,60 @@ jobs:
       - name: Load infra config from SSM
         run: |
           set -e
-          ASTRO_ASSETS_BUCKET=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/assets_bucket" --query Parameter.Value --output text)
-          ASTRO_ARTIFACTS_BUCKET=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/artifacts_bucket" --query Parameter.Value --output text)
-          ASTRO_LAMBDA_KEY=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/lambda_key" --query Parameter.Value --output text)
-          ASTRO_LAMBDA_FUNCTION_NAME=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/lambda_function_name" --query Parameter.Value --output text)
-          ASTRO_CLOUDFRONT_DISTRIBUTION_ID=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/cloudfront_distribution_id" --query Parameter.Value --output text)
+          ASSETS_BUCKET=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/assets_bucket" --query Parameter.Value --output text)
+          ARTIFACTS_BUCKET=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/artifacts_bucket" --query Parameter.Value --output text)
+          LAMBDA_KEY=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/lambda_key" --query Parameter.Value --output text)
+          LAMBDA_FUNCTION_NAME=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/lambda_function_name" --query Parameter.Value --output text)
+          CLOUDFRONT_DISTRIBUTION_ID=$(aws ssm get-parameter --name "$SSM_PREFIX/infra/cloudfront_distribution_id" --query Parameter.Value --output text)
 
-          echo "ASTRO_ASSETS_BUCKET=$ASTRO_ASSETS_BUCKET" >> $GITHUB_ENV
-          echo "ASTRO_ARTIFACTS_BUCKET=$ASTRO_ARTIFACTS_BUCKET" >> $GITHUB_ENV
-          echo "ASTRO_LAMBDA_KEY=$ASTRO_LAMBDA_KEY" >> $GITHUB_ENV
-          echo "ASTRO_LAMBDA_FUNCTION_NAME=$ASTRO_LAMBDA_FUNCTION_NAME" >> $GITHUB_ENV
-          echo "ASTRO_CLOUDFRONT_DISTRIBUTION_ID=$ASTRO_CLOUDFRONT_DISTRIBUTION_ID" >> $GITHUB_ENV
+          echo "ASSETS_BUCKET=$ASSETS_BUCKET" >> $GITHUB_ENV
+          echo "ARTIFACTS_BUCKET=$ARTIFACTS_BUCKET" >> $GITHUB_ENV
+          echo "LAMBDA_KEY=$LAMBDA_KEY" >> $GITHUB_ENV
+          echo "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" >> $GITHUB_ENV
+          echo "CLOUDFRONT_DISTRIBUTION_ID=$CLOUDFRONT_DISTRIBUTION_ID" >> $GITHUB_ENV
 
       - name: Upload Lambda artifact
         run: |
-          aws s3 cp /tmp/astro-ssr.zip \
-            s3://$ASTRO_ARTIFACTS_BUCKET/$ASTRO_LAMBDA_KEY
+          aws s3 cp /tmp/go-api-lambda.zip \
+            s3://$ARTIFACTS_BUCKET/$LAMBDA_KEY
 
       - name: Update Lambda code
         run: |
           aws lambda update-function-code \
-            --function-name "$ASTRO_LAMBDA_FUNCTION_NAME" \
-            --s3-bucket "$ASTRO_ARTIFACTS_BUCKET" \
-            --s3-key "$ASTRO_LAMBDA_KEY"
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --s3-bucket "$ARTIFACTS_BUCKET" \
+            --s3-key "$LAMBDA_KEY"
 
-      - name: Upload static assets
+      - name: Wait for Lambda update
+        run: aws lambda wait function-updated --function-name "$LAMBDA_FUNCTION_NAME"
+
+      - name: Upload immutable static assets
         run: |
-          aws s3 sync apps/web/dist/client \
-            s3://$ASTRO_ASSETS_BUCKET \
+          if [ -d apps/web/dist/_astro ]; then
+            aws s3 sync apps/web/dist/_astro \
+              s3://$ASSETS_BUCKET/_astro \
+              --delete \
+              --cache-control "public,max-age=31536000,immutable"
+          fi
+
+          if [ -d apps/web/dist/assets ]; then
+            aws s3 sync apps/web/dist/assets \
+              s3://$ASSETS_BUCKET/assets \
+              --delete \
+              --cache-control "public,max-age=31536000,immutable"
+          fi
+
+      - name: Upload static HTML and app shell
+        run: |
+          aws s3 sync apps/web/dist \
+            s3://$ASSETS_BUCKET \
             --delete \
-            --cache-control "public,max-age=31536000,immutable"
+            --exclude "_astro/*" \
+            --exclude "assets/*" \
+            --cache-control "no-cache, no-store, must-revalidate"
 
       - name: Invalidate CloudFront
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id "$ASTRO_CLOUDFRONT_DISTRIBUTION_ID" \
+            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
             --paths "/*"

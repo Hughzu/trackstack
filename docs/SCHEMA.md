@@ -138,7 +138,7 @@ Notes:
 
 ## CI/CD Migrations
 
-The workflow `.github/workflows/deploy-serverless.yml` runs Atlas migrations on pushes that change `packages/db/migrations/**`.
+The workflow `.github/workflows/deploy-serverless.yml` runs Atlas migrations on pushes that change `packages/db/migrations/**` while deploying the temporary `serverless-next` stack.
 It applies migrations sequentially and only deploys the app if migrations succeed (or were skipped).
 
 Current order:

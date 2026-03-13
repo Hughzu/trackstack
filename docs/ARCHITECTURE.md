@@ -135,11 +135,11 @@ Backend-owned commands under `apps/server/cmd/**` use the same config surface fo
 ### CI/CD (deploy workflow)
 
 The deploy workflow loads infra outputs from SSM:
-- `/trackstack/serverless/infra/assets_bucket`
-- `/trackstack/serverless/infra/artifacts_bucket`
-- `/trackstack/serverless/infra/lambda_key`
-- `/trackstack/serverless/infra/lambda_function_name`
-- `/trackstack/serverless/infra/cloudfront_distribution_id`
+- `/trackstack/serverless-next/infra/assets_bucket`
+- `/trackstack/serverless-next/infra/artifacts_bucket`
+- `/trackstack/serverless-next/infra/lambda_key`
+- `/trackstack/serverless-next/infra/lambda_function_name`
+- `/trackstack/serverless-next/infra/cloudfront_distribution_id`
 
 ## High-Level Deployment Process
 
@@ -153,9 +153,11 @@ The deploy workflow loads infra outputs from SSM:
 - If migrations changed, Atlas applies Turso migrations first (users → expenses → heat → calories).
 - Astro build outputs:
   - Static assets in `apps/web/dist`
+- The temporary validation deploy currently targets the `serverless-next` SSM prefix and infrastructure outputs.
+- The Go Lambda artifact is built from `apps/server/cmd/lambda` as a Linux ARM64 custom runtime zip with a `bootstrap` binary.
 - The frontend bundle is published separately from the Go API runtime.
 - Local development uses `docker-compose.yml` at repo root to run both runtimes together.
-- Static assets are synced to S3 with long-lived cache headers.
+- Fingerprinted static assets are synced to S3 with long-lived cache headers; HTML shell files are uploaded with no-cache headers.
 - CloudFront cache is invalidated to publish updates.
 
 ## Architecture Boundaries (Macro)
