@@ -9,9 +9,9 @@ import (
 )
 
 type mockStore struct {
-	settings      *expenses.Settings
-	historyLimit  int
-	historyOffset int
+	settings       *expenses.Settings
+	historyLimit   int
+	historyOffset  int
 	checklistReads int
 	recurringReads int
 }
