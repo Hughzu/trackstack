@@ -100,7 +100,53 @@ But this still needs confirmation, because it could also be:
 - bad default root object / rewrite behavior,
 - or missing deploy step after infra apply.
 
-### Problem 2: Local Terraform plan wants to destroy bootstrap artifact object
+### Problem 2: Lambda runtime env does not pick up updated `CORS_ALLOWED_ORIGIN`
+
+Observed after manually updating SSM parameter `/trackstack/serverless-next/runtime/CORS_ALLOWED_ORIGIN` to the new CloudFront URL.
+
+The Lambda environment still shows:
+
+```text
+CORS_ALLOWED_ORIGIN = to_modify
+```
+
+Important context:
+
+- `infra/modules/lambda-api/main.tf` resolves runtime SSM values during Terraform apply through `data "aws_ssm_parameter" "runtime"`
+- those resolved values are injected into `aws_lambda_function.ssr.environment.variables`
+- `.github/workflows/deploy-serverless.yml` updates Lambda code only
+- `.github/workflows/deploy-serverless.yml` does not call `aws lambda update-function-configuration`
+- changing the SSM parameter alone does not mutate the already-deployed Lambda environment
+
+This means the most likely explanation is:
+
+- Terraform apply captured the old SSM value `to_modify`
+- later SSM was fixed manually
+- deploy pipeline only updated function code, not function configuration
+- Lambda is still running with stale env vars from the earlier Terraform apply
+
+### Problem 3: Login succeeds, but protected homepage redirects back to `/login`
+
+Observed behavior:
+
+- login form succeeds
+- browser navigates away from login
+- homepage immediately redirects back to `/login`
+
+Important context:
+
+- protected pages rely on browser-side auth bootstrap via `GET /api/auth/session`
+- the app no longer uses Astro SSR auth context for page gating
+- the redirect likely means session bootstrap is failing after login, even if the login POST itself returns success
+
+Most likely causes to check:
+
+- stale `CORS_ALLOWED_ORIGIN` in Lambda blocks credentialed session bootstrap requests
+- auth cookie attributes are incompatible with the current CloudFront origin or request flow
+- `/api/auth/session` is failing at the browser due to CORS, cookie, or origin mismatch
+- login response sets a cookie, but subsequent session request does not include or accept it
+
+### Problem 4: Local Terraform plan wants to destroy bootstrap artifact object
 
 Observed locally:
 
@@ -198,6 +244,27 @@ Check these in order:
 5. Does `https://<cloudfront>/index.html` also return `AccessDenied`, or only `/`?
 6. Do `/api/health` or `/health` reach Lambda successfully?
 
+### For stale `CORS_ALLOWED_ORIGIN` in Lambda
+
+Check these in order:
+
+1. What value does `aws lambda get-function-configuration` show for `CORS_ALLOWED_ORIGIN`?
+2. What value does `aws ssm get-parameter --with-decryption` show for `/trackstack/serverless-next/runtime/CORS_ALLOWED_ORIGIN`?
+3. Has Terraform been re-applied after the SSM parameter was corrected?
+4. Should runtime config continue to be injected at Terraform apply time, or should Lambda load SSM at runtime instead?
+5. Should the deploy workflow also update function configuration when runtime SSM values are expected to change between Terraform applies?
+
+### For login redirect loop after successful login
+
+Check these in order:
+
+1. Does `POST /api/auth/login` return a `Set-Cookie` header?
+2. After login, does `GET /api/auth/session` return `200` or `401` in the browser?
+3. Is the session cookie present in browser storage after login?
+4. Is the session cookie included on the follow-up `GET /api/auth/session` request?
+5. Are there CORS errors in the browser console or network inspector?
+6. Is the cookie domain/path/samesite/secure configuration compatible with `https://<cloudfront-domain>`?
+
 ### For Terraform bootstrap drift
 
 Check these in order:
@@ -229,6 +296,8 @@ aws s3 ls s3://trackstack-next-assets-<account-id>/
 aws s3 ls s3://trackstack-next-assets-<account-id>/login/
 aws cloudfront get-distribution --id <distribution-id>
 aws lambda get-function --function-name trackstack-go-api-next
+aws lambda get-function-configuration --function-name trackstack-go-api-next
+aws ssm get-parameter --name /trackstack/serverless-next/runtime/CORS_ALLOWED_ORIGIN --with-decryption
 curl -i https://<cloudfront-domain>/
 curl -i https://<cloudfront-domain>/index.html
 curl -i https://<cloudfront-domain>/health
@@ -239,10 +308,14 @@ curl -i https://<cloudfront-domain>/api/auth/session
 
 If Terraform apply succeeded but the app deploy workflow has not run yet, then the `AccessDenied` at the CloudFront URL is probably expected because the S3 default origin has no uploaded static site yet.
 
+If SSM was corrected after Terraform apply, but Terraform was not re-applied and deploy only updated code, then stale Lambda env values such as `CORS_ALLOWED_ORIGIN=to_modify` are also expected from the current design.
+
 Separately, the local plan wanting to destroy `module.lambda_api.aws_s3_object.lambda_artifact[0]` is probably caused by the current bootstrap-artifact design: first apply created a Terraform-managed temporary object, and later plans no longer declare it.
 
 ## What Another Agent Should Answer
 
 1. Is the CloudFront `AccessDenied` simply because static assets were never deployed, or is there an infra policy/routing bug?
-2. Is the bootstrap artifact drift acceptable, or should `infra/modules/lambda-api/main.tf` be changed so later plans are clean?
-3. What is the safest minimal fix to make `serverless-next` stable before Phase 5 validation?
+2. Is the stale Lambda `CORS_ALLOWED_ORIGIN` best fixed by re-applying Terraform, by changing the deploy workflow, or by changing the runtime config model?
+3. Why does login succeed while protected-page bootstrap redirects back to `/login`?
+4. Is the bootstrap artifact drift acceptable, or should `infra/modules/lambda-api/main.tf` be changed so later plans are clean?
+5. What is the safest minimal fix to make `serverless-next` stable before Phase 5 validation?
