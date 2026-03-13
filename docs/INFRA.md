@@ -188,7 +188,7 @@ Local init:
 - Run bootstrap scripts in `infra/bootstrap/bootstrap` once per account.
 - Create local `backend.hcl` files for Terraform init (not committed).
 - Set runtime secrets in SSM using `infra/environments/serverless/01-set-runtime-ssm.sh`.
-- For the migration environment, seed runtime config with `infra/environments/serverless-next/01-set-runtime-ssm.sh` before deploy validation.
+- For the migration environment, seed runtime config with `infra/environments/serverless-next/01-set-runtime-ssm.sh` before deploy validation; it auto-loads `TURSO_*_URL_HTTP` and `TURSO_*_TOKEN` from `apps/server/.env` when present, and exported env vars still win.
 
 ## CI/CD Touchpoints
 

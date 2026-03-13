@@ -2,7 +2,9 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../../bootstrap/config.sh"
+source "$SCRIPT_DIR/../../bootstrap/bootstrap/config.sh"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+SERVER_ENV_FILE="$REPO_ROOT/apps/server/.env"
 
 SSM_PREFIX="${SSM_PREFIX:-/trackstack/serverless-next}"
 
@@ -19,6 +21,29 @@ echo "Profile: $AWS_PROFILE"
 echo "Region: $AWS_REGION"
 echo "SSM Prefix: $SSM_PREFIX"
 echo ""
+
+load_env_defaults() {
+    local env_file="$1"
+
+    if [ ! -f "$env_file" ]; then
+        return 0
+    fi
+
+    while IFS='=' read -r key value; do
+        case "$key" in
+            ''|'#'*)
+                continue
+                ;;
+            TURSO_USERS_URL_HTTP|TURSO_USERS_TOKEN|TURSO_CALORIES_URL_HTTP|TURSO_CALORIES_TOKEN|TURSO_EXPENSES_URL_HTTP|TURSO_EXPENSES_TOKEN|TURSO_HEAT_URL_HTTP|TURSO_HEAT_TOKEN)
+                if [ -z "${!key}" ]; then
+                    export "$key=$value"
+                fi
+                ;;
+        esac
+    done < "$env_file"
+}
+
+load_env_defaults "$SERVER_ENV_FILE"
 
 prompt_value() {
     local name="$1"

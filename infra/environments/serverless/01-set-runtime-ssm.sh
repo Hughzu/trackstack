@@ -2,7 +2,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../../bootstrap/config.sh"
+source "$SCRIPT_DIR/../../bootstrap/bootstrap/config.sh"
 
 SSM_PREFIX="${SSM_PREFIX:-/trackstack/serverless}"
 
