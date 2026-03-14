@@ -55,7 +55,7 @@ variable "artifact_key" {
 }
 
 variable "artifact_path" {
-  description = "Optional local artifact path uploaded during Terraform apply."
+  description = "Optional local artifact path uploaded directly to Lambda during Terraform apply."
   type        = string
   default     = null
 }

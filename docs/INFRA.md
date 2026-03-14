@@ -77,12 +77,13 @@ Responsibilities:
 - IAM execution role and least-privilege policies
 - Log group with retention
 - Origin verification secret stored in SSM
-- Lambda artifact upload (optional)
+- Optional first-apply Lambda bootstrap from a local zip
 - Runtime environment hydration from SSM-backed parameters
 
 Notes:
 - Function URL uses IAM auth and is invoked via CloudFront.
 - Runtime config for the parallel environment is sourced from SSM parameters and injected into Lambda environment variables during apply.
+- Bootstrap Lambda artifacts are uploaded directly to Lambda during Terraform apply; deploy artifacts in S3 are not tracked as Terraform-managed objects.
 
 ### static-hosting
 

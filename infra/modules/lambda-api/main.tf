@@ -103,16 +103,6 @@ resource "aws_iam_role_policy" "lambda_ssm" {
   policy = data.aws_iam_policy_document.lambda_ssm.json
 }
 
-resource "aws_s3_object" "lambda_artifact" {
-  count = var.artifact_path == null ? 0 : 1
-
-  bucket = var.artifact_bucket
-  key    = var.artifact_key
-  source = var.artifact_path
-
-  etag = filemd5(var.artifact_path)
-}
-
 resource "aws_lambda_function" "ssr" {
   function_name = var.lambda_function_name
   role          = aws_iam_role.lambda_exec.arn
@@ -120,9 +110,11 @@ resource "aws_lambda_function" "ssr" {
   runtime       = var.lambda_runtime
   architectures = var.lambda_architectures
 
-  s3_bucket         = var.artifact_bucket
-  s3_key            = var.artifact_key
-  s3_object_version = var.artifact_path != null ? aws_s3_object.lambda_artifact[0].version_id : var.artifact_version
+  filename          = var.artifact_path
+  source_code_hash  = var.artifact_path != null ? filebase64sha256(var.artifact_path) : null
+  s3_bucket         = var.artifact_path == null ? var.artifact_bucket : null
+  s3_key            = var.artifact_path == null ? var.artifact_key : null
+  s3_object_version = var.artifact_path == null ? var.artifact_version : null
 
   memory_size = var.lambda_memory_size
   timeout     = var.lambda_timeout
@@ -141,6 +133,9 @@ resource "aws_lambda_function" "ssr" {
 
   lifecycle {
     ignore_changes = [
+      filename,
+      source_code_hash,
+      s3_bucket,
       s3_key,
       s3_object_version,
     ]
