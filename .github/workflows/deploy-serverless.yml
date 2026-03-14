@@ -96,7 +96,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [changes, migrate]
-    if: (needs.migrate.result == 'success' || needs.migrate.result == 'skipped') && (needs.changes.outputs.deploy == 'true' || github.event_name == 'workflow_dispatch')
+    if: always() && (needs.migrate.result == 'success' || needs.migrate.result == 'skipped') && (needs.changes.outputs.deploy == 'true' || github.event_name == 'workflow_dispatch')
     env:
       SSM_PREFIX: /trackstack/serverless-next
     steps:
