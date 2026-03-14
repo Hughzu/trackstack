@@ -94,6 +94,7 @@ func TestAuthLoginAPI_JSON(t *testing.T) {
 	usersStore := &authUsersStore{updatedCh: make(chan struct{})}
 	router := setupAuthTestRouter(sessionStore, usersStore)
 
+	// TODO, remove the hardcoded password, get this from .env, rotate password ...
 	body, err := json.Marshal(map[string]any{
 		"email":    "test@test.be",
 		"password": "Test123*",

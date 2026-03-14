@@ -1,3 +1,5 @@
+- teardown serverless
+- serverless-next -> serverless
 - perf check turso etc
 - deploy new astro / go backend to aws for the serverless environment
 - make a cli to understand what the heck is going on in bootstrap 
