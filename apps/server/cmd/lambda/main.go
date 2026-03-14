@@ -4,7 +4,7 @@ import (
 	"os"
 
 	appcore "github.com/Hughzu/trackstack/apps/server/internal/core/app"
-	"github.com/aws/aws-lambda-go/lambdaurl"
+	functionurltransport "github.com/Hughzu/trackstack/apps/server/internal/transport/functionurl"
 	"github.com/joho/godotenv"
 )
 
@@ -23,5 +23,5 @@ func main() {
 	}()
 
 	runtime.Logger.Info("lambda runtime started", "env", runtime.Config.Env)
-	lambdaurl.Start(runtime.Handler)
+	functionurltransport.StartBuffered(runtime.Handler)
 }
