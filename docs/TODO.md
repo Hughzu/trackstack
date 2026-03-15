@@ -1,22 +1,30 @@
-- teardown serverless
-- serverless-next -> serverless
-- perf check turso etc
-- deploy new astro / go backend to aws for the serverless environment
-- make a cli to understand what the heck is going on in bootstrap 
-    - idea is to have an AWS cli set up (with root access)
-    - github cli set up
-    - turso cli set up
-    - then create mine that uses them in order to setup everything how I want (maybe create another AWS account for the rest, init the pipelines for terraform and things like that ?)
-- modify agents.md with docs about how many clis is available + the doc for my cli
-- AWS / terraform code deep dive
-- backend code deep dive 
-    - check hexagonal make sens, folder structures with ports and adapters, ...
-        - make sure tests make sense
-        - split code into microservices
-            - first docker compose a big thingy ? change docker compose files place into environments ?
-- frontend code deepdive
-    - frontend design system ? implement skills to implement new UIs ? 
-    - clean folder architecture ?
+- fix bug : add new meal log (timezone error likely, check if other domains suffer of that)
+- fix bug : need to authenticate myself each time I use the app
+
+- Code deep dive
+    - understand what the fuck is going on in the go side
+        - update docs & focus on data flows (with ports / adapters)
+        - understand tests
+        - test microservices ? 
+    - understand what the fuck is going on in the astro side
+        - update docs & focus on DDD and dataflow
+        - understand tests
+        - design system ? (implement skills to create new pages ?)
+        - UI flickering, ... 
+
+- Infra deep dive
+    - make a cli to understand what the fuck is going on in bootstrap 
+        - idea is to have an AWS cli set up (with root access)
+        - github cli set up
+        - turso cli set up
+        - then create mine that uses them in order to setup everything how I want (maybe create another AWS account for the rest, init the pipelines for terraform and things like that ?)
+    
+    - modify agents.md with docs about how many clis is available + the doc for my cli
+
+    - AWS / terraform code deep dive
+
+
+
 
 - quid dependabot and security audits ? 
 
