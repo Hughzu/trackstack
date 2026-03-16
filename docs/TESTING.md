@@ -69,10 +69,12 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Login JSON request
   - Logout JSON request
   - Session verification request
+  - Session touch refreshes cookie expiry without rotating the token
   - Assert cookie issuance and auth transport behavior
 
 - `apps/server/internal/transport/http/calories_test.go`
   - Authenticated `POST /api/calories/log` JSON request
+  - Auth middleware refreshes cookie expiry on touched sessions during protected requests
   - Authenticated non-JSON `POST /api/calories/log` rejection
   - Authenticated `POST /api/calories/target` JSON request
   - Authenticated `DELETE /api/calories/log?id=...` request

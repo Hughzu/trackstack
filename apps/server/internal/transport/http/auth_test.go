@@ -166,3 +166,42 @@ func TestAuthSessionAPI_JSON(t *testing.T) {
 		t.Fatalf("expected user id in body, got %s", rr.Body.String())
 	}
 }
+
+func TestAuthSessionAPI_JSONRefreshesCookieOnTouch(t *testing.T) {
+	now := time.Now().UTC()
+	sessionStore := &testAuthStore{
+		session: auth.Session{
+			UserID:            "test-user",
+			ID:                hashSessionToken(testSessionToken),
+			ExpiresAt:         now.Add(30 * time.Minute).Format(time.RFC3339),
+			AbsoluteExpiresAt: now.Add(48 * time.Hour).Format(time.RFC3339),
+			RotatedAt:         now.Format(time.RFC3339),
+			LastSeenAt:        now.Add(-2 * time.Minute).Format(time.RFC3339),
+		},
+	}
+	usersStore := &authUsersStore{}
+	router := setupAuthTestRouter(sessionStore, usersStore)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/session", nil)
+	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d: body: %s", rr.Code, rr.Body.String())
+	}
+	if sessionStore.touchCalls != 1 {
+		t.Fatalf("expected session touch, got %d", sessionStore.touchCalls)
+	}
+
+	cookies := rr.Result().Cookies()
+	if len(cookies) == 0 {
+		t.Fatalf("expected refreshed auth cookie")
+	}
+	if cookies[0].Value != testSessionToken {
+		t.Fatalf("expected touched session to keep existing token, got %q", cookies[0].Value)
+	}
+	if cookies[0].MaxAge <= 1800 {
+		t.Fatalf("expected touched session cookie max age to extend beyond prior 30 minutes, got %d", cookies[0].MaxAge)
+	}
+}

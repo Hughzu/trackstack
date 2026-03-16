@@ -3,7 +3,6 @@ package httptransport
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/auth"
 )
@@ -35,22 +34,13 @@ func authMiddleware(handler *AuthHandler) func(http.Handler) http.Handler {
 				return
 			}
 
-			if result.ReplacementRaw != nil && result.CookieExpires != nil {
-				now := time.Now().UTC()
-				maxAge := int(result.CookieExpires.Sub(now).Seconds())
-				if maxAge < 0 {
-					maxAge = 0
+			if result.CookieExpires != nil {
+				tokenValue := cookie.Value
+				if result.ReplacementRaw != nil {
+					tokenValue = *result.ReplacementRaw
 				}
 
-				http.SetCookie(w, &http.Cookie{
-					Name:     handler.cookieName,
-					Value:    *result.ReplacementRaw,
-					Path:     "/",
-					HttpOnly: true,
-					Secure:   handler.cookieSecure,
-					SameSite: parseSameSite(handler.cookieSameSiteRaw),
-					MaxAge:   maxAge,
-				})
+				setAuthCookie(w, handler.cookieName, tokenValue, handler.cookieSecure, handler.cookieSameSiteRaw, *result.CookieExpires)
 			}
 
 			next.ServeHTTP(w, r.WithContext(withAuthContext(r.Context(), result.UserID, result.SessionID)))

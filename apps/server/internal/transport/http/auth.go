@@ -79,21 +79,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	now := time.Now().UTC()
-	maxAge := int(expiresAt.Sub(now).Seconds())
-	if maxAge < 0 {
-		maxAge = 0
-	}
+	setAuthCookie(w, h.cookieName, rawToken, h.cookieSecure, h.cookieSameSiteRaw, expiresAt)
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     h.cookieName,
-		Value:    rawToken,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   h.cookieSecure,
-		SameSite: parseSameSite(h.cookieSameSiteRaw),
-		MaxAge:   maxAge,
-	})
+	now := time.Now().UTC()
 
 	h.updateLastLoginAsync(r, user.ID, now.Format(time.RFC3339))
 
@@ -106,15 +94,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		_ = h.authService.RevokeSessionByRawToken(r.Context(), auth.RevokeSessionRequest{RawToken: cookie.Value})
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     h.cookieName,
-		Value:    "",
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   h.cookieSecure,
-		SameSite: parseSameSite(h.cookieSameSiteRaw),
-		MaxAge:   -1,
-	})
+	clearAuthCookie(w, h.cookieName, h.cookieSecure, h.cookieSameSiteRaw)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -139,22 +119,13 @@ func (h *AuthHandler) Session(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result.ReplacementRaw != nil && result.CookieExpires != nil {
-		now := time.Now().UTC()
-		maxAge := int(result.CookieExpires.Sub(now).Seconds())
-		if maxAge < 0 {
-			maxAge = 0
+	if result.CookieExpires != nil {
+		tokenValue := cookie.Value
+		if result.ReplacementRaw != nil {
+			tokenValue = *result.ReplacementRaw
 		}
 
-		http.SetCookie(w, &http.Cookie{
-			Name:     h.cookieName,
-			Value:    *result.ReplacementRaw,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   h.cookieSecure,
-			SameSite: parseSameSite(h.cookieSameSiteRaw),
-			MaxAge:   maxAge,
-		})
+		setAuthCookie(w, h.cookieName, tokenValue, h.cookieSecure, h.cookieSameSiteRaw, *result.CookieExpires)
 	}
 
 	writeJSON(w, http.StatusOK, authSessionResponse{

@@ -28,10 +28,19 @@ func testAuthConfig() auth.Config {
 	}
 }
 
-type testAuthStore struct{}
+type testAuthStore struct {
+	session          auth.Session
+	touchCalls       int
+	touchedLastSeen  string
+	touchedExpiresAt string
+}
 
 func (m *testAuthStore) FindSessionByID(ctx context.Context, id string) (auth.Session, error) {
 	if id == hashSessionToken(testSessionToken) {
+		if m.session.ID != "" || m.session.UserID != "" {
+			return m.session, nil
+		}
+
 		now := time.Now().UTC()
 		return auth.Session{
 			UserID:            "test-user",
@@ -48,6 +57,9 @@ func (m *testAuthStore) FindSessionByID(ctx context.Context, id string) (auth.Se
 func (m *testAuthStore) InsertSession(ctx context.Context, session auth.Session) error { return nil }
 
 func (m *testAuthStore) TouchSession(ctx context.Context, id string, lastSeenAt string, expiresAt string) error {
+	m.touchCalls++
+	m.touchedLastSeen = lastSeenAt
+	m.touchedExpiresAt = expiresAt
 	return nil
 }
 

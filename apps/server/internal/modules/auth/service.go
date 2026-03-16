@@ -131,6 +131,9 @@ func (s *Service) Authenticate(ctx context.Context, req AuthenticateRequest) (Au
 			touchStart := time.Now()
 			err = s.store.TouchSession(ctx, session.ID, now.Format(time.RFC3339), expiresAt.Format(time.RFC3339))
 			logAuthTiming(ctx, "authenticate.touch_session", touchStart, err)
+			if err == nil {
+				response.CookieExpires = &expiresAt
+			}
 		}
 	}
 

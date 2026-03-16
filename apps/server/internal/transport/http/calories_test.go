@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/auth"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/calories"
@@ -95,6 +96,57 @@ func TestCaloriesAddLogAPI_JSON(t *testing.T) {
 	}
 	if !store.logAdded {
 		t.Fatalf("expected log to be added to store")
+	}
+}
+
+func TestCaloriesAddLogAPI_JSONRefreshesCookieOnTouch(t *testing.T) {
+	store := &mockCaloriesStore{}
+	now := time.Now().UTC()
+	authService := auth.NewService(&testAuthStore{
+		session: auth.Session{
+			UserID:            "test-user",
+			ID:                hashSessionToken(testSessionToken),
+			ExpiresAt:         now.Add(30 * time.Minute).Format(time.RFC3339),
+			AbsoluteExpiresAt: now.Add(48 * time.Hour).Format(time.RFC3339),
+			RotatedAt:         now.Format(time.RFC3339),
+			LastSeenAt:        now.Add(-2 * time.Minute).Format(time.RFC3339),
+		},
+	}, testAuthConfig())
+	usersService := users.NewService(&testUsersStore{})
+	calService := calories.NewService(store)
+
+	handlers := httptransport.NewHandlers(httptransport.Deps{
+		AuthService:        authService,
+		UsersService:       usersService,
+		CaloriesService:    calService,
+		HeatService:        &heat.Service{},
+		ExpensesService:    &expenses.Service{},
+		AuthCookieName:     testCookieName,
+		AuthCookieSecure:   false,
+		AuthCookieSameSite: "lax",
+	})
+
+	router := httptransport.NewRouter(handlers, "*").(*chi.Mux)
+
+	payload := map[string]interface{}{
+		"calories": 500,
+		"protein":  30,
+		"title":    "Lunch",
+	}
+	body, _ := json.Marshal(payload)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/calories/log", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("expected status 201, got %d: body: %s", rr.Code, rr.Body.String())
+	}
+	if len(rr.Result().Cookies()) == 0 {
+		t.Fatalf("expected refreshed auth cookie on touched session")
 	}
 }
 

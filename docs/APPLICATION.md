@@ -75,6 +75,7 @@
 - **How it works (`AuthBootstrap.astro`):** `apps/web/src/layouts/AuthBootstrap.astro` performs a browser-side session bootstrap against `GET /api/auth/session` and publishes auth readiness into the client runtime.
 - **Current page guard:** protected pages now rely on browser-side auth bootstrap against `GET /api/auth/session` and redirect to `/login` on the client when the session is missing.
 - **Current auth flow:** login, logout, and session verification are all direct browser-to-Go interactions over `/api/auth/*`.
+- **Session behavior:** Go owns a sliding session window. When authenticated traffic extends the server-side idle expiry, the API also refreshes the auth cookie expiry so the browser keeps sending the DB-backed session token.
 - **Current split:** Go is the source of truth for login, logout, session verification, page data, and API contracts. The Astro app is now a static frontend shell plus client runtime.
 - **Milestone reached:** the home, calories, expenses, and heat dashboards plus the calories and expenses settings pages now load their authenticated read models in the browser after auth bootstrap, so they no longer depend on `getCurrentUserId()` or SSR request-local auth context.
 - **Overview behavior:** the home overview no longer waits on a single aggregated `/api/dashboard` response. It loads expenses, calories, and heat cards independently from their canonical module endpoints so one cold module path does not block the whole screen.

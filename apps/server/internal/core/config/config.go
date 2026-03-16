@@ -91,11 +91,11 @@ func Load() (Config, error) {
 	cfg.AuthCookieSecure = getEnvBool("AUTH_COOKIE_SECURE", false)
 	cfg.AuthCookieSameSite = getEnv("AUTH_COOKIE_SAMESITE", "lax")
 
-	cfg.AuthSessionIdleSeconds, err = getEnvInt("AUTH_SESSION_IDLE_SECONDS", 1800)
+	cfg.AuthSessionIdleSeconds, err = getEnvInt("AUTH_SESSION_IDLE_SECONDS", 604800)
 	if err != nil {
 		return Config{}, err
 	}
-	cfg.AuthSessionAbsoluteSeconds, err = getEnvInt("AUTH_SESSION_ABSOLUTE_SECONDS", 86400)
+	cfg.AuthSessionAbsoluteSeconds, err = getEnvInt("AUTH_SESSION_ABSOLUTE_SECONDS", 7776000)
 	if err != nil {
 		return Config{}, err
 	}

@@ -1,6 +1,3 @@
-- fix bug : add new meal log (timezone error likely, check if other domains suffer of that)
-- fix bug : need to authenticate myself each time I use the app
-
 - fix pipelines to deploy only on main, create dev branch
 
 - Code deep dive
