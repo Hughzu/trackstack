@@ -57,6 +57,7 @@
 - **Deployment note:** In development, browser calls stay same-origin and use the Astro/Vite `/api` proxy. In production/static builds, browser calls target Go through `PUBLIC_API_BASE_URL`.
 - **Rule [SigV4 Forms - CRITICAL]:** ANY form triggering a mutation must use the `data-api-form` attribute to be intercepted by `ApiFormHandler.astro`.
 - **Rule [Go Boundary]:** The browser should call Go-owned `/api/*` endpoints directly. Astro does not own API adapter routes.
+- **Rule [Timestamp Ownership]:** Calorie quick-add and manual meal logging should let the Go backend stamp the current UTC timestamp unless the product explicitly adds a backdating feature.
 - **Usage:**
   - `data-redirect="/path"` controls the success destination. 
   - `data-error-target="element-id"` injects the API error message softly on failure avoiding a full page crash.

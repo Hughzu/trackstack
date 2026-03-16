@@ -174,6 +174,7 @@ describe('Form Safety Checks', () => {
     const content = getSourceContent('pages/calories/new.astro');
     expect(content).toContain('FormShell');
     expect(content).toContain('data-api-form');
+    expect(content).not.toContain('name="date"');
   });
 
   test('no inline fetch calls in form templates', () => {

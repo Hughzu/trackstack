@@ -4,7 +4,6 @@ import "@/styles/global.css";
 import FormShell from "@/components/FormShell.astro";
 import FormCard from "@/components/FormCard.astro";
 
-const today = new Date().toISOString().split("T")[0];
 const error = Astro.url.searchParams.get("error");
 ---
 
@@ -135,19 +134,6 @@ const error = Astro.url.searchParams.get("error");
         />
       </div>
 
-      <div class="flex gap-4">
-        <div class="flex flex-col gap-1 flex-1">
-          <label for="date" class="text-xs text-text-muted ml-1">Date</label>
-          <input
-            type="date"
-            id="date"
-            name="date"
-            value={today}
-            required
-            class="bg-transparent border-b border-border py-2 text-text-main focus:outline-none focus:border-primary transition-colors scheme-dark"
-          />
-        </div>
-      </div>
     </FormCard>
   </FormShell>
 </Layout>
