@@ -1,5 +1,3 @@
-- fix pipelines to deploy only on main, create dev branch
-
 - Code deep dive
     - understand what the fuck is going on in the go side
         - update docs & focus on data flows (with ports / adapters)

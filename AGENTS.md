@@ -10,34 +10,6 @@
 
 ---
 
-## 📁 Directory Map
-
-```text
-.
-├── apps/
-│   ├── server/                 # The Go Backend
-│   │   ├── cmd/                # Transport Entrypoints (Lambda vs HTTP Server)
-│   │   └── internal/           # Backend Logic
-│   │       ├── core/           # DB Setup, Auth, Logger
-│   │       └── modules/        # ✅ PRODUCT: Pure Business Logic (Hexagonal)
-│   │
-│   └── web/                    # The Astro Frontend
-│       ├── src/                # Astro UI Components & Pages
-│       └── dist/               # Build output (Static files -> S3, Server -> Lambda)
-│
-├── infra/                      # Infrastructure as Code
-│   ├── bootstrap/              # One-time account setup (OIDC, state, deploy role)
-│   ├── modules/                # Shared, reusable Terraform modules
-│   └── environments/           # The Infrastructure Matrix
-│       ├── serverless/         # (PROD) $0 Lambda + CloudFront + S3
-│       ├── ecs/                # (LAB) Fargate Spot + ALB
-│       └── eks/                # (LAB) Kubernetes
-│
-└── .github/workflows/          # CI/CD and automated Lab destruction
-```
-
----
-
 ## 🚀 Development Workflows
 
 ### Documentation Contract (Update When You Change)
