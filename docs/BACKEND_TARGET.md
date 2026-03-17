@@ -239,6 +239,8 @@ This is not a big-bang rewrite.
 
 We migrate one vertical slice at a time.
 
+If we use `apps/server-next/` as a rebuild workspace, it must stay intentionally narrow. It is a learning and design lab, not a second full backend. The rebuild should start with one context, then one use case at a time inside that context. Each use case should begin with explicit contract notes before code: input, output, invariants, side effects, and dependency boundaries. Tests should first prove data flow and business behavior with fakes or in-memory adapters, and only then add database wiring. No feature expansion should happen during this rebuild; the purpose is to gain clarity and ownership over contracts and flow.
+
 Suggested order:
 
 1. Define the target structure and vocabulary.

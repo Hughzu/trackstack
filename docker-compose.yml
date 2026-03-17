@@ -1,16 +1,29 @@
 services:
+  # go-backend:
+  #   build:
+  #     context: ./apps/server
+  #     dockerfile: Dockerfile.dev
+  #   volumes:
+  #     - ./apps/server:/app
+  #     # prevent local vendor/mod issues if any
+  #     - server_go_modules:/go/pkg/mod
+  #   ports:
+  #     - "8080:8080"
+  #   env_file:
+  #     - ./apps/server/.env
+
   go-backend:
     build:
-      context: ./apps/server
+      context: ./apps/server-next
       dockerfile: Dockerfile.dev
     volumes:
-      - ./apps/server:/app
+      - ./apps/server-next:/app
       # prevent local vendor/mod issues if any
       - server_go_modules:/go/pkg/mod
     ports:
       - "8080:8080"
     env_file:
-      - ./apps/server/.env
+      - ./apps/server-next/.env
 
   astro-frontend:
     build:
