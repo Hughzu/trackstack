@@ -23,20 +23,6 @@ When you change a contract or boundary, update the corresponding doc:
 - Architecture decisions: update `docs/DECISIONS.md`.
 - Testing strategy, test commands, or CI test changes: update `docs/TESTING.md`.
 
-### Backend Guard Workflow
-
-When you generate or modify code under `apps/server/`, run the backend guard workflow from repo root before finishing:
-
-```bash
-make backend-guard
-```
-
-This is the required local verification step for backend LLM-generated changes. It runs the architecture guard, repository lint guard, and Go test suite together.
-
-### Backend Generation Checklist
-
-- After any `apps/server/` edit, run `make backend-guard` from repo root before finishing.
-
 ## 📝 Coding Standards for AI
 
 * **Go**: Prefer standard library. Use `slog` for structured logging. Return errors wrapped with context; never `panic()`.

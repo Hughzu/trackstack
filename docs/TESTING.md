@@ -16,22 +16,12 @@ Use three test layers:
 
 From repo root:
 
-```bash
-make backend-guard
-```
-
 Or run the pieces directly:
 
 ```bash
 cd apps/server
-go run ./cmd/archguard
-go run ./cmd/lintguard
 go test ./...
 ```
-
-`go run ./cmd/archguard` is the backend boundary guard. Run it whenever package structure changes so hexagonal rules regressions fail as early as behavior regressions.
-
-`go run ./cmd/lintguard` is the backend repository guard. Run it whenever `internal/modules/*/adapters/db` changes so persistence adapters stay mapping-focused.
 
 ### Frontend Unit Tests (Vitest)
 

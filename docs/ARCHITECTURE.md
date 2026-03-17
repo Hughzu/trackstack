@@ -73,8 +73,6 @@ Hard boundaries:
 - DB adapters implement module ports.
 - Cross-domain access should go through ports owned by the consuming module.
 - If domains are split later, outbound adapters live with the consumer and inbound transport adapters live with the provider.
-- `apps/server/cmd/archguard` is the backend architecture fitness check; it fails when modules import transport, wiring, core runtime packages, command packages, other modules directly, or when non-wiring packages import concrete adapters.
-- `apps/server/cmd/lintguard` is the repository simplicity check for `adapters/db`; it keeps persistence code limited to stdlib plus its own module types, rejects in-adapter ID/timestamp/input normalization, and fails branch-heavy adapter methods.
 
 ### Transport Contract
 
