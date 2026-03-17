@@ -35,7 +35,9 @@ apps/server/
 │   ├── lambda/              # Lambda Function URL entrypoint for serverless runs
 │   └── server/              # HTTP server entrypoint used in local/container runs
 ├── internal/
-│   ├── core/                # shared runtime bootstrap, config, db, logging
+│   ├── app/
+│   │   └── bootstrap/       # composition root and runtime assembly
+│   ├── core/                # shared technical config, db, logging
 │   ├── modules/             # domain logic, DTOs, ports, db adapters
 │   ├── transport/
 │   │   └── http/            # router, middleware, handlers, OpenAPI
@@ -73,6 +75,24 @@ Hard boundaries:
 - DB adapters implement module ports.
 - Cross-domain access should go through ports owned by the consuming module.
 - If domains are split later, outbound adapters live with the consumer and inbound transport adapters live with the provider.
+
+### Heat Migration Slice
+
+The first backend migration slice now starts in `apps/server/internal/contexts/heat/`.
+
+Current transitional shape:
+
+- `apps/server/internal/contexts/heat/domain` owns refill and season/date rules.
+- `apps/server/internal/contexts/heat/application/ports` owns use-case-shaped heat ports.
+- `apps/server/internal/contexts/heat/application/services` owns heat use cases.
+- `apps/server/internal/contexts/heat/adapters/outbound/db` owns the Turso SQL implementation.
+- `apps/server/internal/contexts/heat/adapters/inbound/http` now owns heat HTTP route mounting and request translation.
+- `apps/server/internal/contexts/heat/application/service.go` is now the primary heat application facade used by runtime assembly and transport wiring.
+- `apps/server/internal/app/bootstrap` is now the active composition root and assembles the heat runtime directly.
+- `apps/server/internal/transport/http/dashboard.go` now consumes the heat dashboard use case through a context-local application contract.
+- The legacy `apps/server/internal/modules/heat` package has been removed; heat now lives fully under `apps/server/internal/contexts/heat/**`.
+
+This slice is intentionally incremental: the heat context now owns core business and persistence boundaries, and heat runtime assembly has moved into the composition root, while other domains still rely on legacy wiring helpers.
 
 ### Transport Contract
 

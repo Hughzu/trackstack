@@ -1,15 +1,16 @@
 package httptransport
 
 import (
+	heatinboundhttp "github.com/Hughzu/trackstack/apps/server/internal/contexts/heat/adapters/inbound/http"
+	heatapp "github.com/Hughzu/trackstack/apps/server/internal/contexts/heat/application"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/auth"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/calories"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/expenses"
-	"github.com/Hughzu/trackstack/apps/server/internal/modules/heat"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/users"
 )
 
 type Handlers struct {
-	Heat      *HeatHandler
+	Heat      *heatinboundhttp.Handler
 	Expenses  *ExpensesHandler
 	Calories  *CaloriesHandler
 	Auth      *AuthHandler
@@ -17,7 +18,7 @@ type Handlers struct {
 }
 
 type Deps struct {
-	HeatService        *heat.Service
+	HeatService        *heatapp.Service
 	ExpensesService    *expenses.Service
 	CaloriesService    *calories.Service
 	UsersService       *users.Service
@@ -29,9 +30,15 @@ type Deps struct {
 
 func NewHandlers(deps Deps) Handlers {
 	return Handlers{
-		Heat: &HeatHandler{
-			svc: deps.HeatService,
-		},
+		Heat: heatinboundhttp.NewHandler(heatinboundhttp.Deps{
+			ListRefills:       deps.HeatService.ListRefills,
+			GetDashboard:      deps.HeatService.GetDashboard,
+			CreateRefill:      deps.HeatService.CreateRefill,
+			DeleteRefill:      deps.HeatService.DeleteRefill,
+			RequireAuthUserID: requireAuthUserID,
+			WriteJSON:         writeJSON,
+			DecodeJSON:        decodeJSON,
+		}),
 		Expenses: &ExpensesHandler{
 			svc: deps.ExpensesService,
 		},
@@ -46,7 +53,7 @@ func NewHandlers(deps Deps) Handlers {
 			cookieSameSiteRaw: deps.AuthCookieSameSite,
 		},
 		Dashboard: &DashboardHandler{
-			heat:     deps.HeatService,
+			heat:     deps.HeatService.GetDashboard,
 			calories: deps.CaloriesService,
 			expenses: deps.ExpensesService,
 		},

@@ -202,6 +202,11 @@ import { apiConfig } from "@/config/api";
                 [config.payloadKey]: config.pendingId,
               });
             }
+	      } else if (config.pendingId) {
+	        resolvedEndpoint = config.endpoint.replaceAll(
+	          `{${config.payloadKey}}`,
+	          encodeURIComponent(config.pendingId),
+	        );
           }
 
           const signedFetch = window.signedFetch || window.fetch;
@@ -247,13 +252,14 @@ import { apiConfig } from "@/config/api";
           const trigger = target.closest(`[${modal.triggerAttribute}]`);
           if (!trigger) continue;
 
-          if (modal.sendPayload) {
-            if (!modal.idAttribute) return;
+          if (modal.idAttribute) {
             modal.pendingId = trigger.getAttribute(modal.idAttribute);
             if (!modal.pendingId) return;
+          } else if (modal.sendPayload) {
+            return;
           } else {
-            modal.pendingId = "__no_payload__";
-          }
+	          modal.pendingId = "__no_payload__";
+	        }
 
           modal.dialog.showModal();
           return;

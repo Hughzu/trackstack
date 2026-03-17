@@ -1,24 +1,27 @@
 package httptransport
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
+	heatservices "github.com/Hughzu/trackstack/apps/server/internal/contexts/heat/application/services"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/calories"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/expenses"
-	"github.com/Hughzu/trackstack/apps/server/internal/modules/heat"
 )
 
+type HeatDashboardFunc func(context.Context, heatservices.GetDashboardRequest) (heatservices.DashboardViewModel, error)
+
 type DashboardHandler struct {
-	heat     *heat.Service
+	heat     HeatDashboardFunc
 	calories *calories.Service
 	expenses *expenses.Service
 }
 
 type OverarchingDashboardViewModel struct {
-	Expenses expenses.ViewDashboard      `json:"expenses"`
-	Calories calories.DashboardViewModel `json:"calories"`
-	Heat     heat.DashboardViewModel     `json:"heat"`
+	Expenses expenses.ViewDashboard          `json:"expenses"`
+	Calories calories.DashboardViewModel     `json:"calories"`
+	Heat     heatservices.DashboardViewModel `json:"heat"`
 }
 
 func (h *DashboardHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +34,7 @@ func (h *DashboardHandler) GetDashboard(w http.ResponseWriter, r *http.Request) 
 
 	expensesFuture, expensesErrChan := make(chan expenses.ViewDashboard), make(chan error)
 	caloriesFuture, caloriesErrChan := make(chan calories.DashboardViewModel), make(chan error)
-	heatFuture, heatErrChan := make(chan heat.DashboardViewModel), make(chan error)
+	heatFuture, heatErrChan := make(chan heatservices.DashboardViewModel), make(chan error)
 
 	go func() {
 		data, err := h.expenses.GetDashboard(ctx, expenses.GetCurrentSheetRequest{UserID: userID})
@@ -52,7 +55,7 @@ func (h *DashboardHandler) GetDashboard(w http.ResponseWriter, r *http.Request) 
 	}()
 
 	go func() {
-		data, err := h.heat.GetDashboard(ctx, heat.GetDashboardRequest{UserID: userID, Page: 1, Limit: 20})
+		data, err := h.heat(ctx, heatservices.GetDashboardRequest{UserID: userID, Page: 1, Limit: 20})
 		if err != nil {
 			heatErrChan <- err
 			return
@@ -62,7 +65,7 @@ func (h *DashboardHandler) GetDashboard(w http.ResponseWriter, r *http.Request) 
 
 	var expensesData expenses.ViewDashboard
 	var caloriesData calories.DashboardViewModel
-	var heatData heat.DashboardViewModel
+	var heatData heatservices.DashboardViewModel
 
 	var errs []error
 

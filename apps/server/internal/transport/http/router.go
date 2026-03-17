@@ -3,6 +3,7 @@ package httptransport
 import (
 	"net/http"
 
+	heatinboundhttp "github.com/Hughzu/trackstack/apps/server/internal/contexts/heat/adapters/inbound/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -28,10 +29,7 @@ func NewRouter(handlers Handlers, corsAllowedOrigin string) http.Handler {
 		r.Use(authMiddleware(handlers.Auth))
 
 		r.Route("/api/heat", func(r chi.Router) {
-			r.Get("/dashboard", handlers.Heat.GetDashboard)
-			r.Get("/refills", handlers.Heat.ListRefills)
-			r.Post("/refills", handlers.Heat.CreateRefill)
-			r.Delete("/refills", handlers.Heat.DeleteRefill)
+			heatinboundhttp.MountRoutes(r, handlers.Heat)
 		})
 
 		r.Route("/api/expenses", func(r chi.Router) {

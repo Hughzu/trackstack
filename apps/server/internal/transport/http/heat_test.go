@@ -9,10 +9,11 @@ import (
 	"strings"
 	"testing"
 
+	heatapp "github.com/Hughzu/trackstack/apps/server/internal/contexts/heat/application"
+	heatdomain "github.com/Hughzu/trackstack/apps/server/internal/contexts/heat/domain"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/auth"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/calories"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/expenses"
-	"github.com/Hughzu/trackstack/apps/server/internal/modules/heat"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/users"
 	httptransport "github.com/Hughzu/trackstack/apps/server/internal/transport/http"
 	"github.com/go-chi/chi/v5"
@@ -21,26 +22,26 @@ import (
 type mockHeatStore struct {
 	created bool
 	deleted string
-	recent  []heat.Refill
+	recent  []heatdomain.Refill
 }
 
-func (m *mockHeatStore) ListByRange(ctx context.Context, userID string, from string, to string) ([]heat.Refill, error) {
+func (m *mockHeatStore) ListByRange(ctx context.Context, userID string, from string, to string) ([]heatdomain.Refill, error) {
 	return nil, nil
 }
 
-func (m *mockHeatStore) ListRecent(ctx context.Context, userID string, limit int, offset int) ([]heat.Refill, error) {
+func (m *mockHeatStore) ListRecent(ctx context.Context, userID string, limit int, offset int) ([]heatdomain.Refill, error) {
 	if m.recent == nil {
-		return []heat.Refill{}, nil
+		return []heatdomain.Refill{}, nil
 	}
 	return m.recent, nil
 }
 
-func (m *mockHeatStore) Create(ctx context.Context, refill heat.Refill) error {
+func (m *mockHeatStore) Create(ctx context.Context, refill heatdomain.Refill) error {
 	m.created = true
 	return nil
 }
 
-func (m *mockHeatStore) GetLatest(ctx context.Context, userID string) (*heat.Refill, error) {
+func (m *mockHeatStore) GetLatest(ctx context.Context, userID string) (*heatdomain.Refill, error) {
 	return nil, nil
 }
 
@@ -56,7 +57,7 @@ func (m *mockHeatStore) Delete(ctx context.Context, userID string, id string) (b
 func setupHeatTestRouter(hStore *mockHeatStore) *chi.Mux {
 	authService := auth.NewService(&testAuthStore{}, testAuthConfig())
 	usersService := users.NewService(&testUsersStore{})
-	heatService := heat.NewService(hStore)
+	heatService := heatapp.NewService(hStore)
 
 	handlers := httptransport.NewHandlers(httptransport.Deps{
 		AuthService:        authService,
@@ -106,6 +107,24 @@ func TestHeatDeleteRefillAPI_Query(t *testing.T) {
 	router := setupHeatTestRouter(store)
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/heat/refills?id=refill-123", nil)
+	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("expected status 204, got %d: body: %s", rr.Code, rr.Body.String())
+	}
+	if store.deleted != "refill-123" {
+		t.Fatalf("expected refill id to be deleted, got %q", store.deleted)
+	}
+}
+
+func TestHeatDeleteRefillAPI_Path(t *testing.T) {
+	store := &mockHeatStore{}
+	router := setupHeatTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/heat/refills/refill-123", nil)
 	req.AddCookie(&http.Cookie{Name: testCookieName, Value: testSessionToken})
 
 	rr := httptest.NewRecorder()

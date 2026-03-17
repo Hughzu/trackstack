@@ -85,9 +85,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     delete:
-      summary: Delete a heat refill
+      summary: Delete a heat refill (compat alias)
       parameters:
         - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Refill not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/heat/refills/{id}:
+    delete:
+      summary: Delete a heat refill
+      parameters:
+        - in: path
           name: id
           required: true
           schema:

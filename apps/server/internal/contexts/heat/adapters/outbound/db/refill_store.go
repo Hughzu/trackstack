@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/Hughzu/trackstack/apps/server/internal/modules/heat"
+	"github.com/Hughzu/trackstack/apps/server/internal/contexts/heat/domain"
 )
 
 type RefillStore struct {
@@ -20,7 +20,7 @@ func NewRefillStore(db *sql.DB) *RefillStore {
 	return &RefillStore{db: db}
 }
 
-func (s *RefillStore) ListByRange(ctx context.Context, userID string, from string, to string) ([]heat.Refill, error) {
+func (s *RefillStore) ListByRange(ctx context.Context, userID string, from string, to string) ([]domain.Refill, error) {
 	query := `
 SELECT id, user_id, date, weight_kg, bags, temperature, season
 FROM refills
@@ -44,7 +44,7 @@ WHERE user_id = ?`
 	}
 	defer rows.Close()
 
-	var refills []heat.Refill
+	var refills []domain.Refill
 	for rows.Next() {
 		refill, err := scanRefill(rows)
 		if err != nil {
@@ -60,7 +60,7 @@ WHERE user_id = ?`
 	return refills, nil
 }
 
-func (s *RefillStore) ListRecent(ctx context.Context, userID string, limit int, offset int) ([]heat.Refill, error) {
+func (s *RefillStore) ListRecent(ctx context.Context, userID string, limit int, offset int) ([]domain.Refill, error) {
 	if limit <= 0 {
 		limit = 20
 	}
@@ -84,7 +84,7 @@ func (s *RefillStore) ListRecent(ctx context.Context, userID string, limit int, 
 	}
 	defer rows.Close()
 
-	var refills []heat.Refill
+	var refills []domain.Refill
 	for rows.Next() {
 		refill, err := scanRefill(rows)
 		if err != nil {
@@ -98,16 +98,16 @@ func (s *RefillStore) ListRecent(ctx context.Context, userID string, limit int, 
 	}
 
 	if refills == nil {
-		refills = []heat.Refill{}
+		refills = []domain.Refill{}
 	}
 
 	return refills, nil
 }
 
-func (s *RefillStore) GetLatest(ctx context.Context, userID string) (*heat.Refill, error) {
+func (s *RefillStore) GetLatest(ctx context.Context, userID string) (*domain.Refill, error) {
 	query := "SELECT id, user_id, date, weight_kg, bags, temperature, season FROM refills WHERE user_id = ? ORDER BY date DESC LIMIT 1"
 
-	var refill heat.Refill
+	var refill domain.Refill
 	var temperature sql.NullFloat64
 	var season sql.NullString
 
@@ -158,7 +158,7 @@ func (s *RefillStore) GetSumByRange(ctx context.Context, userID string, from str
 	return total, nil
 }
 
-func (s *RefillStore) Create(ctx context.Context, refill heat.Refill) error {
+func (s *RefillStore) Create(ctx context.Context, refill domain.Refill) error {
 	_, err := s.db.ExecContext(
 		ctx,
 		`INSERT INTO refills (id, user_id, date, weight_kg, bags, temperature, season)
@@ -197,8 +197,8 @@ func (s *RefillStore) Delete(ctx context.Context, userID string, id string) (boo
 	return rows > 0, nil
 }
 
-func scanRefill(scanner refillScanner) (heat.Refill, error) {
-	var refill heat.Refill
+func scanRefill(scanner refillScanner) (domain.Refill, error) {
+	var refill domain.Refill
 	var temperature sql.NullFloat64
 	var season sql.NullString
 
@@ -212,7 +212,7 @@ func scanRefill(scanner refillScanner) (heat.Refill, error) {
 		&season,
 	)
 	if err != nil {
-		return heat.Refill{}, err
+		return domain.Refill{}, err
 	}
 
 	if temperature.Valid {

@@ -77,8 +77,9 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Authenticated non-JSON `POST /api/expenses/entries` rejection
   - Assert removed legacy expense aliases return `404`
 
-- `apps/server/internal/modules/heat/service_test.go`
-  - Basic service validation and season behavior regression checks
+- `apps/server/internal/contexts/heat/application/services/services_test.go`
+  - Direct use-case coverage for heat create, list, and dashboard services
+  - Season labeling, date normalization, and dashboard recent-slice behavior without routing through the compatibility facade
 
 - `apps/web/tests/forms.test.ts`
   - Required `data-api-form` attributes across mutation forms
@@ -123,8 +124,9 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Login through Astro
   - Create a refill
   - Delete a refill from the heat history list
-  - Assert `DELETE /api/heat/refills` succeeds and the list shrinks
-  - Assert heat mutations target canonical Go-owned `/api/heat/refills`
+  - Assert canonical `DELETE /api/heat/refills/{id}` succeeds and the list shrinks
+  - Assert the legacy query-param delete route remains compatible until removal
+  - Assert heat mutations target canonical Go-owned `/api/heat/refills` resources
 
 ## Adding Regression Tests
 

@@ -12,7 +12,8 @@ const MODAL_ID = "refill-delete-modal";
   confirmLoadingLabel="Deleting..."
   triggerAttribute="data-refill-delete"
   idAttribute="data-refill-id"
-  endpoint="/api/heat/refills"
+  endpoint="/api/heat/refills/{id}"
   method="DELETE"
+  sendPayload={false}
   errorMessage="Unable to delete refill. Please try again."
 />

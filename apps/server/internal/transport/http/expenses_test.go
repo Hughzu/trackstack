@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"testing"
 
+	heatapp "github.com/Hughzu/trackstack/apps/server/internal/contexts/heat/application"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/auth"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/calories"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/expenses"
-	"github.com/Hughzu/trackstack/apps/server/internal/modules/heat"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/users"
 	httptransport "github.com/Hughzu/trackstack/apps/server/internal/transport/http"
 	"github.com/go-chi/chi/v5"
@@ -178,7 +178,7 @@ func setupExpensesTestRouter(store *mockExpensesStore) *chi.Mux {
 		AuthService:        authService,
 		UsersService:       usersService,
 		CaloriesService:    calories.NewService(nil),
-		HeatService:        heat.NewService(nil),
+		HeatService:        &heatapp.Service{},
 		ExpensesService:    expensesService,
 		AuthCookieName:     testCookieName,
 		AuthCookieSecure:   false,

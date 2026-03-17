@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
+	heatapp "github.com/Hughzu/trackstack/apps/server/internal/contexts/heat/application"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/auth"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/calories"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/expenses"
-	"github.com/Hughzu/trackstack/apps/server/internal/modules/heat"
 	"github.com/Hughzu/trackstack/apps/server/internal/modules/users"
 	httptransport "github.com/Hughzu/trackstack/apps/server/internal/transport/http"
 	"github.com/go-chi/chi/v5"
@@ -63,7 +63,7 @@ func setupTestRouter(cStore *mockCaloriesStore) *chi.Mux {
 		AuthService:        authService,
 		UsersService:       usersService,
 		CaloriesService:    calService,
-		HeatService:        &heat.Service{},
+		HeatService:        &heatapp.Service{},
 		ExpensesService:    &expenses.Service{},
 		AuthCookieName:     testCookieName,
 		AuthCookieSecure:   false,
@@ -119,7 +119,7 @@ func TestCaloriesAddLogAPI_JSONRefreshesCookieOnTouch(t *testing.T) {
 		AuthService:        authService,
 		UsersService:       usersService,
 		CaloriesService:    calService,
-		HeatService:        &heat.Service{},
+		HeatService:        &heatapp.Service{},
 		ExpensesService:    &expenses.Service{},
 		AuthCookieName:     testCookieName,
 		AuthCookieSecure:   false,

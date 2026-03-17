@@ -82,7 +82,8 @@
 
 ### Go Backend Boundary
 
-- **Role:** `apps/server/internal/modules/**` owns domain rules, DTOs, and persistence contracts.
+- **Role:** Go backend business logic is moving toward context-local boundaries. `apps/server/internal/contexts/heat/**` is now the first fully migrated slice, while other domains still remain under `apps/server/internal/modules/**`.
+- **Role:** Runtime assembly is moving into `apps/server/internal/app/bootstrap`, which is now the active composition root used by both `cmd/server` and `cmd/lambda`.
 - **Rule:** New domain behavior should be added in Go first.
 - **Rule:** Transport code in Go stays thin: parse request, call service, map status/error, serialize JSON.
 - **Rule:** Mutating Go endpoints should prefer a single JSON request contract; the frontend runtime may still submit JSON from forms, but Astro pages do not adapt requests server-side.
@@ -91,3 +92,5 @@
 - **Rule:** Go route aliases should be temporary migration shims only; once the browser uses the canonical backend paths, remove the aliases from Go and OpenAPI.
 - **Rule:** Astro forms and UI triggers should use the canonical migrated API paths directly once those paths are stable.
 - **Rule:** When changing a Go endpoint contract, update the frontend client runtime, transport tests, and e2e coverage together.
+- **Heat transition note:** heat now owns its inbound HTTP adapter under `apps/server/internal/contexts/heat/adapters/inbound/http`, and the browser delete flow now targets canonical `DELETE /api/heat/refills/{id}` while the query-param delete route remains as a temporary compatibility alias.
+- **Heat facade note:** runtime assembly and Go transport depend on the context-local heat application facade in `apps/server/internal/contexts/heat/application/service.go`; the legacy backend `internal/modules/heat` package has been removed.

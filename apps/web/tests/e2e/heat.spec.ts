@@ -20,6 +20,10 @@ test.describe('Heat Refill Flow', () => {
     test('User can delete a refill from history', async ({ page }) => {
         await login(page);
 
+        const deleteResponsePromise = page.waitForResponse(response =>
+            response.url().includes('/api/heat/refills/') && response.request().method() === 'DELETE'
+        );
+
         await page.goto('/heat/new');
         await page.fill('input[name="bags"]', '1');
         await page.fill('input[name="weightKg"]', '15');
@@ -39,6 +43,8 @@ test.describe('Heat Refill Flow', () => {
         await expect(deleteModal).toBeVisible();
 
         await deleteModal.locator('[data-confirm-modal]').click();
+        const deleteResponse = await deleteResponsePromise;
+        expect(deleteResponse.ok()).toBeTruthy();
         await expect(deleteModal).toBeHidden();
 
         const finalDeleteCount = await page.locator('[data-refill-delete]').count();

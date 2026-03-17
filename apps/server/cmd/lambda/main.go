@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	appcore "github.com/Hughzu/trackstack/apps/server/internal/core/app"
+	bootstrap "github.com/Hughzu/trackstack/apps/server/internal/app/bootstrap"
 	functionurltransport "github.com/Hughzu/trackstack/apps/server/internal/transport/functionurl"
 	"github.com/joho/godotenv"
 )
@@ -13,7 +13,7 @@ func init() {
 }
 
 func main() {
-	runtime, err := appcore.NewRuntime()
+	runtime, err := bootstrap.NewRuntime()
 	if err != nil {
 		_, _ = os.Stderr.WriteString("startup error: " + err.Error() + "\n")
 		os.Exit(1)
