@@ -94,3 +94,4 @@
 - **Rule:** When changing a Go endpoint contract, update the frontend client runtime, transport tests, and e2e coverage together.
 - **Heat transition note:** heat now owns its inbound HTTP adapter under `apps/server/internal/contexts/heat/adapters/inbound/http`, and the browser delete flow now targets canonical `DELETE /api/heat/refills/{id}` while the query-param delete route remains as a temporary compatibility alias.
 - **Heat facade note:** runtime assembly and Go transport depend on the context-local heat application facade in `apps/server/internal/contexts/heat/application/service.go`; the legacy backend `internal/modules/heat` package has been removed.
+- **Heat rebuild note:** `apps/server-next/internal/contexts/heat/**` now exposes both `GET /api/heat/refills` and `POST /api/heat/refills` with the existing frontend JSON contract (`date`, `weightKg`, `bags`, optional `temperature`) while mocked auth still stays at the HTTP boundary for the rebuild slice.

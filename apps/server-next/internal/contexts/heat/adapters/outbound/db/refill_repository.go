@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Hughzu/trackstack/apps/server-next/internal/contexts/heat/domain"
+	"github.com/Hughzu/trackstack/apps/server-next/internal/platform/timeutil"
 )
 
 type RefillRepository struct {
@@ -19,7 +20,7 @@ func NewRefillRepository(db *sql.DB) *RefillRepository {
 
 func (r *RefillRepository) GetRefills(ctx context.Context, userID string, from, to time.Time) ([]domain.Refill, error) {
 	query := `
-		SELECT id, weight_kg, bags, temperature, season, date 
+		SELECT id, user_id, weight_kg, bags, temperature, season, date 
 		FROM refills 
 		WHERE user_id = ? 
 		AND date >= ? 
@@ -39,30 +40,22 @@ func (r *RefillRepository) GetRefills(ctx context.Context, userID string, from, 
 
 	var refills []domain.Refill
 	for rows.Next() {
-		var id string
-		var weightKg float64
-		var bags int
-		var temperature *float64
-		var season *string
-		var dateStr string
+		var refill domain.Refill
+		var temperature sql.NullFloat64
+		var season sql.NullString
 
-		if err := rows.Scan(&id, &weightKg, &bags, &temperature, &season, &dateStr); err != nil {
+		if err := rows.Scan(&refill.ID, &refill.UserID, &refill.WeightKg, &refill.Bags, &temperature, &season, &refill.Date); err != nil {
 			return nil, fmt.Errorf("failed to scan refill, %w", err)
 		}
-
-		parsedTime, err := time.Parse(time.RFC3339, dateStr)
-		if err != nil {
-			parsedTime, _ = time.Parse("2006-01-02", dateStr)
+		if temperature.Valid {
+			refill.Temperature = &temperature.Float64
 		}
+		if season.Valid {
+			refill.Season = &season.String
+		}
+		refill.Date = timeutil.NormalizeDateString(refill.Date)
 
-		refills = append(refills, domain.Refill{
-			ID:          id,
-			WeightKg:    weightKg,
-			Bags:        bags,
-			Temperature: temperature,
-			Season:      season,
-			Date:        parsedTime,
-		})
+		refills = append(refills, refill)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -71,4 +64,24 @@ func (r *RefillRepository) GetRefills(ctx context.Context, userID string, from, 
 
 	return refills, nil
 
+}
+
+func (r *RefillRepository) CreateRefill(ctx context.Context, refill domain.Refill) error {
+	_, err := r.db.ExecContext(
+		ctx,
+		`INSERT INTO refills (id, user_id, date, weight_kg, bags, temperature, season)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		refill.ID,
+		refill.UserID,
+		refill.Date,
+		refill.WeightKg,
+		refill.Bags,
+		refill.Temperature,
+		refill.Season,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create refill: %w", err)
+	}
+
+	return nil
 }

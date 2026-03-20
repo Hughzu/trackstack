@@ -186,7 +186,7 @@ During migration, legacy route aliases or compatibility behavior should live in 
 
 ### 7. Strict Parameter Passing (No Context Magic)
 
-The HTTP handler must extract all variables (User IDs from tokens, query parameters, etc.), validate them, and pass them as explicit variables (or strict Query Structs) into the Service. `context.Context` must only be used for timeouts and tracing, never for hiding domain inputs!
+The HTTP handler must extract all variables (User IDs from tokens, query parameters, etc.), validate and parse transport values into explicit variables (or strict Query Structs), and pass typed inputs into the Service. `context.Context` must only be used for timeouts and tracing, never for hiding domain inputs!
 
 ## API Direction
 
@@ -258,7 +258,7 @@ This is good progress because it proves the basic runtime shape without pulling 
 
 What is still intentionally missing:
 
-- only the first `heat` vertical slice exists so far: `GET /api/heat/refills`
+- the first `heat` vertical slice now covers `GET /api/heat/refills` and `POST /api/heat/refills`
 - the first slice currently uses a fake outbound adapter and a mocked user identity
 - no real database wiring exists yet
 - no Lambda entrypoint exists yet
@@ -267,11 +267,10 @@ The rebuild has now moved past runtime-only scaffolding. The next step is to dee
 
 Recommended next move after the first slice:
 
-1. Keep `GET /api/heat/refills` as the reference slice for naming and dependency direction.
-2. Add the next heat contract first before coding, likely `POST /api/heat/refills`.
-3. Keep auth compatibility at the HTTP boundary; do not let application services read HTTP context.
-4. Replace the fake outbound adapter only after the use-case contract and tests are stable.
-5. Add database wiring after the service behavior is proven with tests.
+1. Keep `GET /api/heat/refills` and `POST /api/heat/refills` as the reference slice for naming and dependency direction.
+2. Keep auth compatibility at the HTTP boundary; do not let application services read HTTP context.
+3. Replace the fake outbound adapter only after the use-case contract and tests are stable.
+4. Add database wiring after the service behavior is proven with tests.
 
 The preferred first use case should be the smallest one that still proves the architecture. For this rebuild, `GET /api/heat/refills` is a better starting point than the dashboard because it is simpler, read-focused, and easier to test end-to-end without hiding extra orchestration.
 

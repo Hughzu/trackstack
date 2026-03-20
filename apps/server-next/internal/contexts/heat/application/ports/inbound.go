@@ -8,5 +8,22 @@ import (
 )
 
 type RefillUseCase interface {
-	GetRefills(ctx context.Context, userID string, from, to time.Time) ([]domain.Refill, error)
+	GetRefills(ctx context.Context, query GetRefillsQuery) ([]domain.Refill, error)
+	CreateRefill(ctx context.Context, command CreateRefillCommand) (domain.Refill, error)
+}
+
+var ErrInvalidInput = domain.ErrInvalidInput
+
+type GetRefillsQuery struct {
+	UserID string
+	From   time.Time
+	To     time.Time
+}
+
+type CreateRefillCommand struct {
+	UserID      string
+	Date        time.Time
+	WeightKg    float64
+	Bags        int
+	Temperature *float64
 }

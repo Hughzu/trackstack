@@ -2,19 +2,24 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
-	"time"
 
 	"github.com/Hughzu/trackstack/apps/server-next/internal/contexts/heat/application/ports"
+	"github.com/Hughzu/trackstack/apps/server-next/internal/platform/timeutil"
 )
 
-type RefillResponse struct {
-	ID          string   `json:"id"`
+const mockUserID = "8a36e9e2-4b42-4ea2-a397-0a2b441accca"
+
+type createRefillPayload struct {
 	Date        string   `json:"date"`
 	WeightKg    float64  `json:"weightKg"`
 	Bags        int      `json:"bags"`
-	Temperature *float64 `json:"temperature,omitempty"`
-	Season      *string  `json:"season,omitempty"`
+	Temperature *float64 `json:"temperature"`
+}
+
+type errorResponse struct {
+	Error string `json:"error"`
 }
 
 type RefillHandler struct {
@@ -26,44 +31,73 @@ func NewRefillHandler(useCase ports.RefillUseCase) *RefillHandler {
 }
 
 func (h *RefillHandler) GetRefills(w http.ResponseWriter, r *http.Request) {
-
-	mockUserId := "8a36e9e2-4b42-4ea2-a397-0a2b441accca"
-
 	fromStr := r.URL.Query().Get("from")
 	toStr := r.URL.Query().Get("to")
 
-	from, err := time.Parse(time.RFC3339, fromStr)
+	from, err := timeutil.ParseDate(fromStr)
 	if err != nil {
-		http.Error(w, "invalid 'from' format (expected RFC3339)", http.StatusBadRequest)
+		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid 'from' date"})
 		return
 	}
 
-	to, err := time.Parse(time.RFC3339, toStr)
+	to, err := timeutil.ParseDate(toStr)
 	if err != nil {
-		http.Error(w, "invalid 'to' format (expected RFC3339)", http.StatusBadRequest)
+		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid 'to' date"})
 		return
 	}
 
-	refills, err := h.useCase.GetRefills(r.Context(), mockUserId, from, to)
+	refills, err := h.useCase.GetRefills(r.Context(), ports.GetRefillsQuery{
+		UserID: mockUserID,
+		From:   from,
+		To:     to,
+	})
 	if err != nil {
-		http.Error(w, "failed to get refills", http.StatusInternalServerError)
+		h.writeError(w, err)
 		return
 	}
 
-	var response []RefillResponse
+	h.writeJSON(w, http.StatusOK, refills)
+}
 
-	for _, refill := range refills {
-		response = append(response, RefillResponse{
-			ID:          refill.ID,
-			WeightKg:    refill.WeightKg,
-			Bags:        refill.Bags,
-			Temperature: refill.Temperature,
-			Season:      refill.Season,
-			Date:        refill.Date.UTC().Format(time.RFC3339),
-		})
+func (h *RefillHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
+	var payload createRefillPayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
+		return
 	}
 
+	date, err := timeutil.ParseDate(payload.Date)
+	if err != nil {
+		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid 'date'"})
+		return
+	}
+
+	refill, err := h.useCase.CreateRefill(r.Context(), ports.CreateRefillCommand{
+		UserID:      mockUserID,
+		Date:        date,
+		WeightKg:    payload.WeightKg,
+		Bags:        payload.Bags,
+		Temperature: payload.Temperature,
+	})
+	if err != nil {
+		h.writeError(w, err)
+		return
+	}
+
+	h.writeJSON(w, http.StatusCreated, refill)
+}
+
+func (h *RefillHandler) writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func (h *RefillHandler) writeError(w http.ResponseWriter, err error) {
+	status := http.StatusInternalServerError
+	if errors.Is(err, ports.ErrInvalidInput) {
+		status = http.StatusBadRequest
+	}
+
+	h.writeJSON(w, status, errorResponse{Error: err.Error()})
 }
