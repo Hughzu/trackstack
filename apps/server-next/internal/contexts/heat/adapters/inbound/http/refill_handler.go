@@ -9,9 +9,12 @@ import (
 )
 
 type RefillResponse struct {
-	ID        string `json:"id"`
-	Amount    int    `json:"amount"`
-	CreatedAt string `json:"created_at"`
+	ID          string   `json:"id"`
+	Date        string   `json:"date"`
+	WeightKg    float64  `json:"weightKg"`
+	Bags        int      `json:"bags"`
+	Temperature *float64 `json:"temperature,omitempty"`
+	Season      *string  `json:"season,omitempty"`
 }
 
 type RefillHandler struct {
@@ -51,9 +54,12 @@ func (h *RefillHandler) GetRefills(w http.ResponseWriter, r *http.Request) {
 
 	for _, refill := range refills {
 		response = append(response, RefillResponse{
-			ID:        refill.ID,
-			Amount:    refill.Amount,
-			CreatedAt: refill.CreatedAt.Format(time.RFC3339),
+			ID:          refill.ID,
+			WeightKg:    refill.WeightKg,
+			Bags:        refill.Bags,
+			Temperature: refill.Temperature,
+			Season:      refill.Season,
+			Date:        refill.Date.UTC().Format(time.RFC3339),
 		})
 	}
 

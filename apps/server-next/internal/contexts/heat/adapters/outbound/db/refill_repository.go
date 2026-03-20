@@ -19,12 +19,12 @@ func NewRefillRepository(db *sql.DB) *RefillRepository {
 
 func (r *RefillRepository) GetRefills(ctx context.Context, userID string, from, to time.Time) ([]domain.Refill, error) {
 	query := `
-		SELECT id, amount, created_at 
+		SELECT id, weight_kg, bags, temperature, season, date 
 		FROM refills 
 		WHERE user_id = ? 
-		AND created_at >= ? 
-		AND created_at <= ?
-		ORDER BY created_at DESC
+		AND date >= ? 
+		AND date <= ?
+		ORDER BY date DESC
 	`
 
 	fromStr := from.UTC().Format(time.RFC3339)
@@ -40,22 +40,28 @@ func (r *RefillRepository) GetRefills(ctx context.Context, userID string, from, 
 	var refills []domain.Refill
 	for rows.Next() {
 		var id string
-		var amount int
-		var createdAtStr string
+		var weightKg float64
+		var bags int
+		var temperature *float64
+		var season *string
+		var dateStr string
 
-		if err := rows.Scan(&id, &amount, &createdAtStr); err != nil {
+		if err := rows.Scan(&id, &weightKg, &bags, &temperature, &season, &dateStr); err != nil {
 			return nil, fmt.Errorf("failed to scan refill, %w", err)
 		}
 
-		parsedTime, err := time.Parse(time.RFC3339, createdAtStr)
+		parsedTime, err := time.Parse(time.RFC3339, dateStr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse refill time, %w", err)
+			parsedTime, _ = time.Parse("2006-01-02", dateStr)
 		}
 
 		refills = append(refills, domain.Refill{
-			ID:        id,
-			Amount:    amount,
-			CreatedAt: parsedTime,
+			ID:          id,
+			WeightKg:    weightKg,
+			Bags:        bags,
+			Temperature: temperature,
+			Season:      season,
+			Date:        parsedTime,
 		})
 	}
 
