@@ -25,11 +25,18 @@ func NewRuntime() (*Runtime, error) {
 	logger := logging.New(cfg.LogLevel)
 	slog.SetDefault(logger)
 
+	dbs, err := connectDatabases(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect databases: %w", err)
+	}
+
+	heatHandler := buildHeatModule(dbs.Heat)
+
 	runtime := &Runtime{
 		Config:  cfg,
 		Logger:  logger,
-		Handler: newRouter(),
-		closers: nil,
+		Handler: newRouter(heatHandler),
+		closers: dbs.CloseAll(),
 	}
 
 	return runtime, nil

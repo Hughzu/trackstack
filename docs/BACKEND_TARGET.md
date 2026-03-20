@@ -149,7 +149,7 @@ Inbound adapters should stay thin:
 
 - parse request
 - map request to use-case input
-- call exactly one application service
+- call exactly one application service 
 - map result to response
 
 ### `contexts/<name>/adapters/outbound/`
@@ -249,6 +249,36 @@ Suggested order:
 4. Use the `heat` slice as the template for the next contexts.
 5. Rework auth after the new structure is proven.
 6. Leave `expenses` for later because it has the most coupled behavior.
+
+## Current Rebuild Progress (`apps/server-next/`)
+
+The rebuild workspace now has the first runtime foundation in place:
+
+- `cmd/server/main.go` is intentionally thin and only starts the HTTP runtime.
+- `internal/app/bootstrap/` owns runtime assembly and router creation.
+- `internal/platform/config/` and `internal/platform/logging/` hold shared technical concerns.
+- a base `chi` router exists with simple health endpoints (`/health` and `/api/health`).
+
+This is good progress because it proves the basic runtime shape without pulling business logic into `main`.
+
+What is still intentionally missing:
+
+- only the first `heat` vertical slice exists so far: `GET /api/heat/refills`
+- the first slice currently uses a fake outbound adapter and a mocked user identity
+- no real database wiring exists yet
+- no Lambda entrypoint exists yet
+
+The rebuild has now moved past runtime-only scaffolding. The next step is to deepen the `heat` slice use case by use case without adding unrelated runtime infrastructure.
+
+Recommended next move after the first slice:
+
+1. Keep `GET /api/heat/refills` as the reference slice for naming and dependency direction.
+2. Add the next heat contract first before coding, likely `POST /api/heat/refills`.
+3. Keep auth compatibility at the HTTP boundary; do not let application services read HTTP context.
+4. Replace the fake outbound adapter only after the use-case contract and tests are stable.
+5. Add database wiring after the service behavior is proven with tests.
+
+The preferred first use case should be the smallest one that still proves the architecture. For this rebuild, `GET /api/heat/refills` is a better starting point than the dashboard because it is simpler, read-focused, and easier to test end-to-end without hiding extra orchestration.
 
 ## First Slice: Heat
 

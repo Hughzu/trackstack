@@ -3,11 +3,12 @@ package bootstrap
 import (
 	"net/http"
 
+	heatinboundhttp "github.com/Hughzu/trackstack/apps/server-next/internal/contexts/heat/adapters/inbound/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func newRouter() http.Handler {
+func newRouter(heatHandler *heatinboundhttp.RefillHandler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -18,6 +19,7 @@ func newRouter() http.Handler {
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/health", health)
 
+		r.Route("/heat", heatHandler.RegisterRoutes)
 	})
 	return r
 }
