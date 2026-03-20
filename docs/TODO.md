@@ -1,3 +1,13 @@
+- dashboard call
+- authentication ? 
+- calories
+- expenses 
+- wiring everything with front
+- update docs
+- test split into microservices
+- redeploy
+- front
+
 - Code deep dive
     - understand what the fuck is going on in the go side
         - update docs & focus on data flows (with ports / adapters)
