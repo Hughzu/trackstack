@@ -85,3 +85,22 @@ func (r *RefillRepository) CreateRefill(ctx context.Context, refill domain.Refil
 
 	return nil
 }
+
+func (r *RefillRepository) DeleteRefill(ctx context.Context, userID string, id string) (bool, error) {
+	result, err := r.db.ExecContext(
+		ctx,
+		"DELETE FROM refills WHERE id = ? AND user_id = ?",
+		id,
+		userID,
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete refill: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("failed to read deleted refill rows: %w", err)
+	}
+
+	return rows > 0, nil
+}

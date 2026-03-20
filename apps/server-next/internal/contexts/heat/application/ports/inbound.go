@@ -10,6 +10,7 @@ import (
 type RefillUseCase interface {
 	GetRefills(ctx context.Context, query GetRefillsQuery) ([]domain.Refill, error)
 	CreateRefill(ctx context.Context, command CreateRefillCommand) (domain.Refill, error)
+	DeleteRefill(ctx context.Context, command DeleteRefillCommand) (bool, error)
 }
 
 var ErrInvalidInput = domain.ErrInvalidInput
@@ -26,4 +27,9 @@ type CreateRefillCommand struct {
 	WeightKg    float64
 	Bags        int
 	Temperature *float64
+}
+
+type DeleteRefillCommand struct {
+	UserID string
+	ID     string
 }

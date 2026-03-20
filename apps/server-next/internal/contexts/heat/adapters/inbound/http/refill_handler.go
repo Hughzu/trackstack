@@ -87,6 +87,28 @@ func (h *RefillHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusCreated, refill)
 }
 
+func (h *RefillHandler) deleteRefill(w http.ResponseWriter, r *http.Request, id string) {
+	if id == "" {
+		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing refill id"})
+		return
+	}
+
+	deleted, err := h.useCase.DeleteRefill(r.Context(), ports.DeleteRefillCommand{
+		UserID: mockUserID,
+		ID:     id,
+	})
+	if err != nil {
+		h.writeError(w, err)
+		return
+	}
+	if !deleted {
+		h.writeJSON(w, http.StatusNotFound, errorResponse{Error: "Refill not found"})
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *RefillHandler) writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

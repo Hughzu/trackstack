@@ -59,3 +59,14 @@ func (s *refillService) CreateRefill(ctx context.Context, command ports.CreateRe
 
 	return refill, nil
 }
+
+func (s *refillService) DeleteRefill(ctx context.Context, command ports.DeleteRefillCommand) (bool, error) {
+	if strings.TrimSpace(command.UserID) == "" {
+		return false, fmt.Errorf("%w: user id is required", domain.ErrInvalidInput)
+	}
+	if strings.TrimSpace(command.ID) == "" {
+		return false, fmt.Errorf("%w: refill id is required", domain.ErrInvalidInput)
+	}
+
+	return s.repo.DeleteRefill(ctx, command.UserID, command.ID)
+}

@@ -125,8 +125,15 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Create a refill
   - Delete a refill from the heat history list
   - Assert canonical `DELETE /api/heat/refills/{id}` succeeds and the list shrinks
-  - Assert the legacy query-param delete route remains compatible until removal
   - Assert heat mutations target canonical Go-owned `/api/heat/refills` resources
+
+- `apps/server-next/internal/contexts/heat/application/services/refill_service_test.go`
+  - Direct use-case coverage for heat get, create, and delete refill behavior
+  - Assert delete rejects missing user/id and passes canonical typed inputs to the repository
+
+- `apps/server-next/internal/contexts/heat/adapters/inbound/http/refill_handler_test.go`
+  - Assert `DELETE /api/heat/refills/{id}` returns `400` for missing id, `404` for unknown refill, and `204` for success
+  - Keep handler coverage focused on HTTP parsing and status mapping at the boundary
 
 ## Adding Regression Tests
 

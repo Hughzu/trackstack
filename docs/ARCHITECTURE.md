@@ -94,7 +94,7 @@ Current transitional shape:
 
 This slice is intentionally incremental: the heat context now owns core business and persistence boundaries, and heat runtime assembly has moved into the composition root, while other domains still rely on legacy wiring helpers.
 
-The rebuild workspace in `apps/server-next/` now proves the same boundary direction with canonical heat refill routes for `GET /api/heat/refills` and `POST /api/heat/refills`, while auth remains intentionally mocked at the inbound HTTP boundary during the migration slice.
+The rebuild workspace in `apps/server-next/` now proves the same boundary direction with canonical heat refill routes for `GET /api/heat/refills`, `POST /api/heat/refills`, and `DELETE /api/heat/refills/{id}`, while auth remains intentionally mocked at the inbound HTTP boundary during the migration slice.
 
 ### Transport Contract
 
