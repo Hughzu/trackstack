@@ -74,16 +74,13 @@ Shared technical concerns used by multiple contexts.
 
 The composition root.
 
-This is where the runtime is assembled:
+This is where the runtime is assembled. To prevent `runtime.go` from becoming massive, we use the **Module Builder Pattern**:
 
-- load config
-- open databases
-- construct adapters
-- wire application services
-- mount HTTP router
-- expose the final handler for `cmd/server` and `cmd/lambda`
+- `database.go`: Opens all database connection pools (with strict Turso connection limits to protect Serverless tiers).
+- `heat_module.go`: Wires the concrete dependencies for the `heat` vertical slice.
+- `runtime.go`: Orchestrates the module builders and mounts the `chi` router.
 
-This is the only place allowed to know the full concrete graph.
+`bootstrap` is the only package allowed to know the full concrete graph. `contexts/<name>/` packages remain completely ignorant of global assembly!
 
 ### `contexts/<name>/domain/`
 
@@ -103,28 +100,21 @@ The domain must not know about HTTP, Lambda, SQL, or framework concerns.
 
 Interfaces owned by the application layer.
 
-These ports describe what the use cases need from the outside world.
+1. **Inbound Ports**: Explicit interfaces (e.g. `RefillUseCase`) that the HTTP adapters call. The Service constructors MUST return this interface to force explicit dependency boundaries!
+2. **Outbound Ports**: What the use cases need from the outside world (e.g. `RefillRepository`).
 
-Examples:
-
-- repositories
-- query interfaces
-- unit-of-work or transaction boundaries if needed later
-- external service interfaces
-
-Ports should be narrow and shaped around use cases, not giant module-wide god interfaces.
+Ports should be narrow and strict. Use **Query/Request Structs** (e.g. `GetRefillsQuery`) for complex inbound parameters.
 
 ### `contexts/<name>/application/services/`
 
 Use cases and orchestration.
 
+For small, CRUD-heavy domains, a single unified service (e.g., `RefillService`) should implement the inbound port rather than splitting every single method into its own struct, to prevent unnecessary file bloat.
+
 Examples:
 
-- `CreateRefill`
-- `DeleteRefill`
-- `GetHeatDashboard`
-- `Login`
-- `GetSession`
+- `RefillService` (implementing `GetRefills`, `CreateRefill`)
+- `AuthService` (implementing `Login`, `GetSession`)
 
 Application services:
 
@@ -147,8 +137,9 @@ For now, that mainly means HTTP handlers. Later it could also include:
 
 Inbound adapters should stay thin:
 
+- **Routing:** Inbound HTTP Adapters must own their own sub-routing via a dedicated file (e.g. `func (h *RefillHandler) RegisterRoutes(r chi.Router)`).
 - parse request
-- map request to use-case input
+- map request to explicit typed variables or Request Structs
 - call exactly one application service 
 - map result to response
 
@@ -192,6 +183,10 @@ Avoid large interfaces like a single store owning unrelated settings, templates,
 ### 6. Compatibility lives at the boundary
 
 During migration, legacy route aliases or compatibility behavior should live in inbound adapters, not leak into domain logic.
+
+### 7. Strict Parameter Passing (No Context Magic)
+
+The HTTP handler must extract all variables (User IDs from tokens, query parameters, etc.), validate them, and pass them as explicit variables (or strict Query Structs) into the Service. `context.Context` must only be used for timeouts and tracing, never for hiding domain inputs!
 
 ## API Direction
 
