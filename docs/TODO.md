@@ -1,6 +1,7 @@
 - authentication ? 
 - calories
 - expenses 
+- users
 - wiring everything with front
 - update docs
 - test split into microservices

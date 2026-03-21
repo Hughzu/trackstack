@@ -8,7 +8,6 @@ import (
 
 	"github.com/Hughzu/trackstack/apps/server-next/internal/contexts/heat/application/ports"
 	"github.com/Hughzu/trackstack/apps/server-next/internal/platform/timeutil"
-
 )
 
 const mockUserID = "8a36e9e2-4b42-4ea2-a397-0a2b441accca"
@@ -153,4 +152,3 @@ func (h *RefillHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 
 	h.writeJSON(w, http.StatusOK, dashboard)
 }
-

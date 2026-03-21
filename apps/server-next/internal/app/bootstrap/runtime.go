@@ -35,7 +35,7 @@ func NewRuntime() (*Runtime, error) {
 	runtime := &Runtime{
 		Config:  cfg,
 		Logger:  logger,
-		Handler: newRouter(heatHandler),
+		Handler: newRouter(logger, heatHandler),
 		closers: dbs.CloseAll(),
 	}
 

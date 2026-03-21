@@ -150,4 +150,3 @@ func (s *refillService) GetDashboard(ctx context.Context, query ports.GetDashboa
 		History:         history,
 	}, nil
 }
-
