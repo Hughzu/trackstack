@@ -104,3 +104,92 @@ func (r *RefillRepository) DeleteRefill(ctx context.Context, userID string, id s
 
 	return rows > 0, nil
 }
+
+func (r *RefillRepository) GetDashboardStats(ctx context.Context, userID string, currentSeasonStart, currentSeasonEnd, lastSeasonStart, lastSeasonEnd time.Time) (*time.Time, int, int, error) {
+	query := `
+		SELECT 
+			(SELECT date FROM refills WHERE user_id = ? ORDER BY date DESC LIMIT 1) as latest_date,
+			(SELECT SUM(bags) FROM refills WHERE user_id = ? AND date >= ? AND date < ?) as current_season_sum,
+			(SELECT SUM(bags) FROM refills WHERE user_id = ? AND date >= ? AND date < ?) as last_season_sum
+	`
+
+	currentStartStr := currentSeasonStart.UTC().Format(time.RFC3339)
+	currentEndStr := currentSeasonEnd.UTC().Format(time.RFC3339)
+	lastStartStr := lastSeasonStart.UTC().Format(time.RFC3339)
+	lastEndStr := lastSeasonEnd.UTC().Format(time.RFC3339)
+
+	var latestDateStr sql.NullString
+	var currentSeasonSum sql.NullFloat64
+	var lastSeasonSum sql.NullFloat64
+
+	err := r.db.QueryRowContext(ctx, query, userID, userID, currentStartStr, currentEndStr, userID, lastStartStr, lastEndStr).Scan(&latestDateStr, &currentSeasonSum, &lastSeasonSum)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, 0, 0, fmt.Errorf("failed to get dashboard stats: %w", err)
+	}
+
+	var latestDate *time.Time
+	if latestDateStr.Valid {
+		normalizedStr := timeutil.NormalizeDateString(latestDateStr.String)
+		if parsed, err := time.Parse(time.RFC3339, normalizedStr); err == nil {
+			latestDate = &parsed
+		}
+	}
+
+	currentSum := 0
+	if currentSeasonSum.Valid {
+		currentSum = int(currentSeasonSum.Float64)
+	}
+
+	lastSum := 0
+	if lastSeasonSum.Valid {
+		lastSum = int(lastSeasonSum.Float64)
+	}
+
+	return latestDate, currentSum, lastSum, nil
+}
+
+func (r *RefillRepository) ListRecentRefills(ctx context.Context, userID string, limit, offset int) ([]domain.Refill, error) {
+	query := `
+		SELECT id, user_id, weight_kg, bags, temperature, season, date 
+		FROM refills 
+		WHERE user_id = ? 
+		ORDER BY date DESC 
+		LIMIT ? OFFSET ?
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list recent refills: %w", err)
+	}
+	defer rows.Close()
+
+	var refills []domain.Refill
+	for rows.Next() {
+		var refill domain.Refill
+		var temperature sql.NullFloat64
+		var season sql.NullString
+
+		if err := rows.Scan(&refill.ID, &refill.UserID, &refill.WeightKg, &refill.Bags, &temperature, &season, &refill.Date); err != nil {
+			return nil, fmt.Errorf("failed to scan recent refill: %w", err)
+		}
+		if temperature.Valid {
+			refill.Temperature = &temperature.Float64
+		}
+		if season.Valid {
+			refill.Season = &season.String
+		}
+		refill.Date = timeutil.NormalizeDateString(refill.Date)
+
+		refills = append(refills, refill)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
+
+	if refills == nil {
+		return []domain.Refill{}, nil
+	}
+
+	return refills, nil
+}

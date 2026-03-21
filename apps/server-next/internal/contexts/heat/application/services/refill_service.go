@@ -70,3 +70,84 @@ func (s *refillService) DeleteRefill(ctx context.Context, command ports.DeleteRe
 
 	return s.repo.DeleteRefill(ctx, command.UserID, command.ID)
 }
+
+func (s *refillService) GetDashboard(ctx context.Context, query ports.GetDashboardQuery) (ports.DashboardViewModel, error) {
+	if strings.TrimSpace(query.UserID) == "" {
+		return ports.DashboardViewModel{}, fmt.Errorf("%w: user id is required", domain.ErrInvalidInput)
+	}
+
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+	if query.Limit <= 0 {
+		query.Limit = 20
+	}
+	offset := (query.Page - 1) * query.Limit
+
+	now := time.Now().UTC()
+	todayUTCStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	todayUTCEndExclusive := todayUTCStart.Add(24 * time.Hour)
+
+	seasonStartYear := todayUTCStart.Year()
+	if todayUTCStart.Month() < time.September {
+		seasonStartYear--
+	}
+
+	currentSeasonStart := time.Date(seasonStartYear, time.September, 1, 0, 0, 0, 0, time.UTC)
+	currentSeasonEnd := time.Date(seasonStartYear+1, time.September, 1, 0, 0, 0, 0, time.UTC)
+	currentSeasonLabel := domain.SeasonLabelFor(currentSeasonStart)
+
+	currentEnd := currentSeasonEnd
+	if todayUTCEndExclusive.Before(currentSeasonEnd) {
+		currentEnd = todayUTCEndExclusive
+	}
+
+	lastSeasonStart := time.Date(seasonStartYear-1, time.September, 1, 0, 0, 0, 0, time.UTC)
+	lastSeasonEnd := time.Date(seasonStartYear, time.September, 1, 0, 0, 0, 0, time.UTC)
+
+	offsetDuration := currentEnd.Sub(currentSeasonStart)
+	lastSeasonEndSamePeriod := lastSeasonStart.Add(offsetDuration)
+	lastEnd := lastSeasonEnd
+	if lastSeasonEndSamePeriod.Before(lastSeasonEnd) {
+		lastEnd = lastSeasonEndSamePeriod
+	}
+
+	latestDate, seasonToDate, lastSeasonToDate, err := s.repo.GetDashboardStats(ctx, query.UserID, currentSeasonStart, currentEnd, lastSeasonStart, lastEnd)
+	if err != nil {
+		return ports.DashboardViewModel{}, err
+	}
+
+	daysSinceRefill := 0
+	if latestDate != nil {
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+		lastDate := time.Date(latestDate.Year(), latestDate.Month(), latestDate.Day(), 0, 0, 0, 0, time.UTC)
+		daysSinceRefill = int(today.Sub(lastDate).Hours() / 24)
+	}
+
+	delta := seasonToDate - lastSeasonToDate
+	var deltaPct *int
+	if lastSeasonToDate > 0 {
+		pct := int((float64(delta) / float64(lastSeasonToDate)) * 100)
+		deltaPct = &pct
+	}
+
+	snapshot := ports.SeasonSnapshot{
+		SeasonLabel:      currentSeasonLabel,
+		SeasonToDate:     seasonToDate,
+		LastSeasonToDate: lastSeasonToDate,
+		Delta:            delta,
+		DeltaPct:         deltaPct,
+	}
+
+	history, err := s.repo.ListRecentRefills(ctx, query.UserID, query.Limit, offset)
+	if err != nil {
+		history = []domain.Refill{}
+	}
+
+	return ports.DashboardViewModel{
+		DaysSinceRefill: daysSinceRefill,
+		SeasonSnapshot:  snapshot,
+		History:         history,
+	}, nil
+}
+

@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/Hughzu/trackstack/apps/server-next/internal/contexts/heat/application/ports"
 	"github.com/Hughzu/trackstack/apps/server-next/internal/platform/timeutil"
+
 )
 
 const mockUserID = "8a36e9e2-4b42-4ea2-a397-0a2b441accca"
@@ -123,3 +125,32 @@ func (h *RefillHandler) writeError(w http.ResponseWriter, err error) {
 
 	h.writeJSON(w, status, errorResponse{Error: err.Error()})
 }
+
+func (h *RefillHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
+	page := 1
+	if pageValue := r.URL.Query().Get("page"); pageValue != "" {
+		if parsed, err := strconv.Atoi(pageValue); err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+
+	limit := 20
+	if limitValue := r.URL.Query().Get("limit"); limitValue != "" {
+		if parsed, err := strconv.Atoi(limitValue); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+
+	dashboard, err := h.useCase.GetDashboard(r.Context(), ports.GetDashboardQuery{
+		UserID: mockUserID,
+		Page:   page,
+		Limit:  limit,
+	})
+	if err != nil {
+		h.writeError(w, err)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, dashboard)
+}
+

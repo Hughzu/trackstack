@@ -1,4 +1,3 @@
-- dashboard call
 - authentication ? 
 - calories
 - expenses 
