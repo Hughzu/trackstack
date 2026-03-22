@@ -209,6 +209,18 @@ Rules:
 - one endpoint should call one application use case
 - compatibility aliases are temporary and must be removable later
 
+## Authentication Strategy (JWT & Context Injection)
+
+To support both the $0 AWS Serverless monolith and future microservices deployments (VPS/Kubernetes) from the same codebase, we decouple authentication from the domain handlers.
+
+1. **Stateless JWTs ($0 Cost & 0 Latency):** The `auth` service issues a cryptographically signed JWT. Validating this token requires exactly 0 database reads, protecting the Turso free tier and completely removing cold-start latency from DB handshakes.
+2. **Context Injection:** Domain adapters (`heat`, `calories`, `expenses`) never read HTTP cookies or headers. Instead, they strictly read the `UserID` from the Go `context.Context`.
+3. **Topology-Agnostic Middlewares:**
+   - **Monolith (Lambda/Local):** A `ResolveSession` middleware verifies the JWT signature locally and injects the `UserID` into the `context.Context`. All domains run in one process.
+   - **Microservices (VPS/K8s):** An external API Gateway verifies the JWT and passes an `X-Internal-User-Id` header. The internal domain service simply uses a `TrustGatewayHeader` middleware to inject that value into the `context.Context`.
+
+This guarantees business logic never changes regardless of the deployment infrastructure.
+
 ## Deployment Shape
 
 This structure must support multiple runtimes without changing domain or application code.

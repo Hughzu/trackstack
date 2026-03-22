@@ -1,6 +1,4 @@
-- authentication ? 
-- calories
-- expenses 
+- authentication 
 - users
 - wiring everything with front
 - update docs
