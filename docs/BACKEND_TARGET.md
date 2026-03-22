@@ -243,35 +243,35 @@ Suggested order:
 3. Keep compatibility at the HTTP boundary so the frontend still works.
 4. Use the `heat` slice as the template for the next contexts.
 5. Rework auth after the new structure is proven.
-6. Leave `expenses` for later because it has the most coupled behavior.
+6. Leave `expenses` for later because it has the most coupled behavior. *(Update: Done!)*
 
 ## Current Rebuild Progress (`apps/server-next/`)
 
-The rebuild workspace now has the first runtime foundation in place:
+The rebuild workspace now has the foundational runtime in place:
 
-- `cmd/server/main.go` is intentionally thin and only starts the HTTP runtime.
-- `internal/app/bootstrap/` owns runtime assembly and router creation.
-- `internal/platform/config/` and `internal/platform/logging/` hold shared technical concerns.
-- a base `chi` router exists with simple health endpoints (`/health` and `/api/health`).
-
-This is good progress because it proves the basic runtime shape without pulling business logic into `main`.
+- `cmd/server/main.go` is intentionally thin and starts the HTTP runtime.
+- `internal/app/bootstrap/` owns the runtime assembly, DB pooling, and router creation.
+- `internal/platform/` holds shared technical concerns (config, DB, logging, and base middleware).
+- a base `chi` router orchestrates the active modules.
 
 What is implemented now:
 
-- the `heat` slice exposes `GET /api/heat/refills`, `POST /api/heat/refills`, `DELETE /api/heat/refills/{id}`, and `GET /api/heat/dashboard`
-- the `calories` slice exposes `GET /api/calories/dashboard`, `GET /api/calories/target`, `POST /api/calories/target`, `POST /api/calories/log`, and `DELETE /api/calories/logs/{id}`
-- both slices now use real outbound database adapters and runtime wiring in `internal/app/bootstrap/`
-- mocked user identity still intentionally lives at the inbound HTTP boundary
-- no Lambda entrypoint exists yet
+- the `heat` slice
+- the `calories` slice
+- the `expenses` slice
+- All three slices use real Turso outbound database adapters and are wired via domain-specific module builders in `internal/app/bootstrap/`.
 
-The rebuild has now moved past the first reference slice. It proves the runtime shape, module builder pattern, context-local routing, application-owned ports, and outbound database adapters across more than one bounded context.
+What is missing to fully replace the old `apps/server`:
 
-Recommended next move after `heat` and `calories`:
+1. **Authentication and Users Contexts:** `auth` and `users` domains remain to be implemented. Currently, mocked user identity still intentionally lives at the inbound HTTP boundary.
+2. **Platform & Middleware:** The real authentication middleware (session validation and user extraction) and CORS middleware need to be ported.
+3. **Application Entrypoints:** The `cmd/lambda/main.go` entrypoint for AWS Serverless and any required local `cmd/seed-user` scripts.
 
-1. Keep auth compatibility at the HTTP boundary; do not let application services read HTTP context.
-2. Add tests around the new calories boundary and service flow before tightening more transport guarantees.
-3. Decide whether the next slice should preserve legacy compatibility at the boundary or intentionally adopt cleaner contracts like calories did.
-4. Add the Lambda entrypoint once the local HTTP runtime and boundary conventions are stable enough to share confidently.
+Recommended next move:
+
+1. Tackle the **Auth Context & Middleware** to prove end-to-end functionality for authenticated boundaries across all implemented domains.
+2. Keep auth compatibility strictly at the HTTP boundary—do not let application services read HTTP context directly; always pass resolved credentials as strict parameters.
+3. Add the Lambda entrypoint once the local HTTP runtime and auth boundary conventions are stable enough to share confidently.
 
 ## First Slice: Heat
 
