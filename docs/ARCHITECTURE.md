@@ -94,7 +94,12 @@ Current transitional shape:
 
 This slice is intentionally incremental: the heat context now owns core business and persistence boundaries, and heat runtime assembly has moved into the composition root, while other domains still rely on legacy wiring helpers.
 
-The rebuild workspace in `apps/server-next/` now proves the same boundary direction with canonical heat refill routes for `GET /api/heat/refills`, `POST /api/heat/refills`, `DELETE /api/heat/refills/{id}`, and `GET /api/heat/dashboard`, while auth remains intentionally mocked at the inbound HTTP boundary during the migration slice.
+The rebuild workspace in `apps/server-next/` now proves the same boundary direction with two implemented contexts while auth remains intentionally mocked at the inbound HTTP boundary during the migration slice:
+
+- `heat` exposes `GET /api/heat/refills`, `POST /api/heat/refills`, `DELETE /api/heat/refills/{id}`, and `GET /api/heat/dashboard`
+- `calories` exposes `GET /api/calories/dashboard`, `GET /api/calories/target`, `POST /api/calories/target`, `POST /api/calories/log`, and `DELETE /api/calories/logs/{id}`
+
+For `calories`, the rebuild intentionally adopts a cleaner API vocabulary than the legacy backend. Explicit nutrient names like `proteinGrams`, `carbGrams`, `fatGrams`, `targetCalories`, and `targetProteinGrams` now replace the legacy abbreviated field names. Intentional frontend/backend contract breaks are tracked in `docs/BACKEND_BREAKING_CHANGES.md`.
 
 ### Transport Contract
 

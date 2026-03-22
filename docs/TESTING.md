@@ -67,7 +67,7 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Auth middleware refreshes cookie expiry on touched sessions during protected requests
   - Authenticated non-JSON `POST /api/calories/log` rejection
   - Authenticated `POST /api/calories/target` JSON request
-  - Authenticated `DELETE /api/calories/log?id=...` request
+  - Authenticated `DELETE /api/calories/log?id=...` request in the legacy backend contract
   - Assert JSON-only transport behavior at the HTTP boundary
 
 - `apps/server/internal/transport/http/expenses_test.go`
@@ -134,6 +134,12 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
 - `apps/server-next/internal/contexts/heat/adapters/inbound/http/refill_handler_test.go`
   - Assert `DELETE /api/heat/refills/{id}` returns `400` for missing id, `404` for unknown refill, and `204` for success
   - Keep handler coverage focused on HTTP parsing and status mapping at the boundary
+
+- `apps/server-next/internal/contexts/calories/**`
+  - No dedicated regression tests yet
+  - Manual curl verification has been performed for `GET /api/calories/target`, `POST /api/calories/target`, `POST /api/calories/log`, `GET /api/calories/dashboard`, and `DELETE /api/calories/logs/{id}`
+  - The rebuild contract uses explicit nutrient field names (`proteinGrams`, `carbGrams`, `fatGrams`, `targetCalories`, `targetProteinGrams`) rather than the legacy calories transport names
+  - A known gap remains in strict unknown-field rejection because the current handler decodes into `map[string]any`; add handler tests before tightening this contract
 
 ## Adding Regression Tests
 

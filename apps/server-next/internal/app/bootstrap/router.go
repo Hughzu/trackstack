@@ -4,13 +4,14 @@ import (
 	"log/slog"
 	"net/http"
 
+	caloriesinboundhttp "github.com/Hughzu/trackstack/apps/server-next/internal/contexts/calories/adapters/inbound/http"
 	heatinboundhttp "github.com/Hughzu/trackstack/apps/server-next/internal/contexts/heat/adapters/inbound/http"
 	"github.com/Hughzu/trackstack/apps/server-next/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 )
 
-func newRouter(logger *slog.Logger, heatHandler *heatinboundhttp.RefillHandler) http.Handler {
+func newRouter(logger *slog.Logger, heatHandler *heatinboundhttp.RefillHandler, caloriesHandler *caloriesinboundhttp.CaloriesHandler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(chimiddleware.RequestID)
@@ -22,6 +23,7 @@ func newRouter(logger *slog.Logger, heatHandler *heatinboundhttp.RefillHandler) 
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/health", health)
 
+		r.Route("/calories", caloriesHandler.RegisterRoutes)
 		r.Route("/heat", heatHandler.RegisterRoutes)
 	})
 	return r

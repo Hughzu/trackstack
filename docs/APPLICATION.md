@@ -82,7 +82,7 @@
 
 ### Go Backend Boundary
 
-- **Role:** Go backend business logic is moving toward context-local boundaries. `apps/server/internal/contexts/heat/**` is now the first fully migrated slice, while other domains still remain under `apps/server/internal/modules/**`.
+- **Role:** Go backend business logic is moving toward context-local boundaries. `apps/server/internal/contexts/heat/**` is the first fully migrated slice in the main backend, and `apps/server-next/internal/contexts/{heat,calories}/**` now serves as the rebuild workspace for the target architecture.
 - **Role:** Runtime assembly is moving into `apps/server/internal/app/bootstrap`, which is now the active composition root used by both `cmd/server` and `cmd/lambda`.
 - **Rule:** New domain behavior should be added in Go first.
 - **Rule:** Transport code in Go stays thin: parse request, call service, map status/error, serialize JSON.
@@ -95,3 +95,4 @@
 - **Heat transition note:** heat now owns its inbound HTTP adapter under `apps/server/internal/contexts/heat/adapters/inbound/http`, and the browser delete flow now targets canonical `DELETE /api/heat/refills/{id}` while the query-param delete route remains as a temporary compatibility alias.
 - **Heat facade note:** runtime assembly and Go transport depend on the context-local heat application facade in `apps/server/internal/contexts/heat/application/service.go`; the legacy backend `internal/modules/heat` package has been removed.
 - **Heat rebuild note:** `apps/server-next/internal/contexts/heat/**` now exposes `GET /api/heat/refills`, `POST /api/heat/refills`, and canonical `DELETE /api/heat/refills/{id}` with the existing frontend JSON contract (`date`, `weightKg`, `bags`, optional `temperature`) while mocked auth still stays at the HTTP boundary for the rebuild slice.
+- **Calories rebuild note:** `apps/server-next/internal/contexts/calories/**` now exposes `GET /api/calories/dashboard`, `GET /api/calories/target`, `POST /api/calories/target`, `POST /api/calories/log`, and canonical `DELETE /api/calories/logs/{id}`. Unlike the legacy calories contract, the rebuild intentionally uses explicit nutrient field names such as `proteinGrams`, `carbGrams`, `fatGrams`, `targetCalories`, and `targetProteinGrams`. Any accepted contract break must be recorded in `docs/BACKEND_BREAKING_CHANGES.md`.

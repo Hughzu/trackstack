@@ -109,7 +109,7 @@ Ports should be narrow and strict. Use **Query/Request Structs** (e.g. `GetRefil
 
 Use cases and orchestration.
 
-For small, CRUD-heavy domains, a single unified service (e.g., `RefillService`) should implement the inbound port rather than splitting every single method into its own struct, to prevent unnecessary file bloat.
+For small, CRUD-heavy domains, a single unified service (e.g., `RefillService`) is often a good default, but it is not mandatory. If a context has clearly separate subdomains or a cross-cutting read model, multiple focused services (for example `TargetService`, `LogService`, and `DashboardService`) are acceptable as long as the boundaries stay explicit and the split is driven by use-case clarity rather than ceremony.
 
 Examples:
 
@@ -256,23 +256,22 @@ The rebuild workspace now has the first runtime foundation in place:
 
 This is good progress because it proves the basic runtime shape without pulling business logic into `main`.
 
-What is still intentionally missing:
+What is implemented now:
 
-- the first `heat` vertical slice now covers `GET /api/heat/refills` and `POST /api/heat/refills`
-- the first slice currently uses a fake outbound adapter and a mocked user identity
-- no real database wiring exists yet
+- the `heat` slice exposes `GET /api/heat/refills`, `POST /api/heat/refills`, `DELETE /api/heat/refills/{id}`, and `GET /api/heat/dashboard`
+- the `calories` slice exposes `GET /api/calories/dashboard`, `GET /api/calories/target`, `POST /api/calories/target`, `POST /api/calories/log`, and `DELETE /api/calories/logs/{id}`
+- both slices now use real outbound database adapters and runtime wiring in `internal/app/bootstrap/`
+- mocked user identity still intentionally lives at the inbound HTTP boundary
 - no Lambda entrypoint exists yet
 
-The rebuild has now moved past runtime-only scaffolding. The next step is to deepen the `heat` slice use case by use case without adding unrelated runtime infrastructure.
+The rebuild has now moved past the first reference slice. It proves the runtime shape, module builder pattern, context-local routing, application-owned ports, and outbound database adapters across more than one bounded context.
 
-Recommended next move after the first slice:
+Recommended next move after `heat` and `calories`:
 
-1. Keep `GET /api/heat/refills` and `POST /api/heat/refills` as the reference slice for naming and dependency direction.
-2. Keep auth compatibility at the HTTP boundary; do not let application services read HTTP context.
-3. Replace the fake outbound adapter only after the use-case contract and tests are stable.
-4. Add database wiring after the service behavior is proven with tests.
-
-The preferred first use case should be the smallest one that still proves the architecture. For this rebuild, `GET /api/heat/refills` is a better starting point than the dashboard because it is simpler, read-focused, and easier to test end-to-end without hiding extra orchestration.
+1. Keep auth compatibility at the HTTP boundary; do not let application services read HTTP context.
+2. Add tests around the new calories boundary and service flow before tightening more transport guarantees.
+3. Decide whether the next slice should preserve legacy compatibility at the boundary or intentionally adopt cleaner contracts like calories did.
+4. Add the Lambda entrypoint once the local HTTP runtime and boundary conventions are stable enough to share confidently.
 
 ## First Slice: Heat
 
