@@ -32,11 +32,12 @@ func NewRuntime() (*Runtime, error) {
 
 	heatHandler := buildHeatModule(dbs.Heat)
 	caloriesHandler := buildCaloriesModule(dbs.Calories)
+	expensesHandler := buildExpensesModule(dbs.Expenses)
 
 	runtime := &Runtime{
 		Config:  cfg,
 		Logger:  logger,
-		Handler: newRouter(logger, heatHandler, caloriesHandler),
+		Handler: newRouter(logger, heatHandler, caloriesHandler, expensesHandler),
 		closers: dbs.CloseAll(),
 	}
 

@@ -94,12 +94,15 @@ Current transitional shape:
 
 This slice is intentionally incremental: the heat context now owns core business and persistence boundaries, and heat runtime assembly has moved into the composition root, while other domains still rely on legacy wiring helpers.
 
-The rebuild workspace in `apps/server-next/` now proves the same boundary direction with two implemented contexts while auth remains intentionally mocked at the inbound HTTP boundary during the migration slice:
+The rebuild workspace in `apps/server-next/` now proves the same boundary direction with three implemented contexts while auth remains intentionally mocked at the inbound HTTP boundary during the migration slice:
 
 - `heat` exposes `GET /api/heat/refills`, `POST /api/heat/refills`, `DELETE /api/heat/refills/{id}`, and `GET /api/heat/dashboard`
 - `calories` exposes `GET /api/calories/dashboard`, `GET /api/calories/target`, `POST /api/calories/target`, `POST /api/calories/log`, and `DELETE /api/calories/logs/{id}`
+- `expenses` exposes `GET /api/expenses/settings`, `POST /api/expenses/settings`, `GET /api/expenses/sheet/current`, `POST /api/expenses/entries`, `DELETE /api/expenses/entries/{id}`, `POST /api/expenses/checklists`, `DELETE /api/expenses/checklists/{id}`, `POST /api/expenses/checklists/complete`, `POST /api/expenses/recurring`, `DELETE /api/expenses/recurring/{id}`, and `POST /api/expenses/sheet/close`
 
 For `calories`, the rebuild intentionally adopts a cleaner API vocabulary than the legacy backend. Explicit nutrient names like `proteinGrams`, `carbGrams`, `fatGrams`, `targetCalories`, and `targetProteinGrams` now replace the legacy abbreviated field names. Intentional frontend/backend contract breaks are tracked in `docs/BACKEND_BREAKING_CHANGES.md`.
+
+For `expenses`, the rebuild keeps the existing settings, dashboard, checklist, recurring, and entry payload shapes where possible, but intentionally breaks the legacy delete-by-query-string contract in favor of canonical path identifiers. The expenses dashboard also now uses a dedicated snapshot-style read port so the application layer does not fan out into several read-side repository calls for one screen.
 
 ### Transport Contract
 

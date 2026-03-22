@@ -36,4 +36,19 @@ Date: 2026-03-22
   - `targetCarbs` -> `targetCarbGrams`
   - `targetFat` -> `targetFatGrams`
 
+## Expenses (`apps/server-next`)
+
+Date: 2026-03-22
+
+### HTTP contract breaks
+
+- `DELETE /api/expenses/entries?id=<id>` becomes `DELETE /api/expenses/entries/{id}`.
+- `DELETE /api/expenses/checklists?id=<id>` becomes `DELETE /api/expenses/checklists/{id}`.
+- `DELETE /api/expenses/recurring?id=<id>` becomes `DELETE /api/expenses/recurring/{id}`.
+
+### Compatibility notes
+
+- Legacy query-parameter delete routes are intentionally removed and are not kept as compatibility aliases.
+- Existing expenses payload and response shapes otherwise stay aligned with the current frontend contract during the `apps/server-next` migration slice.
+
 This document should be updated whenever additional intentional compatibility breaks are introduced.
