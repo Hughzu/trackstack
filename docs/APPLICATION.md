@@ -67,7 +67,7 @@
 *The problem: We need to connect to 4 completely separate Turso databases simultaneously (Users, Calories, Expenses, Heat). Furthermore, local development uses hardcoded `.env` secrets, but AWS Lambda must securely fetch connection strings from AWS SSM Parameter Store at runtime to prevent leaks.*
 
 - **Rule [Frontend DB Boundary]:** Astro application runtime must not read or write domain databases directly. Page data, auth verification, and mutations go through Go endpoints.
-- **Rule [Backend-Owned Tooling]:** Direct Turso access for seeding or maintenance belongs in backend-owned commands under `apps/server/cmd`, not inside the frontend app.
+- **Rule [Backend-Owned Tooling]:** Direct Turso access for seeding or maintenance belongs in backend-owned commands under `apps/server-next/cmd`, not inside the frontend app.
 
 ### Authentication
 *The problem: We need a secure, custom session system that protects both API routes and server-rendered pages without constantly prop-drilling a `userId` through every UI component and business logic function.*
@@ -84,8 +84,8 @@
 
 ### Go Backend Boundary
 
-- **Role:** Go backend business logic is moving toward context-local boundaries. `apps/server/internal/contexts/heat/**` is the first fully migrated slice in the main backend, and `apps/server-next/internal/contexts/{heat,calories}/**` now serves as the rebuild workspace for the target architecture.
-- **Role:** Runtime assembly is moving into `apps/server/internal/app/bootstrap`, which is now the active composition root used by both `cmd/server` and `cmd/lambda`.
+- **Role:** Go backend business logic is moving toward context-local boundaries. `apps/server/internal/contexts/heat/**` is the first fully migrated slice in the main backend, and `apps/server-next/internal/contexts/{auth,users,heat,calories,expenses}/**` now serves as the replacement-oriented workspace for the target architecture.
+- **Role:** Runtime assembly in `apps/server-next` now lives under `apps/server-next/internal/app/bootstrap` and is shared by both `apps/server-next/cmd/server` and `apps/server-next/cmd/lambda`.
 - **Rule:** New domain behavior should be added in Go first.
 - **Rule:** Transport code in Go stays thin: parse request, call service, map status/error, serialize JSON.
 - **Rule:** Mutating Go endpoints should prefer a single JSON request contract; the frontend runtime may still submit JSON from forms, but Astro pages do not adapt requests server-side.
@@ -96,8 +96,9 @@
 - **Rule:** When changing a Go endpoint contract, update the frontend client runtime, transport tests, and e2e coverage together.
 - **Heat transition note:** heat now owns its inbound HTTP adapter under `apps/server/internal/contexts/heat/adapters/inbound/http`, and the browser delete flow now targets canonical `DELETE /api/heat/refills/{id}` while the query-param delete route remains as a temporary compatibility alias.
 - **Heat facade note:** runtime assembly and Go transport depend on the context-local heat application facade in `apps/server/internal/contexts/heat/application/service.go`; the legacy backend `internal/modules/heat` package has been removed.
-- **Heat rebuild note:** `apps/server-next/internal/contexts/heat/**` now exposes `GET /api/heat/refills`, `POST /api/heat/refills`, and canonical `DELETE /api/heat/refills/{id}` with the existing frontend JSON contract (`date`, `weightKg`, `bags`, optional `temperature`) while mocked auth still stays at the HTTP boundary for the rebuild slice.
+- **Heat rebuild note:** `apps/server-next/internal/contexts/heat/**` now exposes `GET /api/heat/refills`, `POST /api/heat/refills`, and canonical `DELETE /api/heat/refills/{id}` with bearer-auth enforced by shared middleware at the runtime boundary.
 - **Calories rebuild note:** `apps/server-next/internal/contexts/calories/**` now exposes `GET /api/calories/dashboard`, `GET /api/calories/target`, `POST /api/calories/target`, `POST /api/calories/log`, and canonical `DELETE /api/calories/logs/{id}`. Unlike the legacy calories contract, the rebuild intentionally uses explicit nutrient field names such as `proteinGrams`, `carbGrams`, `fatGrams`, `targetCalories`, and `targetProteinGrams`. Any accepted contract break must be recorded in `docs/BACKEND_BREAKING_CHANGES.md`.
 - **Expenses rebuild note:** `apps/server-next/internal/contexts/expenses/**` now exposes `GET /api/expenses/settings`, `POST /api/expenses/settings`, `GET /api/expenses/sheet/current`, `POST /api/expenses/entries`, `POST /api/expenses/checklists`, `POST /api/expenses/checklists/complete`, `POST /api/expenses/recurring`, and `POST /api/expenses/sheet/close` with the existing frontend JSON contract for settings, dashboard, entries, and templates.
 - **Expenses delete contract note:** the rebuild intentionally removes legacy query-param deletes and uses canonical resource routes instead: `DELETE /api/expenses/entries/{id}`, `DELETE /api/expenses/checklists/{id}`, and `DELETE /api/expenses/recurring/{id}`. Accepted contract breaks must be recorded in `docs/BACKEND_BREAKING_CHANGES.md`.
 - **Expenses dashboard note:** the expenses dashboard use case now depends on a snapshot-style read port in Go so the application layer does not orchestrate several separate read calls for one page against Turso.
+- **Backend-first rebuild verification note:** `apps/server-next/scripts/e2e.sh` is the current backend smoke harness and should be kept aligned with auth and route contract changes.

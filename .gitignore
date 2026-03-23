@@ -75,3 +75,4 @@ apps/web/test-results/sigv4-SigV4-Form-Submissio-2dbd1-uest-includes-SigV4-heade
 apps/web/playwright-report/
 apps/web/test-results/
 apps/server-next/seed-user
+apps/server-next/lambda

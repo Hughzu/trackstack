@@ -40,6 +40,30 @@ pnpm test:e2e
 
 `pnpm test:e2e` seeds the configured users database through the backend-owned seed command before running browser flows. The test workflow remains compatible with `apps/web/.env` for `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD`; the backend command also supports `apps/server/.env` or exported environment variables for DB config.
 
+### Backend-First `server-next` Smoke Checks
+
+Run the rebuild backend directly:
+
+```bash
+cd apps/server-next
+go run ./cmd/server
+```
+
+In another shell:
+
+```bash
+cd apps/server-next
+go run ./cmd/seed-user
+./scripts/e2e.sh
+```
+
+Notes:
+
+- `./scripts/e2e.sh` defaults to `BASE_URL=http://localhost:8080`.
+- It requires `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD`.
+- `go run ./cmd/seed-user` loads `apps/web/.env` first and `apps/server-next/.env` second.
+- Override `BASE_URL` when validating a non-default local port or remote environment.
+
 ## Compose Regression Workflow
 
 From repo root:
@@ -127,19 +151,18 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Assert canonical `DELETE /api/heat/refills/{id}` succeeds and the list shrinks
   - Assert heat mutations target canonical Go-owned `/api/heat/refills` resources
 
-- `apps/server-next/internal/contexts/heat/application/services/refill_service_test.go`
-  - Direct use-case coverage for heat get, create, and delete refill behavior
-  - Assert delete rejects missing user/id and passes canonical typed inputs to the repository
+- `apps/server-next/scripts/e2e.sh`
+  - Backend-first curl smoke coverage for the rebuild runtime
+  - Logs in with bearer auth and validates `GET /api/auth/session`
+  - Exercises heat create/list/delete
+  - Exercises calories target update, log create, dashboard read, and delete
+  - Exercises expenses settings read/update, entry create/delete, checklist create/delete, recurring create/delete, and dashboard read
+  - Validates `POST /api/auth/logout` stays stateless and returns `204`
 
-- `apps/server-next/internal/contexts/heat/adapters/inbound/http/refill_handler_test.go`
-  - Assert `DELETE /api/heat/refills/{id}` returns `400` for missing id, `404` for unknown refill, and `204` for success
-  - Keep handler coverage focused on HTTP parsing and status mapping at the boundary
-
-- `apps/server-next/internal/contexts/calories/**`
-  - No dedicated regression tests yet
-  - Manual curl verification has been performed for `GET /api/calories/target`, `POST /api/calories/target`, `POST /api/calories/log`, `GET /api/calories/dashboard`, and `DELETE /api/calories/logs/{id}`
-  - The rebuild contract uses explicit nutrient field names (`proteinGrams`, `carbGrams`, `fatGrams`, `targetCalories`, `targetProteinGrams`) rather than the legacy calories transport names
-  - A known gap remains in strict unknown-field rejection because the current handler decodes into `map[string]any`; add handler tests before tightening this contract
+- `apps/server-next/**`
+  - No dedicated Go regression test files yet
+  - The current rebuild safety net is the backend-owned seed command plus the curl e2e script
+  - Add focused Go tests next for handler parsing/status mapping and service invariants as contracts settle
 
 ## Adding Regression Tests
 
@@ -157,11 +180,13 @@ When a regression is found in the frontend/backend boundary:
 - If the homepage or any server-rendered page throws `fetch failed` in Docker:
   - rebuild `go-backend` after any `apps/server/go.mod` or Go runtime image change so the running container is not stuck on an older toolchain image.
 - If `pnpm test:e2e` fails before the browser starts:
-  - verify `apps/web/.env` contains valid `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` values, and verify `apps/server/.env` or your shell environment provides valid Turso users DB credentials if they are not already shared.
+  - verify `apps/web/.env` contains valid `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` values, and verify `apps/server-next/.env` or your shell environment provides valid Turso users DB credentials if they are not already shared.
 - If login e2e fails unexpectedly:
   - rerun `pnpm test:e2e`; it reseeds the test credentials each run.
 - If Go tools are missing in container runs:
   - execute the command through the `go-backend` service.
+- If `apps/server-next/scripts/e2e.sh` fails early:
+  - verify `apps/server-next` is running on the expected `BASE_URL`, rerun `go run ./cmd/seed-user`, and confirm `JWT_SECRET` plus `TURSO_*` env vars are set for the rebuild runtime.
 ## Auth Boundary
 
 - Browser auth now talks directly to Go under `/api/auth/*`.
@@ -169,9 +194,11 @@ When a regression is found in the frontend/backend boundary:
 - Playwright login helpers now explicitly assert that `/api/auth/login` succeeds before continuing into module tests.
 - When auth transport behavior changes, update both Go auth transport tests and at least one browser flow that authenticates through `/api/auth/login`.
 
-For `apps/server-next`, bearer-auth changes should be validated backend-first with Docker and `curl` before the frontend migration exists:
+For `apps/server-next`, bearer-auth changes should be validated backend-first with the rebuild runtime and `curl` before the frontend migration exists:
 
-- run `docker compose up --build go-backend`
+- run `go run ./cmd/server` from `apps/server-next`
+- run `go run ./cmd/seed-user` from `apps/server-next`
+- run `./scripts/e2e.sh` from `apps/server-next`
 - verify `POST /api/auth/login` returns a JSON bearer token payload and no auth cookie
 - verify `GET /api/auth/session` returns `401` without `Authorization: Bearer <jwt>` and `200` with it
 - verify protected routes under `/api/heat/*`, `/api/calories/*`, and `/api/expenses/*` reject missing bearer headers and succeed with a valid bearer token

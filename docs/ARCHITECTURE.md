@@ -94,7 +94,7 @@ Current transitional shape:
 
 This slice is intentionally incremental: the heat context now owns core business and persistence boundaries, and heat runtime assembly has moved into the composition root, while other domains still rely on legacy wiring helpers.
 
-The rebuild workspace in `apps/server-next/` now proves the same boundary direction with three implemented contexts while auth remains intentionally mocked at the inbound HTTP boundary during the migration slice:
+The rebuild workspace in `apps/server-next/` now proves the same boundary direction with auth, users, heat, calories, and expenses assembled through the same runtime shape:
 
 - `heat` exposes `GET /api/heat/refills`, `POST /api/heat/refills`, `DELETE /api/heat/refills/{id}`, and `GET /api/heat/dashboard`
 - `calories` exposes `GET /api/calories/dashboard`, `GET /api/calories/target`, `POST /api/calories/target`, `POST /api/calories/log`, and `DELETE /api/calories/logs/{id}`
@@ -139,6 +139,7 @@ For `apps/server-next`, the rebuild auth boundary now differs from the currently
 - `POST /api/auth/login` returns a JSON token payload instead of `Set-Cookie`
 - `POST /api/auth/logout` is stateless and only signals client-side token discard
 - the current Astro frontend is not yet compatible with this rebuild auth contract
+- local/serverless runtime assembly still stays shared between `cmd/server` and `cmd/lambda`
 
 ## Environment Variables
 
@@ -165,7 +166,7 @@ The Go backend reads its own runtime config from `apps/server/internal/core/conf
 - `AUTH_SESSION_TOUCH_SECONDS`
 - domain-specific Turso connection values for auth, users, calories, expenses, and heat
 
-Backend-owned commands under `apps/server/cmd/**` use the same config surface for direct database tooling such as user seeding.
+Backend-owned commands under `apps/server-next/cmd/**` use the same runtime config family for direct database tooling such as user seeding.
 
 ### CI/CD (deploy workflow)
 
@@ -182,7 +183,7 @@ The deploy workflow loads infra outputs from SSM:
 - `infra/environments/serverless` is the production baseline.
 - `infra/environments/serverless-next` is the temporary migration validation environment.
 - `terraform-serverless.yml` now targets `serverless-next`, runs `terraform plan` on main, and keeps `apply` and `destroy` manual via workflow dispatch.
-- Optional bootstrap artifact build produces an initial Go Lambda custom-runtime zip from `apps/server/cmd/lambda` for first apply.
+- Optional bootstrap artifact build produces an initial Go Lambda custom-runtime zip from `apps/server-next/cmd/lambda` for first apply.
 
 ### Application (Static Astro Frontend + Go Backend)
 - `deploy-serverless.yml` runs on main when frontend, backend, or migrations change.
@@ -190,7 +191,7 @@ The deploy workflow loads infra outputs from SSM:
 - Astro build outputs:
   - Static assets in `apps/web/dist`
 - The temporary validation deploy currently targets the `serverless-next` SSM prefix and infrastructure outputs.
-- The Go Lambda artifact is built from `apps/server/cmd/lambda` as a Linux ARM64 custom runtime zip with a `bootstrap` binary.
+- The Go Lambda artifact is built from `apps/server-next/cmd/lambda` as a Linux ARM64 custom runtime zip with a `bootstrap` binary.
 - The frontend bundle is published separately from the Go API runtime.
 - Local development uses `docker-compose.yml` at repo root to run both runtimes together.
 - Fingerprinted static assets are synced to S3 with long-lived cache headers; HTML shell files are uploaded with no-cache headers.
