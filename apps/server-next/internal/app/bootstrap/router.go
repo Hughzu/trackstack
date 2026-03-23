@@ -14,6 +14,7 @@ import (
 
 func newRouter(
 	logger *slog.Logger,
+	authModule *AuthModule,
 	heatHandler *heatinboundhttp.RefillHandler,
 	caloriesHandler *caloriesinboundhttp.CaloriesHandler,
 	expensesHandler *expensesinboundhttp.ExpensesHandler,
@@ -29,9 +30,17 @@ func newRouter(
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/health", health)
 
-		r.Route("/calories", caloriesHandler.RegisterRoutes)
-		r.Route("/expenses", expensesHandler.RegisterRoutes)
-		r.Route("/heat", heatHandler.RegisterRoutes)
+		r.Route("/auth", func(r chi.Router) {
+			authModule.Handler.RegisterRoutes(r, authModule.Middleware)
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(authModule.Middleware)
+
+			r.Route("/calories", caloriesHandler.RegisterRoutes)
+			r.Route("/expenses", expensesHandler.RegisterRoutes)
+			r.Route("/heat", heatHandler.RegisterRoutes)
+		})
 	})
 	return r
 }

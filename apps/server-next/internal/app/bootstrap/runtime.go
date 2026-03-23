@@ -33,11 +33,12 @@ func NewRuntime() (*Runtime, error) {
 	heatHandler := buildHeatModule(dbs.Heat)
 	caloriesHandler := buildCaloriesModule(dbs.Calories)
 	expensesHandler := buildExpensesModule(dbs.Expenses)
+	authModule := buildAuthModule(dbs.Users, cfg.JWTSecret, cfg.AuthCookieName, cfg.AuthCookieSecure)
 
 	runtime := &Runtime{
 		Config:  cfg,
 		Logger:  logger,
-		Handler: newRouter(logger, heatHandler, caloriesHandler, expensesHandler),
+		Handler: newRouter(logger, authModule, heatHandler, caloriesHandler, expensesHandler),
 		closers: dbs.CloseAll(),
 	}
 

@@ -13,6 +13,7 @@ type Databases struct {
 	Calories *sql.DB
 	Expenses *sql.DB
 	Heat     *sql.DB
+	Users    *sql.DB
 }
 
 func connectDatabases(cfg config.Config) (*Databases, error) {
@@ -38,10 +39,16 @@ func connectDatabases(cfg config.Config) (*Databases, error) {
 		return nil, fmt.Errorf("failed to open expenses db: %w", err)
 	}
 
+	usersDB, err := db.Open(cfg.TursoUsersURLHTTP, cfg.TursoUsersToken, poolCfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open users db: %w", err)
+	}
+
 	return &Databases{
 		Calories: caloriesDB,
 		Expenses: expensesDB,
 		Heat:     heatDB,
+		Users:    usersDB,
 	}, nil
 }
 
@@ -50,5 +57,6 @@ func (d *Databases) CloseAll() []func() error {
 		func() error { return d.Calories.Close() },
 		func() error { return d.Expenses.Close() },
 		func() error { return d.Heat.Close() },
+		func() error { return d.Users.Close() },
 	}
 }

@@ -26,6 +26,10 @@ type Config struct {
 	DBMaxIdleConns           int
 	DBConnMaxLifetimeSeconds int
 	DBConnMaxIdleTimeSeconds int
+
+	JWTSecret        string
+	AuthCookieName   string
+	AuthCookieSecure bool
 }
 
 func Load() (Config, error) {
@@ -44,6 +48,10 @@ func Load() (Config, error) {
 		TursoHeatToken:       getEnv("TURSO_HEAT_TOKEN", ""),
 		TursoUsersURLHTTP:    getEnv("TURSO_USERS_URL_HTTP", ""),
 		TursoUsersToken:      getEnv("TURSO_USERS_TOKEN", ""),
+
+		JWTSecret:        getEnv("JWT_SECRET", ""),
+		AuthCookieName:   getEnv("AUTH_COOKIE_NAME", "trackstack_session"),
+		AuthCookieSecure: getEnvBool("AUTH_COOKIE_SECURE", true),
 	}
 
 	cfg.DBMaxOpenConns, err = getEnvInt("DB_MAX_OPEN_CONNS", 10)
@@ -110,6 +118,13 @@ func (cfg Config) Validate() error {
 		return fmt.Errorf("TursoUsersToken must not be empty.")
 	}
 
+	if strings.TrimSpace(cfg.JWTSecret) == "" {
+		return fmt.Errorf("JWT_SECRET must not be empty.")
+	}
+	if strings.TrimSpace(cfg.AuthCookieName) == "" {
+		return fmt.Errorf("AUTH_COOKIE_NAME must not be empty.")
+	}
+
 	return nil
 }
 
@@ -118,6 +133,18 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return fallback
+	}
+	return parsed
 }
 
 func getEnvInt(key string, fallback int) (int, error) {

@@ -1,10 +1,12 @@
 FROM golang:1.26-alpine
 
 ENV PATH="/usr/local/go/bin:/go/bin:${PATH}"
+ENV GOMODCACHE=/opt/gomodcache
 
 WORKDIR /app
 
-# Install latest air
+RUN mkdir -p /opt/gomodcache
+
 RUN go install github.com/air-verse/air@v1.52.3
 RUN ln -sf /usr/local/go/bin/go /usr/local/bin/go
 

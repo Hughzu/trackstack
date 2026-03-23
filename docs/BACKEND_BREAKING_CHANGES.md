@@ -53,12 +53,18 @@ Date: 2026-03-22
 
 ## Authentication (`apps/server-next` target)
 
-Date: 2026-03-22
+Date: 2026-03-23
 
-### Upcoming Auth Contract Breaks
+### Auth Contract Breaks
 
 - The backend migration will adopt a **Stateless JWT** approach to achieve $0 infrastructure cost and 0 Turso DB reads on API requests.
 - The frontend must be updated to handle this change. It should expect an `HttpOnly` JWT cookie instead of the existing Turso session string. 
 - If the Astro frontend currently validates sessions directly against Turso during Server-Side Rendering (SSR), this logic must be rethought to either cryptographically verify the JWT using the shared secret natively, or delegate authentication checks entirely to the Go backend proxy.
+
+### Config Contract Breaks
+
+- `apps/server-next` now accepts only `AUTH_COOKIE_NAME` for the auth cookie name.
+- `apps/server-next` now accepts only `AUTH_COOKIE_SECURE` for the auth cookie secure flag.
+- Legacy `SESSION_COOKIE_NAME` and `SESSION_COOKIE_SECURE` are intentionally removed from the rebuild config surface and are not kept as compatibility aliases.
 
 This document should be updated whenever additional intentional compatibility breaks are introduced.
