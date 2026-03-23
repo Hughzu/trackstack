@@ -3,6 +3,7 @@ module github.com/Hughzu/trackstack/apps/server-next
 go 1.26
 
 require (
+	github.com/aws/aws-lambda-go v1.50.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
