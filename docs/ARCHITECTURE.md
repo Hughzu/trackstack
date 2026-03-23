@@ -1,206 +1,388 @@
 # Architecture
 
-This document defines the macro system flow and the strict boundaries between frontend, server, and infrastructure. It is a constraint for future changes.
+This document defines the Trackstack system shape, the backend target vocabulary, and the current migration status. It replaces the need for a separate backend target note.
 
-## Request Flow
+`apps/server-next` is now the reference backend architecture and the replacement path for the legacy `apps/server` workspace. Intentional frontend/backend contract breaks are tracked separately in `docs/BACKEND_BREAKING_CHANGES.md`.
+
+## System Flow
 
 ```mermaid
 flowchart LR
   U[User Browser] --> CF[CloudFront Distribution]
-  CF -->|/assets/* or /_astro/*| S3[Assets S3 Bucket]
-  CF -->|HTML shell and PWA assets| S3
-  CF -->|/api/* and /health| GFL[Go API Lambda]
-  GFL -->|LibSQL domain data| TU
+  CF -->|/assets/*, /_astro/*, HTML shell| S3[Static Assets Bucket]
+  CF -->|/api/*, /health, /openapi.yaml| API[Go API Runtime]
+  API --> CAL[(Turso Calories)]
+  API --> EXP[(Turso Expenses)]
+  API --> HEAT[(Turso Heat)]
+  API --> USERS[(Turso Users)]
 
-  CF -. custom header .-> GFL
-  GFL -. IAM auth + OAC .-> CF
+  CF -. origin verification .-> API
 ```
 
 Key points:
-- CloudFront is the single public entrypoint.
-- Static assets (`/assets/*`, `/_astro/*`) are served from S3 with optimized caching.
-- The Astro frontend is built as static assets and served from S3.
-- Business routes, auth routes, and health checks are served by the Go runtime.
-- CloudFront adds origin verification headers and the Lambda entrypoints remain private behind CloudFront.
 
-## Go Backend Shape
+- CloudFront is the only public ingress in serverless environments.
+- Astro is shipped as static assets from S3.
+- Go owns health, OpenAPI, auth, and business API routes.
+- The Go runtime is stateless; persistent state lives only in Turso.
+- The same assembled backend contract must run locally and in Lambda.
 
-The Go backend is the long-term source of truth for domain logic and API contracts.
+## Source Of Truth
 
-Current implemented layout in `apps/server/`:
+- `apps/web` owns pages, layouts, browser interaction, and the static frontend shell.
+- `apps/server-next` owns backend contracts, domain rules, auth issuance/verification, and backend-owned tooling.
+- `apps/server` remains the legacy compatibility workspace until the frontend and deploy paths finish migrating, but it is no longer the architecture reference.
+- Frontend pages should talk to Go-owned `/api/*` endpoints rather than direct databases or Astro-owned API adapters.
+
+## Reference Backend Shape
+
+The target backend structure is the one implemented in `apps/server-next`:
 
 ```text
-apps/server/
+apps/server-next/
 ├── cmd/
-│   ├── lambda/              # Lambda Function URL entrypoint for serverless runs
-│   └── server/              # HTTP server entrypoint used in local/container runs
-├── internal/
-│   ├── app/
-│   │   └── bootstrap/       # composition root and runtime assembly
-│   ├── core/                # shared technical config, db, logging
-│   ├── modules/             # domain logic, DTOs, ports, db adapters
-│   ├── transport/
-│   │   └── http/            # router, middleware, handlers, OpenAPI
-│   └── wiring/              # composition helpers per domain
+│   ├── lambda/                    # AWS Lambda custom-runtime entrypoint
+│   ├── seed-user/                 # backend-owned db tooling for e2e/local flows
+│   └── server/                    # local/container HTTP entrypoint
+└── internal/
+    ├── app/
+    │   └── bootstrap/             # composition root, router, openapi, module builders
+    ├── contexts/
+    │   ├── auth/
+    │   ├── calories/
+    │   ├── expenses/
+    │   ├── heat/
+    │   └── users/
+    └── platform/
+        ├── authcontext/           # request-scope identity handoff at transport boundary
+        ├── aws/
+        │   └── functionurl/       # Lambda Function URL adapter
+        ├── config/
+        ├── db/
+        ├── logging/
+        ├── middleware/
+        └── timeutil/
 ```
 
-Possible expansion path for later phases:
+Possible expansion path later, only if justified:
 
-- `cmd/service/<domain>/` only if domains are extracted into separate services
+- `cmd/service/<domain>/` for extracted runtimes
+- more outbound adapters under `contexts/<name>/adapters/outbound/`
+- more inbound adapters under `contexts/<name>/adapters/inbound/`
 
-### Backend Principles
+## Backend Vocabulary
 
-- Hexagonal architecture: domain logic lives in `internal/modules/**`; transport and runtime wiring stay outside modules.
-- Stateless compute: runtime state lives in Turso; no local-disk dependency is part of the design contract.
-- Transport isolation: HTTP, Lambda, and any future service transport must reuse the same module services.
-- Environment-driven database mode: Turso DSNs are selected from config so the same backend can run in local/container and serverless environments.
+### `platform/`
 
-### Module Contract
+Shared technical building blocks used across contexts.
 
-Each domain module follows the same shape:
+Examples:
 
-```text
-internal/modules/<domain>/
-├── ports.go
-├── types.go
-├── service.go
-└── adapters/
-    └── db/
-```
+- config loading and validation
+- database opening and pooling
+- logging
+- shared middleware
+- AWS runtime adapters
+- time helpers and transport-scoped auth context helpers
 
-Hard boundaries:
+`platform` must never become a hidden business-logic bucket.
 
-- Modules do not import transport or AWS packages.
-- Transport depends on modules, never the reverse.
-- DB adapters implement module ports.
-- Cross-domain access should go through ports owned by the consuming module.
-- If domains are split later, outbound adapters live with the consumer and inbound transport adapters live with the provider.
+### `app/bootstrap/`
 
-### Heat Migration Slice
+The composition root.
 
-The first backend migration slice now starts in `apps/server/internal/contexts/heat/`.
+Responsibilities:
 
-Current transitional shape:
+- load config
+- open all required database pools
+- build context modules
+- create the shared router
+- expose one assembled `http.Handler`
+- serve shared runtime endpoints like `/health` and `/openapi.yaml`
 
-- `apps/server/internal/contexts/heat/domain` owns refill and season/date rules.
-- `apps/server/internal/contexts/heat/application/ports` owns use-case-shaped heat ports.
-- `apps/server/internal/contexts/heat/application/services` owns heat use cases.
-- `apps/server/internal/contexts/heat/adapters/outbound/db` owns the Turso SQL implementation.
-- `apps/server/internal/contexts/heat/adapters/inbound/http` now owns heat HTTP route mounting and request translation.
-- `apps/server/internal/contexts/heat/application/service.go` is now the primary heat application facade used by runtime assembly and transport wiring.
-- `apps/server/internal/app/bootstrap` is now the active composition root and assembles the heat runtime directly.
-- `apps/server/internal/transport/http/dashboard.go` now consumes the heat dashboard use case through a context-local application contract.
-- The legacy `apps/server/internal/modules/heat` package has been removed; heat now lives fully under `apps/server/internal/contexts/heat/**`.
+`bootstrap` is allowed to know the full concrete dependency graph. Context packages are not.
 
-This slice is intentionally incremental: the heat context now owns core business and persistence boundaries, and heat runtime assembly has moved into the composition root, while other domains still rely on legacy wiring helpers.
+The current assembly pattern is intentionally split by concern:
 
-The rebuild workspace in `apps/server-next/` now proves the same boundary direction with auth, users, heat, calories, and expenses assembled through the same runtime shape:
+- `database.go` opens and closes domain database pools
+- `*_module.go` wires each context vertically
+- `router.go` mounts global middleware and route groups
+- `runtime.go` returns the assembled runtime used by both `cmd/server` and `cmd/lambda`
 
-- `heat` exposes `GET /api/heat/refills`, `POST /api/heat/refills`, `DELETE /api/heat/refills/{id}`, and `GET /api/heat/dashboard`
-- `calories` exposes `GET /api/calories/dashboard`, `GET /api/calories/target`, `POST /api/calories/target`, `POST /api/calories/log`, and `DELETE /api/calories/logs/{id}`
-- `expenses` exposes `GET /api/expenses/settings`, `POST /api/expenses/settings`, `GET /api/expenses/sheet/current`, `POST /api/expenses/entries`, `DELETE /api/expenses/entries/{id}`, `POST /api/expenses/checklists`, `DELETE /api/expenses/checklists/{id}`, `POST /api/expenses/checklists/complete`, `POST /api/expenses/recurring`, `DELETE /api/expenses/recurring/{id}`, and `POST /api/expenses/sheet/close`
+### `contexts/<name>/domain/`
 
-For `calories`, the rebuild intentionally adopts a cleaner API vocabulary than the legacy backend. Explicit nutrient names like `proteinGrams`, `carbGrams`, `fatGrams`, `targetCalories`, and `targetProteinGrams` now replace the legacy abbreviated field names. Intentional frontend/backend contract breaks are tracked in `docs/BACKEND_BREAKING_CHANGES.md`.
+Pure business concepts and invariants.
 
-For `expenses`, the rebuild keeps the existing settings, dashboard, checklist, recurring, and entry payload shapes where possible, but intentionally breaks the legacy delete-by-query-string contract in favor of canonical path identifiers. The expenses dashboard also now uses a dedicated snapshot-style read port so the application layer does not fan out into several read-side repository calls for one screen.
+Examples:
 
-### Transport Contract
+- entities and value objects
+- domain-specific validation rules
+- domain errors
+- logic that should survive transport or persistence changes
 
-The current Go transport is JSON-over-HTTP under `/api/*`.
+The domain must not know about HTTP, Lambda, SQL drivers, Chi, or AWS packages.
 
-- Router: `apps/server/internal/transport/http/router.go`
-- OpenAPI: `GET /openapi.yaml`
-- Auth middleware: cookie-based session auth in `apps/server/internal/transport/http/middleware_auth.go`, applied only to protected route groups under `/api/*`
-- Response helpers: `apps/server/internal/transport/http/response.go`
-- Canonical expenses routes: `/api/expenses/settings`, `/api/expenses/sheet/current`, `/api/expenses/entries`, `/api/expenses/checklists`, `/api/expenses/checklists/complete`, `/api/expenses/recurring`, `/api/expenses/sheet/close`
+### `contexts/<name>/application/ports/`
 
-Current error contract is intentionally simple:
+Interfaces owned by the application layer.
 
-- HTTP status carries the main classification
-- JSON errors use `{ "error": "..." }`
-- Go auth endpoints under `/api/auth/*` are JSON API endpoints; frontend redirect/form behavior is handled by the web app adapters
+- inbound ports define use cases the adapters can call
+- outbound ports define what the use cases need from infrastructure
+- command/query structs carry explicit typed inputs when a use case needs more than a primitive
 
-If a richer typed API error contract is introduced later, update this doc and the transport tests together.
+Ports should stay narrow and use-case-shaped.
 
-### Auth Contract
+### `contexts/<name>/application/services/`
 
-Go is now the source of truth for:
+Use cases and orchestration.
+
+Application services may:
+
+- validate commands and queries
+- coordinate repositories and external dependencies
+- build read models
+- apply domain rules
+- materialize explicit defaults when that behavior is part of the contract
+
+Application services must not parse HTTP or contain SQL details.
+
+### `contexts/<name>/adapters/inbound/`
+
+Entry points into the application.
+
+Today this is mainly HTTP. Later it could include async consumers or service-specific transports.
+
+Inbound adapters should stay thin:
+
+- mount their own subroutes
+- parse and validate transport input
+- extract the authenticated user at the boundary
+- call one use case
+- map the result into HTTP status + JSON
+
+Note: request context may carry authenticated identity resolved by middleware, but handlers are still responsible for turning that into explicit application inputs.
+
+### `contexts/<name>/adapters/outbound/`
+
+Technical implementations of outbound ports.
+
+Today this is mostly Turso/libSQL access. These packages own SQL and persistence details, not business decisions.
+
+## Dependency Rules
+
+The dependency direction is strict:
+
+`inbound adapters -> application -> domain`
+
+`application -> outbound ports <- outbound adapters`
+
+Rules:
+
+- contexts must not import `bootstrap`
+- domain packages must not import transport or AWS packages
+- handlers depend on application ports, never the reverse
+- outbound adapters implement application-owned ports
+- compatibility shims belong at the transport boundary, not in domain logic
+- middleware may inject authenticated identity into request context, but application services still receive explicit `userID` values from handlers
+- prefer explicit commands and queries over hidden inputs
+- prefer explicit create/bootstrap flows; if a read path materializes defaults, document it and test it as part of the contract
+
+## Runtime Assembly
+
+The shared runtime is built once in `apps/server-next/internal/app/bootstrap` and reused by all deployment targets.
+
+### Local HTTP Runtime
+
+- `apps/server-next/cmd/server/main.go` is intentionally thin
+- it loads `.env`, builds the runtime, starts `http.Server`, and handles graceful shutdown
+
+### Lambda Runtime
+
+- `apps/server-next/cmd/lambda/main.go` is intentionally thin
+- it builds the same runtime and passes the assembled `http.Handler` into `apps/server-next/internal/platform/aws/functionurl`
+- the Function URL adapter is a deployment/runtime concern, not a domain transport concern
+
+### Backend-Owned Tooling
+
+- `apps/server-next/cmd/seed-user` creates or updates the e2e/local test user directly in the users database
+- backend-owned CLI tools may reuse the same runtime config family without needing the full HTTP runtime
+
+## Authentication And Identity Flow
+
+`apps/server-next` uses stateless bearer auth.
+
+Flow:
+
+1. `POST /api/auth/login` verifies credentials through the users context and returns a signed JWT.
+2. `ResolveSession` middleware validates `Authorization: Bearer <jwt>` locally using `JWT_SECRET`.
+3. The middleware injects `userID` into request context through `platform/authcontext`.
+4. Inbound handlers read that `userID` and pass it explicitly into application commands and queries.
+5. Domain and application layers never parse bearer headers or read cookies.
+
+Design note:
+
+- the current `platform/authcontext` helper is an intentional transport-boundary convenience, not permission for application services to read hidden request values directly.
+- the desired rule remains: handlers extract request-scoped identity and pass explicit `userID` values into use cases.
+
+Current auth contract:
+
+- `POST /api/auth/login` returns JSON with `accessToken`, `tokenType`, `expiresAt`, and `userId`
+- `GET /api/auth/session` requires bearer auth
+- `POST /api/auth/logout` is stateless and returns `204`
+- protected domain routes under `/api/calories/*`, `/api/expenses/*`, and `/api/heat/*` require bearer auth
+
+Important migration note:
+
+- the current Astro frontend is still behind this auth contract and is not yet fully compatible with `apps/server-next`
+
+## Transport Contract
+
+The backend transport is JSON-over-HTTP.
+
+Global runtime endpoints:
+
+- `GET /health`
+- `GET /api/health`
+- `GET /openapi.yaml`
+
+Auth endpoints:
 
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `GET /api/auth/session`
-- authenticated API access under `/api/*`
 
-Astro no longer enforces page auth in middleware, proxies auth routes, or maintains SSR auth helper layers. Page-session verification delegates to Go through `GET /api/auth/session`, login/logout submit directly to Go under `/api/auth/*`, and the browser bootstrap handles redirects for protected routes. The home, calories, expenses, and heat dashboards plus the calories and expenses settings pages load directly from Go in the browser.
+Heat endpoints:
 
-For `apps/server-next`, the rebuild auth boundary now differs from the currently shipped web shell:
+- `GET /api/heat/dashboard`
+- `GET /api/heat/refills`
+- `POST /api/heat/refills`
+- `DELETE /api/heat/refills/{id}`
 
-- protected routes require `Authorization: Bearer <jwt>`
-- `POST /api/auth/login` returns a JSON token payload instead of `Set-Cookie`
-- `POST /api/auth/logout` is stateless and only signals client-side token discard
-- the current Astro frontend is not yet compatible with this rebuild auth contract
-- local/serverless runtime assembly still stays shared between `cmd/server` and `cmd/lambda`
+Calories endpoints:
+
+- `GET /api/calories/dashboard`
+- `GET /api/calories/target`
+- `POST /api/calories/target`
+- `POST /api/calories/log`
+- `DELETE /api/calories/logs/{id}`
+
+Expenses endpoints:
+
+- `GET /api/expenses/settings`
+- `POST /api/expenses/settings`
+- `GET /api/expenses/sheet/current`
+- `POST /api/expenses/entries`
+- `DELETE /api/expenses/entries/{id}`
+- `POST /api/expenses/checklists`
+- `DELETE /api/expenses/checklists/{id}`
+- `POST /api/expenses/checklists/complete`
+- `POST /api/expenses/recurring`
+- `DELETE /api/expenses/recurring/{id}`
+- `POST /api/expenses/sheet/close`
+
+Shared transport rules:
+
+- HTTP status carries the main error classification
+- JSON errors use `{ "error": "..." }`
+- CORS is configured globally at the router level
+- OpenAPI is served by the backend and must stay in sync with the route surface
+- the aggregate `GET /api/dashboard` route is intentionally removed from `apps/server-next`
+
+Intentional compatibility breaks live in `docs/BACKEND_BREAKING_CHANGES.md`, not in this file.
+
+## Current Context Status
+
+The reference backend shape is no longer hypothetical. `apps/server-next` currently includes:
+
+- `auth`
+- `users`
+- `heat`
+- `calories`
+- `expenses`
+
+Current replacement-oriented runtime capabilities:
+
+- shared bootstrap-based assembly
+- local HTTP entrypoint
+- Lambda entrypoint
+- CORS middleware
+- OpenAPI endpoint
+- backend-owned user seeding command
+- curl-based end-to-end smoke coverage in `apps/server-next/scripts/e2e.sh`
+
+Current intentional gaps vs the legacy backend:
+
+- the old aggregate `/api/dashboard` route is not carried forward
+- the current Astro shell still needs auth migration from cookie transport to bearer transport
+- accepted route/payload differences are documented in `docs/BACKEND_BREAKING_CHANGES.md`
 
 ## Environment Variables
 
 ### Frontend
 
-Public or local frontend integration variables:
-- `PUBLIC_API_BASE_URL` for browser-side API submission targets when needed
-- `API_PROXY_URL` for Astro/Vite dev proxying to the Go backend in local/container workflows
+Frontend/browser integration values:
 
-In local/container development, browser requests should keep using same-origin `/api` paths and rely on the frontend dev proxy. `PUBLIC_API_BASE_URL` is for production-style direct browser access from the static frontend.
+- `PUBLIC_API_BASE_URL`
+- `API_PROXY_URL`
 
-### Go API runtime
+In local development, browser requests should stay same-origin and rely on the frontend proxy where applicable.
 
-The Go backend reads its own runtime config from `apps/server/internal/core/config/config.go`, including:
+### Backend Runtime
+
+The `apps/server-next` runtime currently depends on:
+
+- `APP_ENV`
 - `PORT`
+- `LOG_LEVEL`
 - `CORS_ALLOWED_ORIGIN`
-- `AUTH_COOKIE_NAME`
-- `AUTH_COOKIE_SECURE`
-- `AUTH_COOKIE_SAMESITE`
-- `AUTH_SESSION_IDLE_SECONDS`
-- `AUTH_SESSION_ABSOLUTE_SECONDS`
-- `AUTH_SESSION_ROTATE_AFTER_SECONDS`
-- `AUTH_SESSION_ROTATION_GRACE_SECONDS`
-- `AUTH_SESSION_TOUCH_SECONDS`
-- domain-specific Turso connection values for auth, users, calories, expenses, and heat
+- `JWT_SECRET`
+- `TURSO_CALORIES_URL_HTTP`
+- `TURSO_CALORIES_TOKEN`
+- `TURSO_EXPENSES_URL_HTTP`
+- `TURSO_EXPENSES_TOKEN`
+- `TURSO_HEAT_URL_HTTP`
+- `TURSO_HEAT_TOKEN`
+- `TURSO_USERS_URL_HTTP`
+- `TURSO_USERS_TOKEN`
+- `DB_MAX_OPEN_CONNS`
+- `DB_MAX_IDLE_CONNS`
+- `DB_CONN_MAX_LIFETIME_SECONDS`
+- `DB_CONN_MAX_IDLE_TIME_SECONDS`
 
-Backend-owned commands under `apps/server-next/cmd/**` use the same runtime config family for direct database tooling such as user seeding.
+Backend-owned commands under `apps/server-next/cmd/**` should align with this same runtime family unless a command intentionally narrows the required config surface.
 
-### CI/CD (deploy workflow)
+### CI/CD And Runtime Secrets
 
-The deploy workflow loads infra outputs from SSM:
-- `/trackstack/serverless-next/infra/assets_bucket`
-- `/trackstack/serverless-next/infra/artifacts_bucket`
-- `/trackstack/serverless-next/infra/lambda_key`
-- `/trackstack/serverless-next/infra/lambda_function_name`
-- `/trackstack/serverless-next/infra/cloudfront_distribution_id`
+- serverless runtime secrets come from SSM
+- no secrets should be hardcoded in code or Terraform
+- `serverless-next` must provide `JWT_SECRET` in addition to domain database credentials
 
-## High-Level Deployment Process
+## Deployment Shape
 
-### Infrastructure (Terraform)
-- `infra/environments/serverless` is the production baseline.
-- `infra/environments/serverless-next` is the temporary migration validation environment.
-- `terraform-serverless.yml` now targets `serverless-next`, runs `terraform plan` on main, and keeps `apply` and `destroy` manual via workflow dispatch.
-- Optional bootstrap artifact build produces an initial Go Lambda custom-runtime zip from `apps/server-next/cmd/lambda` for first apply.
+The architecture must support multiple runtimes without changing context business logic.
 
-### Application (Static Astro Frontend + Go Backend)
-- `deploy-serverless.yml` runs on main when frontend, backend, or migrations change.
-- If migrations changed, Atlas applies Turso migrations first (users → expenses → heat → calories).
-- Astro build outputs:
-  - Static assets in `apps/web/dist`
-- The temporary validation deploy currently targets the `serverless-next` SSM prefix and infrastructure outputs.
-- The Go Lambda artifact is built from `apps/server-next/cmd/lambda` as a Linux ARM64 custom runtime zip with a `bootstrap` binary.
-- The frontend bundle is published separately from the Go API runtime.
-- Local development uses `docker-compose.yml` at repo root to run both runtimes together.
-- Fingerprinted static assets are synced to S3 with long-lived cache headers; HTML shell files are uploaded with no-cache headers.
-- CloudFront cache is invalidated to publish updates.
+Current required runtimes:
 
-## Architecture Boundaries (Macro)
+- local HTTP server
+- AWS Lambda Function URL runtime
 
-- CloudFront is the only public ingress.
-- Astro owns the static frontend shell and client runtime only.
-- Go owns health, auth, and business API routes plus their transport tests.
-- Turso is the only persistent store; all compute is stateless.
-- Runtime secrets come from SSM; no hardcoded secrets in code or Terraform.
+Possible later runtime:
+
+- extracted service per context
+
+Deployment rules:
+
+- `cmd/server` and `cmd/lambda` stay thin
+- runtime-specific adapters stay in `platform/`, not in contexts
+- contexts must not import server or Lambda packages
+- static frontend deployment stays separate from the Go API runtime
+
+## Macro Boundaries
+
+- CloudFront is the only public ingress in serverless environments.
+- Astro owns the static frontend shell and browser runtime.
+- Go owns auth, health, OpenAPI, and all business API routes.
+- Turso is the only persistent store.
+- Compute is stateless.
+- Secrets come from environment or SSM, never from checked-in infra/code.
+- `platform/` may hold technical helpers, but never domain rules.
