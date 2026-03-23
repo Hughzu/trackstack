@@ -1,9 +1,7 @@
-- authentication 
-- users
 - wiring everything with front
+- redeploy
 - update docs
 - test split into microservices
-- redeploy
 - front
 
 - Code deep dive

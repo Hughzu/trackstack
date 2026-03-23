@@ -60,7 +60,7 @@ go run ./cmd/seed-user
 Notes:
 
 - `./scripts/e2e.sh` defaults to `BASE_URL=http://localhost:8080`.
-- It requires `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD`.
+- It loads `apps/server-next/.env` automatically and requires `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` there or in the shell.
 - `go run ./cmd/seed-user` loads `apps/web/.env` first and `apps/server-next/.env` second.
 - Override `BASE_URL` when validating a non-default local port or remote environment.
 

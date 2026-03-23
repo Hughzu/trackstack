@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="$SCRIPT_DIR/../.env"
+
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  set +a
+fi
+
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 EMAIL="${E2E_TEST_EMAIL:-}"
 PASSWORD="${E2E_TEST_PASSWORD:-}"
@@ -17,6 +27,9 @@ fi
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
+
+TODAY_UTC="$(date -u +%F)"
+TIME_UTC="$(date -u +%H:%M)"
 
 LAST_BODY=""
 LAST_STATUS=""
@@ -186,7 +199,7 @@ assert_json_equals userId "$USER_ID"
 assert_json_equals targetCalories 2400
 
 log "calories log create"
-request POST /api/calories/log '{"calories":650,"proteinGrams":45,"carbGrams":70,"fatGrams":20,"title":"E2E Meal","date":"2026-03-02","time":"12:30"}' "$TOKEN"
+request POST /api/calories/log "{\"calories\":650,\"proteinGrams\":45,\"carbGrams\":70,\"fatGrams\":20,\"title\":\"E2E Meal\",\"date\":\"$TODAY_UTC\",\"time\":\"$TIME_UTC\"}" "$TOKEN"
 assert_status 201
 assert_json_equals userId "$USER_ID"
 assert_json_equals title "E2E Meal"
