@@ -14,6 +14,7 @@ import (
 
 func newRouter(
 	logger *slog.Logger,
+	corsAllowedOrigin string,
 	authModule *AuthModule,
 	heatHandler *heatinboundhttp.RefillHandler,
 	caloriesHandler *caloriesinboundhttp.CaloriesHandler,
@@ -25,8 +26,10 @@ func newRouter(
 	r.Use(chimiddleware.RealIP)
 	r.Use(chimiddleware.Recoverer)
 	r.Use(middleware.Logger(logger))
+	r.Use(middleware.CORS(corsAllowedOrigin))
 
 	r.Get("/health", health)
+	r.Get("/openapi.yaml", openapi)
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/health", health)
 

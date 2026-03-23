@@ -38,7 +38,7 @@ func NewRuntime() (*Runtime, error) {
 	runtime := &Runtime{
 		Config:  cfg,
 		Logger:  logger,
-		Handler: newRouter(logger, authModule, heatHandler, caloriesHandler, expensesHandler),
+		Handler: newRouter(logger, cfg.CORSAllowedOrigin, authModule, heatHandler, caloriesHandler, expensesHandler),
 		closers: dbs.CloseAll(),
 	}
 

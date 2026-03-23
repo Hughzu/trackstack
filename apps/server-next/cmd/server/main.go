@@ -53,7 +53,7 @@ func main() {
 
 	runtime.Logger.Info("Server started", "port", runtime.Config.Port, "env", runtime.Config.Env)
 
-	if err := srv.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		runtime.Logger.Error("Server error", "error", err)
 		os.Exit(1)
 	}

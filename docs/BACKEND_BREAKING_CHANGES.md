@@ -51,6 +51,25 @@ Date: 2026-03-22
 - Legacy query-parameter delete routes are intentionally removed and are not kept as compatibility aliases.
 - Existing expenses payload and response shapes otherwise stay aligned with the current frontend contract during the `apps/server-next` migration slice.
 
+## Heat (`apps/server-next`)
+
+Date: 2026-03-23
+
+### HTTP contract breaks
+
+- `DELETE /api/heat/refills?id=<id>` becomes `DELETE /api/heat/refills/{id}`.
+- The legacy query-parameter delete route is intentionally removed and is not kept as a compatibility alias.
+
+## General API Surface (`apps/server-next`)
+
+Date: 2026-03-23
+
+### HTTP contract breaks
+
+- `GET /api/dashboard` is intentionally removed from `apps/server-next`.
+- The overview/read-model direction is now explicit module-level endpoints instead of one aggregate backend dashboard endpoint.
+- Health payload shape changes from `{"ok":true}` to `{"status":"ok"}` for both `/health` and `/api/health`.
+
 ## Authentication (`apps/server-next` target)
 
 Date: 2026-03-23
@@ -70,5 +89,6 @@ Date: 2026-03-23
 - `apps/server-next` now requires `JWT_SECRET` for bearer token signing and verification.
 - `AUTH_COOKIE_NAME` and `AUTH_COOKIE_SECURE` are intentionally removed from the rebuild config surface.
 - Legacy `SESSION_COOKIE_NAME` and `SESSION_COOKIE_SECURE` remain unsupported.
+- Existing `serverless-next` runtime and deploy wiring must be updated to provide `JWT_SECRET` before `apps/server-next` can fully replace the old backend in that environment.
 
 This document should be updated whenever additional intentional compatibility breaks are introduced.

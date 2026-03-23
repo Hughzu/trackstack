@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	Env      string
-	Port     string
-	LogLevel string
+	Env               string
+	Port              string
+	LogLevel          string
+	CORSAllowedOrigin string
 
 	// DB
 	TursoCaloriesURLHTTP string
@@ -33,9 +34,10 @@ type Config struct {
 func Load() (Config, error) {
 	var err error
 	cfg := Config{
-		Env:      getEnv("APP_ENV", "local"),
-		Port:     getEnv("PORT", "8080"),
-		LogLevel: getEnv("LOG_LEVEL", "info"),
+		Env:               getEnv("APP_ENV", "local"),
+		Port:              getEnv("PORT", "8080"),
+		LogLevel:          getEnv("LOG_LEVEL", "info"),
+		CORSAllowedOrigin: getEnv("CORS_ALLOWED_ORIGIN", ""),
 
 		// DB
 		TursoCaloriesURLHTTP: getEnv("TURSO_CALORIES_URL_HTTP", ""),
