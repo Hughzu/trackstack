@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/Hughzu/trackstack/apps/server-next/internal/contexts/auth/application/ports"
 	"github.com/Hughzu/trackstack/apps/server-next/internal/contexts/auth/domain"
@@ -10,9 +11,7 @@ import (
 )
 
 type AuthHandler struct {
-	useCase      ports.AuthUseCase
-	cookieName   string
-	cookieSecure bool
+	useCase ports.AuthUseCase
 }
 
 type loginPayload struct {
@@ -24,12 +23,15 @@ type errorResponse struct {
 	Error string `json:"error"`
 }
 
-func NewAuthHandler(useCase ports.AuthUseCase, cookieName string, cookieSecure bool) *AuthHandler {
-	return &AuthHandler{
-		useCase:      useCase,
-		cookieName:   cookieName,
-		cookieSecure: cookieSecure,
-	}
+type loginResponse struct {
+	AccessToken string `json:"accessToken"`
+	TokenType   string `json:"tokenType"`
+	ExpiresAt   string `json:"expiresAt"`
+	UserID      string `json:"userId"`
+}
+
+func NewAuthHandler(useCase ports.AuthUseCase) *AuthHandler {
+	return &AuthHandler{useCase: useCase}
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +41,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.useCase.Login(r.Context(), payload.Email, payload.Password)
+	result, err := h.useCase.Login(r.Context(), payload.Email, payload.Password)
 	if err != nil {
 		if err == domain.ErrUnauthorized || err == domain.ErrInvalidInput {
 			h.writeJSON(w, http.StatusUnauthorized, errorResponse{Error: "Unauthorized"})
@@ -49,32 +51,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 30 days max-age
-	maxAge := 30 * 24 * 60 * 60
-	http.SetCookie(w, &http.Cookie{
-		Name:     h.cookieName,
-		Value:    token,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   h.cookieSecure,
-		SameSite: http.SameSiteStrictMode,
-		MaxAge:   maxAge,
+	h.writeJSON(w, http.StatusOK, loginResponse{
+		AccessToken: result.AccessToken,
+		TokenType:   result.TokenType,
+		ExpiresAt:   result.ExpiresAt.UTC().Format(time.RFC3339),
+		UserID:      result.UserID,
 	})
-
-	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     h.cookieName,
-		Value:    "",
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   h.cookieSecure,
-		SameSite: http.SameSiteStrictMode,
-		MaxAge:   -1,
-	})
-
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -85,7 +70,6 @@ func (h *AuthHandler) Session(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// For compatibility with old `AuthHandler.Session` response shape
 	h.writeJSON(w, http.StatusOK, map[string]string{
 		"userId":    userID,
 		"sessionId": "stateless-jwt",

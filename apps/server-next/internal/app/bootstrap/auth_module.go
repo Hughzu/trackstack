@@ -33,8 +33,6 @@ func (a *userProviderAdapter) UpdateLastLogin(ctx context.Context, userID string
 func buildAuthModule(
 	db *sql.DB,
 	jwtSecret string,
-	cookieName string,
-	cookieSecure bool,
 ) *AuthModule {
 	userService := buildUsersModule(db)
 	userProvider := &userProviderAdapter{svc: userService}
@@ -42,7 +40,7 @@ func buildAuthModule(
 	authService := authservices.NewAuthService(userProvider, tokenIssuer)
 
 	return &AuthModule{
-		Handler:    authhttpserver.NewAuthHandler(authService, cookieName, cookieSecure),
-		Middleware: platformmiddleware.ResolveSession(jwtSecret, cookieName),
+		Handler:    authhttpserver.NewAuthHandler(authService),
+		Middleware: platformmiddleware.ResolveSession(jwtSecret),
 	}
 }

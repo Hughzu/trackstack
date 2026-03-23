@@ -80,6 +80,8 @@
 - **Milestone reached:** the home, calories, expenses, and heat dashboards plus the calories and expenses settings pages now load their authenticated read models in the browser after auth bootstrap, so they no longer depend on `getCurrentUserId()` or SSR request-local auth context.
 - **Overview behavior:** the home overview no longer waits on a single aggregated `/api/dashboard` response. It loads expenses, calories, and heat cards independently from their canonical module endpoints so one cold module path does not block the whole screen.
 
+`apps/server-next` is intentionally ahead of the current web app on auth transport: it now expects bearer tokens on protected requests and returns bearer tokens from login. Until the Astro frontend is migrated, browser auth flows remain incompatible with the rebuild workspace.
+
 ### Go Backend Boundary
 
 - **Role:** Go backend business logic is moving toward context-local boundaries. `apps/server/internal/contexts/heat/**` is the first fully migrated slice in the main backend, and `apps/server-next/internal/contexts/{heat,calories}/**` now serves as the rebuild workspace for the target architecture.

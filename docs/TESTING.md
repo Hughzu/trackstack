@@ -168,3 +168,11 @@ When a regression is found in the frontend/backend boundary:
 - Protected-page gating happens through `AuthBootstrap.astro` calling `GET /api/auth/session` and redirecting client-side.
 - Playwright login helpers now explicitly assert that `/api/auth/login` succeeds before continuing into module tests.
 - When auth transport behavior changes, update both Go auth transport tests and at least one browser flow that authenticates through `/api/auth/login`.
+
+For `apps/server-next`, bearer-auth changes should be validated backend-first with Docker and `curl` before the frontend migration exists:
+
+- run `docker compose up --build go-backend`
+- verify `POST /api/auth/login` returns a JSON bearer token payload and no auth cookie
+- verify `GET /api/auth/session` returns `401` without `Authorization: Bearer <jwt>` and `200` with it
+- verify protected routes under `/api/heat/*`, `/api/calories/*`, and `/api/expenses/*` reject missing bearer headers and succeed with a valid bearer token
+- verify `POST /api/auth/logout` returns `204` and does not invalidate an already-issued token because the current rebuild stays stateless

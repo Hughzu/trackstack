@@ -3,25 +3,26 @@ package middleware
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/Hughzu/trackstack/apps/server-next/internal/contexts/auth/domain"
 	"github.com/Hughzu/trackstack/apps/server-next/internal/platform/authcontext"
 	jwtv5 "github.com/golang-jwt/jwt/v5"
 )
 
-func ResolveSession(jwtSecret string, cookieName string) func(http.Handler) http.Handler {
+func ResolveSession(jwtSecret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cookie, err := r.Cookie(cookieName)
-			if err != nil || cookie == nil || cookie.Value == "" {
+			tokenValue, ok := bearerToken(r)
+			if !ok {
 				writeUnauthorized(w)
 				return
 			}
 
 			claims := &domain.SessionClaims{}
-			token, err := jwtv5.ParseWithClaims(cookie.Value, claims, func(token *jwtv5.Token) (interface{}, error) {
+			token, err := jwtv5.ParseWithClaims(tokenValue, claims, func(token *jwtv5.Token) (interface{}, error) {
 				return []byte(jwtSecret), nil
-			})
+			}, jwtv5.WithValidMethods([]string{jwtv5.SigningMethodHS256.Alg()}))
 
 			if err != nil || !token.Valid || claims.UserID == "" {
 				writeUnauthorized(w)
@@ -32,6 +33,15 @@ func ResolveSession(jwtSecret string, cookieName string) func(http.Handler) http
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func bearerToken(r *http.Request) (string, bool) {
+	fields := strings.Fields(strings.TrimSpace(r.Header.Get("Authorization")))
+	if len(fields) != 2 || !strings.EqualFold(fields[0], "Bearer") || fields[1] == "" {
+		return "", false
+	}
+
+	return fields[1], true
 }
 
 func writeUnauthorized(w http.ResponseWriter) {

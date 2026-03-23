@@ -18,9 +18,8 @@ func NewIssuer(secret string) *Issuer {
 	return &Issuer{secret: secret}
 }
 
-func (i *Issuer) IssueToken(userID string) (string, error) {
+func (i *Issuer) IssueToken(userID string) (ports.IssuedToken, error) {
 	now := time.Now().UTC()
-	// TTL: 30 days
 	expiresAt := now.Add(30 * 24 * time.Hour)
 
 	claims := domain.SessionClaims{
@@ -33,5 +32,13 @@ func (i *Issuer) IssueToken(userID string) (string, error) {
 	}
 
 	token := jwtv5.NewWithClaims(jwtv5.SigningMethodHS256, claims)
-	return token.SignedString([]byte(i.secret))
+	signedToken, err := token.SignedString([]byte(i.secret))
+	if err != nil {
+		return ports.IssuedToken{}, err
+	}
+
+	return ports.IssuedToken{
+		Value:     signedToken,
+		ExpiresAt: expiresAt,
+	}, nil
 }

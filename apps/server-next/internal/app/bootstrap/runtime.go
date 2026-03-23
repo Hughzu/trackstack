@@ -33,7 +33,7 @@ func NewRuntime() (*Runtime, error) {
 	heatHandler := buildHeatModule(dbs.Heat)
 	caloriesHandler := buildCaloriesModule(dbs.Calories)
 	expensesHandler := buildExpensesModule(dbs.Expenses)
-	authModule := buildAuthModule(dbs.Users, cfg.JWTSecret, cfg.AuthCookieName, cfg.AuthCookieSecure)
+	authModule := buildAuthModule(dbs.Users, cfg.JWTSecret)
 
 	runtime := &Runtime{
 		Config:  cfg,

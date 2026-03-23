@@ -133,6 +133,13 @@ Go is now the source of truth for:
 
 Astro no longer enforces page auth in middleware, proxies auth routes, or maintains SSR auth helper layers. Page-session verification delegates to Go through `GET /api/auth/session`, login/logout submit directly to Go under `/api/auth/*`, and the browser bootstrap handles redirects for protected routes. The home, calories, expenses, and heat dashboards plus the calories and expenses settings pages load directly from Go in the browser.
 
+For `apps/server-next`, the rebuild auth boundary now differs from the currently shipped web shell:
+
+- protected routes require `Authorization: Bearer <jwt>`
+- `POST /api/auth/login` returns a JSON token payload instead of `Set-Cookie`
+- `POST /api/auth/logout` is stateless and only signals client-side token discard
+- the current Astro frontend is not yet compatible with this rebuild auth contract
+
 ## Environment Variables
 
 ### Frontend
