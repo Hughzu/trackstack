@@ -8,9 +8,8 @@ import (
 	"strings"
 
 	"github.com/Hughzu/trackstack/apps/server-next/internal/contexts/calories/application/ports"
+	"github.com/Hughzu/trackstack/apps/server-next/internal/platform/authcontext"
 )
-
-const mockUserID = "8a36e9e2-4b42-4ea2-a397-0a2b441accca"
 
 type errorResponse struct {
 	Error string `json:"error"`
@@ -45,7 +44,12 @@ func NewCaloriesHandler(targetUseCase ports.TargetUseCase, logUseCase ports.LogU
 }
 
 func (h *CaloriesHandler) GetTarget(w http.ResponseWriter, r *http.Request) {
-	target, err := h.targetUseCase.GetTarget(r.Context(), ports.GetTargetQuery{UserID: mockUserID})
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
+	target, err := h.targetUseCase.GetTarget(r.Context(), ports.GetTargetQuery{UserID: userID})
 	if err != nil {
 		h.writeError(w, err)
 		return
@@ -55,6 +59,11 @@ func (h *CaloriesHandler) GetTarget(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CaloriesHandler) UpdateTarget(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	data, err := readCaloriesPayload(r)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
@@ -66,7 +75,7 @@ func (h *CaloriesHandler) UpdateTarget(w http.ResponseWriter, r *http.Request) {
 	}
 
 	target, err := h.targetUseCase.UpdateTarget(r.Context(), ports.UpdateTargetCommand{
-		UserID:             mockUserID,
+		UserID:             userID,
 		TargetCalories:     *data.TargetCalories,
 		TargetProteinGrams: *data.TargetProteinGrams,
 		TargetCarbGrams:    data.TargetCarbGrams,
@@ -81,6 +90,11 @@ func (h *CaloriesHandler) UpdateTarget(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CaloriesHandler) AddLog(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	data, err := readCaloriesPayload(r)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
@@ -92,7 +106,7 @@ func (h *CaloriesHandler) AddLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log, err := h.logUseCase.AddLog(r.Context(), ports.AddLogCommand{
-		UserID:       mockUserID,
+		UserID:       userID,
 		Calories:     *data.Calories,
 		ProteinGrams: *data.ProteinGrams,
 		CarbGrams:    data.CarbGrams,
@@ -110,13 +124,18 @@ func (h *CaloriesHandler) AddLog(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CaloriesHandler) DeleteLog(w http.ResponseWriter, r *http.Request, id string) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	if strings.TrimSpace(id) == "" {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing log id"})
 		return
 	}
 
 	deleted, err := h.logUseCase.DeleteLog(r.Context(), ports.DeleteLogCommand{
-		UserID: mockUserID,
+		UserID: userID,
 		ID:     id,
 	})
 	if err != nil {
@@ -132,6 +151,11 @@ func (h *CaloriesHandler) DeleteLog(w http.ResponseWriter, r *http.Request, id s
 }
 
 func (h *CaloriesHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	recentLimit := 8
 	if limitValue := r.URL.Query().Get("recentLimit"); limitValue != "" {
 		if parsed, err := strconv.Atoi(limitValue); err == nil && parsed > 0 {
@@ -147,7 +171,7 @@ func (h *CaloriesHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dashboard, err := h.dashboardUseCase.GetDashboard(r.Context(), ports.GetDashboardQuery{
-		UserID:      mockUserID,
+		UserID:      userID,
 		RecentLimit: recentLimit,
 		LogsLimit:   logsLimit,
 	})
@@ -157,6 +181,16 @@ func (h *CaloriesHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.writeJSON(w, http.StatusOK, dashboard)
+}
+
+func (h *CaloriesHandler) userID(w http.ResponseWriter, r *http.Request) (string, bool) {
+	userID, ok := authcontext.GetUserID(r.Context())
+	if !ok || userID == "" {
+		h.writeJSON(w, http.StatusUnauthorized, errorResponse{Error: "Unauthorized"})
+		return "", false
+	}
+
+	return userID, true
 }
 
 func readCaloriesPayload(r *http.Request) (caloriesPayload, error) {

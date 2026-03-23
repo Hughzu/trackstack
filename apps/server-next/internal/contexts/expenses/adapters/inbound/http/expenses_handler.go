@@ -9,9 +9,8 @@ import (
 
 	"github.com/Hughzu/trackstack/apps/server-next/internal/contexts/expenses/application/ports"
 	"github.com/Hughzu/trackstack/apps/server-next/internal/contexts/expenses/domain"
+	"github.com/Hughzu/trackstack/apps/server-next/internal/platform/authcontext"
 )
-
-const mockUserID = "8a36e9e2-4b42-4ea2-a397-0a2b441accca"
 
 type errorResponse struct {
 	Error string `json:"error"`
@@ -68,7 +67,12 @@ func NewExpensesHandler(
 }
 
 func (h *ExpensesHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
-	view, err := h.settingsUseCase.GetSettings(r.Context(), ports.GetSettingsQuery{UserID: mockUserID})
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
+	view, err := h.settingsUseCase.GetSettings(r.Context(), ports.GetSettingsQuery{UserID: userID})
 	if err != nil {
 		h.writeError(w, err)
 		return
@@ -78,6 +82,11 @@ func (h *ExpensesHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ExpensesHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	var payload updateSettingsPayload
 	if err := decodeJSON(r, &payload); err != nil {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
@@ -89,7 +98,7 @@ func (h *ExpensesHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 	}
 
 	settings, err := h.settingsUseCase.UpdateSettings(r.Context(), ports.UpdateSettingsCommand{
-		UserID:      mockUserID,
+		UserID:      userID,
 		Income:      *payload.Income,
 		RatioFund:   *payload.RatioFund,
 		RatioFun:    *payload.RatioFun,
@@ -104,6 +113,11 @@ func (h *ExpensesHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *ExpensesHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	historyLimit := 50
 	if limitValue := r.URL.Query().Get("historyLimit"); limitValue != "" {
 		if parsed, err := strconv.Atoi(limitValue); err == nil && parsed > 0 {
@@ -112,7 +126,7 @@ func (h *ExpensesHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dashboard, err := h.dashboardUseCase.GetDashboard(r.Context(), ports.GetDashboardQuery{
-		UserID:       mockUserID,
+		UserID:       userID,
 		HistoryLimit: historyLimit,
 	})
 	if err != nil {
@@ -124,6 +138,11 @@ func (h *ExpensesHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ExpensesHandler) AddEntry(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	var payload entryPayload
 	if err := decodeJSON(r, &payload); err != nil {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
@@ -135,7 +154,7 @@ func (h *ExpensesHandler) AddEntry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	entry, err := h.entryUseCase.AddEntry(r.Context(), ports.AddEntryCommand{
-		UserID:   mockUserID,
+		UserID:   userID,
 		Title:    payload.Title,
 		Amount:   *payload.Amount,
 		Category: payload.Category,
@@ -150,13 +169,18 @@ func (h *ExpensesHandler) AddEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ExpensesHandler) DeleteEntry(w http.ResponseWriter, r *http.Request, id string) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	if strings.TrimSpace(id) == "" {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing expense id"})
 		return
 	}
 
 	deleted, err := h.entryUseCase.DeleteEntry(r.Context(), ports.DeleteEntryCommand{
-		UserID: mockUserID,
+		UserID: userID,
 		ID:     id,
 	})
 	if err != nil {
@@ -172,6 +196,11 @@ func (h *ExpensesHandler) DeleteEntry(w http.ResponseWriter, r *http.Request, id
 }
 
 func (h *ExpensesHandler) UpsertChecklist(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	var payload templatePayload
 	if err := decodeJSON(r, &payload); err != nil {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
@@ -184,7 +213,7 @@ func (h *ExpensesHandler) UpsertChecklist(w http.ResponseWriter, r *http.Request
 
 	template, err := h.templateUseCase.UpsertChecklist(r.Context(), ports.UpsertTemplateCommand{
 		ID:       payload.ID,
-		UserID:   mockUserID,
+		UserID:   userID,
 		Title:    payload.Title,
 		Amount:   *payload.Amount,
 		Category: payload.Category,
@@ -198,13 +227,18 @@ func (h *ExpensesHandler) UpsertChecklist(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ExpensesHandler) DeleteChecklist(w http.ResponseWriter, r *http.Request, id string) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	if strings.TrimSpace(id) == "" {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing template id"})
 		return
 	}
 
 	deleted, err := h.templateUseCase.DeleteChecklist(r.Context(), ports.DeleteTemplateCommand{
-		UserID: mockUserID,
+		UserID: userID,
 		ID:     id,
 	})
 	if err != nil {
@@ -220,6 +254,11 @@ func (h *ExpensesHandler) DeleteChecklist(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ExpensesHandler) CompleteChecklistItem(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	var payload completeChecklistPayload
 	if err := decodeJSON(r, &payload); err != nil {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
@@ -231,7 +270,7 @@ func (h *ExpensesHandler) CompleteChecklistItem(w http.ResponseWriter, r *http.R
 	}
 
 	entry, err := h.templateUseCase.CompleteChecklistItem(r.Context(), ports.CompleteChecklistItemCommand{
-		UserID: mockUserID,
+		UserID: userID,
 		ID:     payload.ID,
 		Date:   payload.Date,
 	})
@@ -244,6 +283,11 @@ func (h *ExpensesHandler) CompleteChecklistItem(w http.ResponseWriter, r *http.R
 }
 
 func (h *ExpensesHandler) UpsertRecurring(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	var payload templatePayload
 	if err := decodeJSON(r, &payload); err != nil {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
@@ -256,7 +300,7 @@ func (h *ExpensesHandler) UpsertRecurring(w http.ResponseWriter, r *http.Request
 
 	template, err := h.templateUseCase.UpsertRecurring(r.Context(), ports.UpsertTemplateCommand{
 		ID:       payload.ID,
-		UserID:   mockUserID,
+		UserID:   userID,
 		Title:    payload.Title,
 		Amount:   *payload.Amount,
 		Category: payload.Category,
@@ -270,13 +314,18 @@ func (h *ExpensesHandler) UpsertRecurring(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ExpensesHandler) DeleteRecurring(w http.ResponseWriter, r *http.Request, id string) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	if strings.TrimSpace(id) == "" {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing template id"})
 		return
 	}
 
 	deleted, err := h.templateUseCase.DeleteRecurring(r.Context(), ports.DeleteTemplateCommand{
-		UserID: mockUserID,
+		UserID: userID,
 		ID:     id,
 	})
 	if err != nil {
@@ -292,13 +341,28 @@ func (h *ExpensesHandler) DeleteRecurring(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ExpensesHandler) CloseSheet(w http.ResponseWriter, r *http.Request) {
-	sheet, err := h.sheetUseCase.CloseSheet(r.Context(), ports.CloseSheetCommand{UserID: mockUserID})
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
+	sheet, err := h.sheetUseCase.CloseSheet(r.Context(), ports.CloseSheetCommand{UserID: userID})
 	if err != nil {
 		h.writeError(w, err)
 		return
 	}
 
 	h.writeJSON(w, http.StatusOK, sheet)
+}
+
+func (h *ExpensesHandler) userID(w http.ResponseWriter, r *http.Request) (string, bool) {
+	userID, ok := authcontext.GetUserID(r.Context())
+	if !ok || userID == "" {
+		h.writeJSON(w, http.StatusUnauthorized, errorResponse{Error: "Unauthorized"})
+		return "", false
+	}
+
+	return userID, true
 }
 
 func decodeJSON(r *http.Request, dst any) error {

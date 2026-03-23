@@ -7,10 +7,9 @@ import (
 	"strconv"
 
 	"github.com/Hughzu/trackstack/apps/server-next/internal/contexts/heat/application/ports"
+	"github.com/Hughzu/trackstack/apps/server-next/internal/platform/authcontext"
 	"github.com/Hughzu/trackstack/apps/server-next/internal/platform/timeutil"
 )
-
-const mockUserID = "8a36e9e2-4b42-4ea2-a397-0a2b441accca"
 
 type createRefillPayload struct {
 	Date        string   `json:"date"`
@@ -32,6 +31,11 @@ func NewRefillHandler(useCase ports.RefillUseCase) *RefillHandler {
 }
 
 func (h *RefillHandler) GetRefills(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	fromStr := r.URL.Query().Get("from")
 	toStr := r.URL.Query().Get("to")
 
@@ -48,7 +52,7 @@ func (h *RefillHandler) GetRefills(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refills, err := h.useCase.GetRefills(r.Context(), ports.GetRefillsQuery{
-		UserID: mockUserID,
+		UserID: userID,
 		From:   from,
 		To:     to,
 	})
@@ -61,6 +65,11 @@ func (h *RefillHandler) GetRefills(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RefillHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	var payload createRefillPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Invalid JSON body"})
@@ -74,7 +83,7 @@ func (h *RefillHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refill, err := h.useCase.CreateRefill(r.Context(), ports.CreateRefillCommand{
-		UserID:      mockUserID,
+		UserID:      userID,
 		Date:        date,
 		WeightKg:    payload.WeightKg,
 		Bags:        payload.Bags,
@@ -89,13 +98,18 @@ func (h *RefillHandler) CreateRefill(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RefillHandler) deleteRefill(w http.ResponseWriter, r *http.Request, id string) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	if id == "" {
 		h.writeJSON(w, http.StatusBadRequest, errorResponse{Error: "Missing refill id"})
 		return
 	}
 
 	deleted, err := h.useCase.DeleteRefill(r.Context(), ports.DeleteRefillCommand{
-		UserID: mockUserID,
+		UserID: userID,
 		ID:     id,
 	})
 	if err != nil {
@@ -126,6 +140,11 @@ func (h *RefillHandler) writeError(w http.ResponseWriter, err error) {
 }
 
 func (h *RefillHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.userID(w, r)
+	if !ok {
+		return
+	}
+
 	page := 1
 	if pageValue := r.URL.Query().Get("page"); pageValue != "" {
 		if parsed, err := strconv.Atoi(pageValue); err == nil && parsed > 0 {
@@ -141,7 +160,7 @@ func (h *RefillHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dashboard, err := h.useCase.GetDashboard(r.Context(), ports.GetDashboardQuery{
-		UserID: mockUserID,
+		UserID: userID,
 		Page:   page,
 		Limit:  limit,
 	})
@@ -151,4 +170,14 @@ func (h *RefillHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.writeJSON(w, http.StatusOK, dashboard)
+}
+
+func (h *RefillHandler) userID(w http.ResponseWriter, r *http.Request) (string, bool) {
+	userID, ok := authcontext.GetUserID(r.Context())
+	if !ok || userID == "" {
+		h.writeJSON(w, http.StatusUnauthorized, errorResponse{Error: "Unauthorized"})
+		return "", false
+	}
+
+	return userID, true
 }
