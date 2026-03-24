@@ -137,7 +137,8 @@ import ConfirmModal from "@/components/ConfirmModal.astro";
   confirmLoadingLabel="Deleting..."
   triggerAttribute="data-checklist-delete"
   idAttribute="data-checklist-id"
-  endpoint="/api/expenses/checklists"
+  endpoint="/api/expenses/checklists/{id}"
+  sendPayload={false}
   method="DELETE"
   errorMessage="Unable to delete checklist item."
 />
@@ -150,7 +151,8 @@ import ConfirmModal from "@/components/ConfirmModal.astro";
   confirmLoadingLabel="Deleting..."
   triggerAttribute="data-recurring-delete"
   idAttribute="data-recurring-id"
-  endpoint="/api/expenses/recurring"
+  endpoint="/api/expenses/recurring/{id}"
+  sendPayload={false}
   method="DELETE"
   errorMessage="Unable to delete recurring expense."
 />
@@ -264,8 +266,12 @@ import ConfirmModal from "@/components/ConfirmModal.astro";
     if (!auth?.authenticated) return;
 
     try {
+      const token = window.localStorage.getItem("trackstack_token");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const response = await fetch(resolveBrowserApiUrl("/api/expenses/settings"), {
-        credentials: "include",
+        headers,
       });
 
       if (response.status === 401) {

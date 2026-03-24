@@ -131,15 +131,15 @@ import Skeleton from "@/components/Skeleton.astro";
   };
 
   const renderSummary = (summary) => {
-    document.querySelector("[data-calories-consumed]").textContent = String(summary.consumed);
-    document.querySelector("[data-calories-target]").textContent = String(summary.target.targetKcal);
-    document.querySelector("[data-calories-protein]").innerHTML = `${summary.protein}g <span class="font-normal text-text-muted">/ ${summary.target.targetProteinG}g</span>`;
-    document.querySelector("[data-calories-carbs]").textContent = `${summary.carbs}g`;
-    document.querySelector("[data-calories-fat]").textContent = `${summary.fat}g`;
-    document.querySelector("[data-calories-protein-summary]").textContent = `${summary.protein}g`;
+    document.querySelector("[data-calories-consumed]").textContent = String(summary.consumedCalories);
+    document.querySelector("[data-calories-target]").textContent = String(summary.target.targetCalories);
+    document.querySelector("[data-calories-protein]").innerHTML = `${summary.proteinGrams}g <span class="font-normal text-text-muted">/ ${summary.target.targetProteinGrams}g</span>`;
+    document.querySelector("[data-calories-carbs]").textContent = `${summary.carbGrams}g`;
+    document.querySelector("[data-calories-fat]").textContent = `${summary.fatGrams}g`;
+    document.querySelector("[data-calories-protein-summary]").textContent = `${summary.proteinGrams}g`;
 
-    const percent = summary.target.targetKcal
-      ? Math.min((summary.consumed / summary.target.targetKcal) * 100, 100)
+    const percent = summary.target.targetCalories
+      ? Math.min((summary.consumedCalories / summary.target.targetCalories) * 100, 100)
       : 0;
     document.querySelector("[data-calories-progress]").style.width = `${percent}%`;
   };
@@ -153,9 +153,9 @@ import Skeleton from "@/components/Skeleton.astro";
     const hiddenFields = {
       title: meal.title ?? "",
       calories: meal.calories,
-      protein: meal.proteinG,
-      carbs: meal.carbsG ?? 0,
-      fat: meal.fatG ?? 0,
+      proteinGrams: meal.proteinGrams,
+      carbGrams: meal.carbGrams ?? 0,
+      fatGrams: meal.fatGrams ?? 0,
     };
 
     Object.entries(hiddenFields).forEach(([name, value]) => {
@@ -211,7 +211,7 @@ import Skeleton from "@/components/Skeleton.astro";
         <div class="text-sm font-medium text-text-main">${log.title ?? "Untitled"}</div>
         <div class="flex gap-2 text-[10px] text-text-muted">
           <span>${formatTime(log.dateTime)}</span>
-          <span class="text-primary">${log.proteinG}g prot</span>
+          <span class="text-primary">${log.proteinGrams}g prot</span>
         </div>
       </div>
       <div class="flex items-center gap-3">
@@ -256,8 +256,12 @@ import Skeleton from "@/components/Skeleton.astro";
     }
 
     try {
+      const token = window.localStorage.getItem("trackstack_token");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const response = await fetch(resolveBrowserApiUrl("/api/calories/dashboard?recentLimit=8"), {
-        credentials: "include",
+        headers,
       });
 
       if (response.status === 401) {

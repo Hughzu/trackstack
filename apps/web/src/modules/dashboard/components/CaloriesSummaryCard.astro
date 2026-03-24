@@ -6,11 +6,11 @@ interface Props {
   dashboard: {
     calories: {
       summary: {
-        consumed: number;
-        protein: number;
+        consumedCalories: number;
+        proteinGrams: number;
         target: {
-          targetKcal: number;
-          targetProteinG: number;
+          targetCalories: number;
+          targetProteinGrams: number;
         };
       };
     };
@@ -19,10 +19,10 @@ interface Props {
 
 const { dashboard } = Astro.props;
 
-const percent = dashboard.calories.summary.target.targetKcal
+const percent = dashboard.calories.summary.target.targetCalories
   ? Math.min(
-      (dashboard.calories.summary.consumed /
-        dashboard.calories.summary.target.targetKcal) * 100,
+      (dashboard.calories.summary.consumedCalories /
+        dashboard.calories.summary.target.targetCalories) * 100,
       100,
     )
   : 0;
@@ -34,19 +34,19 @@ const percent = dashboard.calories.summary.target.targetKcal
       <span class="text-xs text-text-muted uppercase tracking-widest">Consumed</span>
       <div class="flex items-baseline gap-2">
         <span class="text-3xl font-bold text-text-main">
-          {dashboard.calories.summary.consumed}
+          {dashboard.calories.summary.consumedCalories}
         </span>
         <span class="text-sm font-mono text-text-muted">
-          / {dashboard.calories.summary.target.targetKcal} kcal
+          / {dashboard.calories.summary.target.targetCalories} kcal
         </span>
       </div>
     </div>
     <div class="text-right">
       <span class="text-xs text-text-muted uppercase tracking-widest">Protein</span>
       <div class="text-sm font-bold text-primary">
-        {dashboard.calories.summary.protein}g
+        {dashboard.calories.summary.proteinGrams}g
         <span class="text-text-muted font-normal">
-          / {dashboard.calories.summary.target.targetProteinG}g
+          / {dashboard.calories.summary.target.targetProteinGrams}g
         </span>
       </div>
     </div>

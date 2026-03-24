@@ -32,7 +32,14 @@ import { apiConfig } from "@/config/api";
     window.signedFetch = async (input, init = {}) => {
       const method = (init.method || "GET").toUpperCase();
       const requestInput = resolveApiUrl(input);
-      const requestInit = { credentials: "include", ...init };
+      
+      const token = window.localStorage.getItem("trackstack_token");
+      const baseHeaders = { ...init.headers };
+      if (token) {
+        baseHeaders["Authorization"] = `Bearer ${token}`;
+      }
+      
+      const requestInit = { ...init, headers: baseHeaders };
       if (method === "GET" || method === "HEAD") {
         return fetch(requestInput, requestInit);
       }
@@ -119,16 +126,31 @@ import { apiConfig } from "@/config/api";
 
         try {
           const fetcher = window.signedFetch || window.fetch;
+          
+          const token = window.localStorage.getItem("trackstack_token");
+          const headers = {
+            "Content-Type": "application/json",
+          };
+          if (token && action !== "/api/auth/login") {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
+
           const response = await fetcher(resolveFormAction(action), {
             method: method,
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: headers,
             body: JSON.stringify(payload),
-            credentials: "include",
           });
 
           if (response.ok) {
+            if (action === "/api/auth/login") {
+              const data = await response.json();
+              if (data?.accessToken) {
+                window.localStorage.setItem("trackstack_token", data.accessToken);
+              }
+            } else if (action === "/api/auth/logout") {
+              window.localStorage.removeItem("trackstack_token");
+            }
+
             if (redirectUrl) window.location.href = redirectUrl;
             else window.location.reload();
             return;

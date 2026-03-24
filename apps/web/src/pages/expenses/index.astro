@@ -60,7 +60,8 @@ import ExpensesDashboardClient from "@/modules/expenses/components/ExpensesDashb
   confirmLoadingLabel="Deleting..."
   triggerAttribute="data-expense-delete"
   idAttribute="data-expense-id"
-  endpoint="/api/expenses/entries"
+  endpoint="/api/expenses/entries/{id}"
+  sendPayload={false}
   method="DELETE"
   errorMessage="Unable to delete expense."
 />

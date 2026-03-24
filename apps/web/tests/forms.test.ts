@@ -53,7 +53,7 @@ describe('SigV4 Form Attributes', () => {
       name: 'calories delete modal uses log endpoint',
       path: 'modules/calories/components/DeleteLogModal.astro',
       expects: [
-        'endpoint="/api/calories/log"',
+        'endpoint="/api/calories/logs/{id}"',
         'method="DELETE"',
         'data-calorie-delete',
       ],
@@ -92,7 +92,7 @@ describe('SigV4 Form Attributes', () => {
       name: 'expenses checklist delete modal',
       path: 'modules/expenses/components/ExpensesSettingsClient.astro',
       expects: [
-        'endpoint="/api/expenses/checklists"',
+        'endpoint="/api/expenses/checklists/{id}"',
         'method="DELETE"',
         'data-checklist-delete',
       ],
@@ -111,7 +111,7 @@ describe('SigV4 Form Attributes', () => {
       name: 'expenses recurring delete modal',
       path: 'modules/expenses/components/ExpensesSettingsClient.astro',
       expects: [
-        'endpoint="/api/expenses/recurring"',
+        'endpoint="/api/expenses/recurring/{id}"',
         'method="DELETE"',
         'data-recurring-delete',
       ],

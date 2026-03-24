@@ -28,7 +28,7 @@ import SectionHeader from "@/components/SectionHeader.astro";
       <label>
         <input
           type="number"
-          name="targetKcal"
+          name="targetCalories"
           min="0"
           required
           data-calories-target-kcal-input
@@ -61,7 +61,7 @@ import SectionHeader from "@/components/SectionHeader.astro";
         <label>
           <input
             type="number"
-            name="targetProtein"
+            name="targetProteinGrams"
             min="0"
             required
             data-calories-target-protein-input
@@ -83,7 +83,7 @@ import SectionHeader from "@/components/SectionHeader.astro";
         <label>
           <input
             type="number"
-            name="targetCarbs"
+            name="targetCarbGrams"
             min="0"
             placeholder="Optional"
             data-calories-target-carbs-input
@@ -105,7 +105,7 @@ import SectionHeader from "@/components/SectionHeader.astro";
         <label>
           <input
             type="number"
-            name="targetFat"
+            name="targetFatGrams"
             min="0"
             placeholder="Optional"
             data-calories-target-fat-input
@@ -173,8 +173,12 @@ import SectionHeader from "@/components/SectionHeader.astro";
     if (!auth?.authenticated) return;
 
     try {
+      const token = window.localStorage.getItem("trackstack_token");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const response = await fetch(resolveBrowserApiUrl("/api/calories/target"), {
-        credentials: "include",
+        headers,
       });
 
       if (response.status === 401) {
@@ -185,10 +189,10 @@ import SectionHeader from "@/components/SectionHeader.astro";
       if (!response.ok) return;
 
       const target = await response.json();
-      if (inputRefs.kcal()) inputRefs.kcal().value = String(target.targetKcal ?? "");
-      if (inputRefs.protein()) inputRefs.protein().value = String(target.targetProteinG ?? "");
-      if (inputRefs.carbs()) inputRefs.carbs().value = target.targetCarbsG == null ? "" : String(target.targetCarbsG);
-      if (inputRefs.fat()) inputRefs.fat().value = target.targetFatG == null ? "" : String(target.targetFatG);
+      if (inputRefs.kcal()) inputRefs.kcal().value = String(target.targetCalories ?? "");
+      if (inputRefs.protein()) inputRefs.protein().value = String(target.targetProteinGrams ?? "");
+      if (inputRefs.carbs()) inputRefs.carbs().value = target.targetCarbGrams == null ? "" : String(target.targetCarbGrams);
+      if (inputRefs.fat()) inputRefs.fat().value = target.targetFatGrams == null ? "" : String(target.targetFatGrams);
       updateMacroLabels();
     } catch {
       // Leave empty defaults in place.

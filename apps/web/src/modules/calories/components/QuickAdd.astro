@@ -6,9 +6,9 @@ interface Props {
   recentMeals: {
     title?: string;
     calories: number;
-    proteinG: number;
-    carbsG?: number;
-    fatG?: number;
+    proteinGrams: number;
+    carbGrams?: number;
+    fatGrams?: number;
   }[];
 }
 
@@ -30,9 +30,9 @@ const recentMeals = Astro.props.recentMeals ?? [];
               <input type="hidden" name="title" value={meal.title} />
             )}
             <input type="hidden" name="calories" value={meal.calories} />
-            <input type="hidden" name="protein" value={meal.proteinG} />
-            <input type="hidden" name="carbs" value={meal.carbsG ?? 0} />
-            <input type="hidden" name="fat" value={meal.fatG ?? 0} />
+            <input type="hidden" name="proteinGrams" value={meal.proteinGrams} />
+            <input type="hidden" name="carbGrams" value={meal.carbGrams ?? 0} />
+            <input type="hidden" name="fatGrams" value={meal.fatGrams ?? 0} />
             <PillButton
               type="submit"
               aria-label={`Quick add ${meal.title ?? "meal"}`}

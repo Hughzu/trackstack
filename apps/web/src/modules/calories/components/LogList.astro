@@ -9,7 +9,7 @@ interface Props {
     id: number;
     title?: string | null;
     calories: number;
-    proteinG: number;
+    proteinGrams: number;
     dateTime: string | Date;
   }[];
 }
@@ -37,7 +37,7 @@ const formatTime = (dateInput: Date | string) => {
             </div>
             <div class="text-[10px] text-text-muted flex gap-2">
               <span>{formatTime(log.dateTime)}</span>
-              <span class="text-primary">{log.proteinG}g prot</span>
+              <span class="text-primary">{log.proteinGrams}g prot</span>
             </div>
           </div>
           <div slot="right" class="flex items-center gap-2">

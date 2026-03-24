@@ -12,7 +12,8 @@ const MODAL_ID = "calorie-delete-modal";
   confirmLoadingLabel="Deleting..."
   triggerAttribute="data-calorie-delete"
   idAttribute="data-calorie-id"
-  endpoint="/api/calories/log"
+  endpoint="/api/calories/logs/{id}"
+  sendPayload={false}
   method="DELETE"
   errorMessage="Unable to delete log. Please try again."
 />

@@ -25,7 +25,7 @@ test.describe('Calories Logging Flow', () => {
 
         // 2. Fill out the form
         await page.fill('input[name="calories"]', '500');
-        await page.fill('input[name="protein"]', '30');
+        await page.fill('input[name="proteinGrams"]', '30');
         await page.fill('input[name="title"]', 'Test Meal');
 
         // 3. Submit the form
@@ -47,10 +47,10 @@ test.describe('Calories Logging Flow', () => {
         await login(page);
 
         await page.goto('/calories/settings');
-        await page.fill('input[name="targetKcal"]', '2600');
-        await page.fill('input[name="targetProtein"]', '190');
-        await page.fill('input[name="targetCarbs"]', '240');
-        await page.fill('input[name="targetFat"]', '80');
+        await page.fill('input[name="targetCalories"]', '2600');
+        await page.fill('input[name="targetProteinGrams"]', '190');
+        await page.fill('input[name="targetCarbGrams"]', '240');
+        await page.fill('input[name="targetFatGrams"]', '80');
 
         const responsePromise = page.waitForResponse(response =>
             response.url().includes('/api/calories/target') && response.request().method() === 'POST'
@@ -68,7 +68,7 @@ test.describe('Calories Logging Flow', () => {
 
         await page.goto('/calories/new');
         await page.fill('input[name="calories"]', '640');
-        await page.fill('input[name="protein"]', '42');
+        await page.fill('input[name="proteinGrams"]', '42');
         await page.fill('input[name="title"]', 'Quick Add Seed');
         await page.click('button[type="submit"]');
         await expect(page).toHaveURL('/calories');
@@ -92,7 +92,7 @@ test.describe('Calories Logging Flow', () => {
 
         await page.goto('/calories/new');
         await page.fill('input[name="calories"]', '510');
-        await page.fill('input[name="protein"]', '35');
+        await page.fill('input[name="proteinGrams"]', '35');
         await page.fill('input[name="title"]', 'Delete Me');
         await page.click('button[type="submit"]');
         await expect(page).toHaveURL('/calories');

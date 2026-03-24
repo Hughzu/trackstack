@@ -128,11 +128,11 @@ import Skeleton from "@/components/Skeleton.astro";
 
   type CaloriesDashboard = {
     summary: {
-      consumed: number;
-      protein: number;
+      consumedCalories: number;
+      proteinGrams: number;
       target: {
-        targetKcal: number;
-        targetProteinG: number;
+        targetCalories: number;
+        targetProteinGrams: number;
       };
     };
   };
@@ -220,14 +220,14 @@ import Skeleton from "@/components/Skeleton.astro";
   };
 
   const renderCalories = (dashboard: CaloriesDashboard) => {
-    setText("[data-calories-consumed]", String(dashboard.summary.consumed));
-    setText("[data-calories-target]", `/ ${dashboard.summary.target.targetKcal} kcal`);
+    setText("[data-calories-consumed]", String(dashboard.summary.consumedCalories));
+    setText("[data-calories-target]", `/ ${dashboard.summary.target.targetCalories} kcal`);
     const protein = query<HTMLElement>("[data-calories-protein]");
     if (protein) {
-      protein.innerHTML = `${dashboard.summary.protein}g <span class="font-normal text-text-muted">/ ${dashboard.summary.target.targetProteinG}g</span>`;
+      protein.innerHTML = `${dashboard.summary.proteinGrams}g <span class="font-normal text-text-muted">/ ${dashboard.summary.target.targetProteinGrams}g</span>`;
     }
-    const percent = dashboard.summary.target.targetKcal
-      ? Math.min((dashboard.summary.consumed / dashboard.summary.target.targetKcal) * 100, 100)
+    const percent = dashboard.summary.target.targetCalories
+      ? Math.min((dashboard.summary.consumedCalories / dashboard.summary.target.targetCalories) * 100, 100)
       : 0;
     const bar = query<HTMLElement>("[data-calories-bar]");
     if (bar) {
@@ -258,8 +258,14 @@ import Skeleton from "@/components/Skeleton.astro";
   };
 
   const fetchDashboardSection = async <T,>(path: string): Promise<T> => {
+    const token = window.localStorage.getItem("trackstack_token");
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const response = await fetch(resolveBrowserApiUrl(path), {
-      credentials: "include",
+      headers,
     });
 
     if (response.status === 401) {

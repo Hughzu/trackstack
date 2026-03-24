@@ -210,9 +210,13 @@ import { apiConfig } from "@/config/api";
           }
 
           const signedFetch = window.signedFetch || window.fetch;
+          const token = window.localStorage.getItem("trackstack_token");
+          if (token) {
+            requestInit.headers["Authorization"] = `Bearer ${token}`;
+          }
+
           const response = await signedFetch(resolveApiUrl(resolvedEndpoint), {
             ...requestInit,
-            credentials: "include",
           });
 
           if (response.ok) {
