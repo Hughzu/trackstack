@@ -14,14 +14,14 @@ services:
 
   go-backend:
     build:
-      context: ./apps/server-next
+      context: ./apps/server
       dockerfile: Dockerfile.dev
     volumes:
-      - ./apps/server-next:/app
+      - ./apps/server:/app
     ports:
       - "8080:8080"
     env_file:
-      - ./apps/server-next/.env
+      - ./apps/server/.env
 
   astro-frontend:
     build:

@@ -2,33 +2,33 @@
 
 Date: 2026-03-23
 
-This document explains what must be migrated so `apps/web` can use `apps/server-next` as its backend cleanly and safely.
+This document explains what must be migrated so `apps/web` can use the rebuilt `apps/server` backend cleanly and safely.
 
 It is not a backend target document. It is a wiring and migration plan for the browser/runtime boundary.
 
 ## Goal
 
-Make `apps/web` work against `apps/server-next` with:
+Make `apps/web` work against `apps/server` with:
 
 - bearer-auth instead of cookie-auth
-- canonical `server-next` route shapes
-- canonical `server-next` request payloads
-- canonical `server-next` response payloads
+- canonical backend route shapes
+- canonical backend request payloads
+- canonical backend response payloads
 - repeatable verification across backend smoke tests and browser tests
 
 ## Current Situation
 
 The backend is now far enough along to begin the frontend migration:
 
-- `apps/server-next` has `auth`, `users`, `heat`, `calories`, and `expenses`
+- `apps/server` has `auth`, `users`, `heat`, `calories`, and `expenses`
 - it exposes local HTTP and Lambda runtimes
 - it has CORS and `/openapi.yaml`
 - it has backend-owned tooling via `cmd/seed-user`
-- it has backend-first smoke coverage via `apps/server-next/scripts/e2e.sh`
+- it has backend-first smoke coverage via `apps/server/scripts/e2e.sh`
 
 The main missing work is now on the frontend wiring side.
 
-## Why The Frontend Cannot Just Point At `server-next`
+## Why The Frontend Cannot Just Point At The Rebuilt Backend Yet
 
 The current Astro frontend still assumes the old auth and calories contracts.
 
@@ -46,7 +46,7 @@ Intentional backend contract breaks are tracked in `docs/BACKEND_BREAKING_CHANGE
 
 ### Auth
 
-`apps/server-next` now uses bearer auth only.
+`apps/server` now uses bearer auth only.
 
 - `POST /api/auth/login` returns JSON with `accessToken`, `tokenType`, `expiresAt`, and `userId`
 - `GET /api/auth/session` requires `Authorization: Bearer <jwt>`
@@ -82,7 +82,7 @@ The browser should wire to these canonical backend endpoints:
 
 Important:
 
-- `/api/dashboard` is intentionally removed in `server-next`
+- `/api/dashboard` is intentionally removed in the rebuilt backend
 - the home overview must keep loading module cards independently
 
 ### Calories Contract Breaks
@@ -215,7 +215,7 @@ What must change:
 - login success must capture the JSON token response before redirect
 - login failure handling should still show a friendly invalid-credentials message
 - logout should clear the browser token even though backend logout is stateless
-- do not wait for cookie clearing because there is no auth cookie in `server-next`
+- do not wait for cookie clearing because there is no auth cookie in the rebuilt backend
 
 ## 5. Calories Forms And Read Models
 
@@ -287,7 +287,7 @@ Do this first.
 
 Deliverable:
 
-- browser can authenticate against `apps/server-next`
+- browser can authenticate against `apps/server`
 - protected pages can bootstrap session state correctly
 
 ### Phase 2: Calories contract migration
@@ -302,7 +302,7 @@ Do this second because it has the highest payload/response mismatch.
 
 Deliverable:
 
-- calories UI reads and writes work against `server-next`
+- calories UI reads and writes work against the rebuilt backend
 
 ### Phase 3: Expenses and heat bearer migration
 
@@ -312,13 +312,13 @@ Deliverable:
 
 Deliverable:
 
-- expenses and heat work against `server-next` without cookie auth
+- expenses and heat work against the rebuilt backend without cookie auth
 
 ### Phase 4: Regression/test migration
 
 1. update frontend Vitest expectations that still assume old calories names or old auth transport
 2. update Playwright flows to work with the new login/session behavior
-3. keep `apps/server-next/scripts/e2e.sh` passing as backend smoke coverage
+3. keep `apps/server/scripts/e2e.sh` passing as backend smoke coverage
 4. run browser tests against the migrated frontend/backend pair
 
 Deliverable:
@@ -332,12 +332,14 @@ Deliverable:
 Keep these green throughout the frontend migration:
 
 ```bash
-cd apps/server-next
+cd apps/server
 go run ./cmd/seed-user
 ./scripts/e2e.sh
 ```
 
 This proves backend integrity independently of frontend work.
+
+If browser e2e runs do not need a fresh seeded user, `pnpm test:e2e` in `apps/web` can run independently against the current environment.
 
 ## Frontend integration checks
 
@@ -361,7 +363,7 @@ pnpm test:e2e
 And keep backend checks alongside them:
 
 ```bash
-cd apps/server-next
+cd apps/server
 go test ./...
 ./scripts/e2e.sh
 ```
@@ -374,19 +376,19 @@ The frontend/backend wiring is considered good when:
 - session bootstrap works after full page reloads and Astro navigations
 - logout clears client auth state reliably
 - all protected browser fetches and mutation forms use bearer auth
-- calories request/response shapes fully match `server-next`
-- expenses and heat work through canonical `server-next` routes
+- calories request/response shapes fully match the rebuilt backend
+- expenses and heat work through canonical rebuilt-backend routes
 - the overview page loads module cards without `/api/dashboard`
 - backend smoke checks pass
 - frontend unit/e2e regression checks pass
-- no frontend code still relies on cookie auth for `server-next`
+- no frontend code still relies on cookie auth for the rebuilt backend
 
 ## Non-Goals
 
 This migration plan does not require:
 
 - bringing back `/api/dashboard`
-- keeping cookie auth compatibility in `server-next`
+- keeping cookie auth compatibility in the rebuilt backend
 - preserving old calories field names forever
 - hiding intentional contract breaks instead of documenting them
 

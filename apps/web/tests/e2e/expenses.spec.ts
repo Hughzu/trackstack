@@ -3,6 +3,10 @@ import { test, expect } from '@playwright/test';
 const e2eEmail = process.env.E2E_TEST_EMAIL ?? '';
 const e2ePassword = process.env.E2E_TEST_PASSWORD ?? '';
 
+function uniqueSuffix() {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 async function login(page: import('@playwright/test').Page) {
     await page.goto('/login');
     const responsePromise = page.waitForResponse(response =>
@@ -67,16 +71,17 @@ test.describe('Expenses Logging Flow', () => {
     test('User can add monthly checklist and recurring templates', async ({ page }) => {
         await login(page);
 
-        await page.goto('/expenses/settings');
+        const suffix = uniqueSuffix();
+        const checklistTitle = `Checklist Test ${suffix}`;
+        const recurringTitle = `Recurring Test ${suffix}`;
 
-        const checklistCount = await page.locator('[data-checklist-delete]').count();
-        const recurringCount = await page.locator('[data-recurring-delete]').count();
+        await page.goto('/expenses/settings');
 
         const checklistPostPromise = page.waitForResponse(response =>
             response.url().includes('/api/expenses/checklists') && response.request().method() === 'POST'
         );
 
-        await page.locator('input[form="expense-checklist-form"][name="title"]').fill('Checklist Test');
+        await page.locator('input[form="expense-checklist-form"][name="title"]').fill(checklistTitle);
         await page.locator('input[form="expense-checklist-form"][name="amount"]').fill('18.75');
         await page.locator('select[form="expense-checklist-form"][name="category"]').selectOption('fun');
         await page.locator('button[form="expense-checklist-form"][type="submit"]').click();
@@ -84,13 +89,14 @@ test.describe('Expenses Logging Flow', () => {
         const checklistResponse = await checklistPostPromise;
         expect(checklistResponse.ok()).toBeTruthy();
         await expect(page).toHaveURL('/expenses/settings');
-        await expect(page.locator('[data-checklist-delete]')).toHaveCount(checklistCount + 1);
+        const checklistRow = page.locator('[data-checklist-list] > div').filter({ hasText: checklistTitle }).first();
+        await expect(checklistRow).toBeVisible();
 
         const recurringPostPromise = page.waitForResponse(response =>
             response.url().includes('/api/expenses/recurring') && response.request().method() === 'POST'
         );
 
-        await page.locator('input[form="expense-recurring-form"][name="title"]').fill('Recurring Test');
+        await page.locator('input[form="expense-recurring-form"][name="title"]').fill(recurringTitle);
         await page.locator('input[form="expense-recurring-form"][name="amount"]').fill('44.10');
         await page.locator('select[form="expense-recurring-form"][name="category"]').selectOption('future');
         await page.locator('button[form="expense-recurring-form"][type="submit"]').click();
@@ -98,6 +104,7 @@ test.describe('Expenses Logging Flow', () => {
         const recurringResponse = await recurringPostPromise;
         expect(recurringResponse.ok()).toBeTruthy();
         await expect(page).toHaveURL('/expenses/settings');
-        await expect(page.locator('[data-recurring-delete]')).toHaveCount(recurringCount + 1);
+        const recurringRow = page.locator('[data-recurring-list] > div').filter({ hasText: recurringTitle }).first();
+        await expect(recurringRow).toBeVisible();
     });
 });

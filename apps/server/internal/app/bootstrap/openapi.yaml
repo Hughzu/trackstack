@@ -1,0 +1,778 @@
+openapi: 3.0.3
+info:
+  title: Trackstack API
+  version: 0.2.0
+  description: Trackstack backend API contract.
+servers:
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /api/health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /openapi.yaml:
+    get:
+      summary: OpenAPI specification
+      responses:
+        "200":
+          description: OpenAPI spec
+          content:
+            application/yaml:
+              schema:
+                type: string
+  /api/auth/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/auth/logout:
+    post:
+      summary: Logout user
+      responses:
+        "204":
+          description: Logged out
+  /api/auth/session:
+    get:
+      summary: Read current bearer session
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/heat/dashboard:
+    get:
+      summary: Get heat dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard data
+  /api/heat/refills:
+    get:
+      summary: List heat refills
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Refills
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Refill"
+    post:
+      summary: Create heat refill
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRefillRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Refill"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/heat/refills/{id}:
+    delete:
+      summary: Delete heat refill
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/calories/dashboard:
+    get:
+      summary: Get calories dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard data
+  /api/calories/target:
+    get:
+      summary: Get calorie target
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Target
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalorieTarget"
+    post:
+      summary: Update calorie target
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCalorieTargetRequest"
+      responses:
+        "200":
+          description: Target updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalorieTarget"
+  /api/calories/log:
+    post:
+      summary: Create calorie log
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCalorieLogRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalorieLog"
+  /api/calories/logs/{id}:
+    delete:
+      summary: Delete calorie log
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/expenses/settings:
+    get:
+      summary: Get expenses settings
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpensesSettingsView"
+    post:
+      summary: Update expenses settings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateExpensesSettingsRequest"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpensesSettings"
+  /api/expenses/sheet/current:
+    get:
+      summary: Get current expenses dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard
+  /api/expenses/entries:
+    post:
+      summary: Add expense entry
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExpenseEntryRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseEntry"
+  /api/expenses/entries/{id}:
+    delete:
+      summary: Delete expense entry
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+  /api/expenses/checklists:
+    post:
+      summary: Upsert checklist template
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertTemplateRequest"
+      responses:
+        "200":
+          description: Upserted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseTemplate"
+  /api/expenses/checklists/{id}:
+    delete:
+      summary: Delete checklist template
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+  /api/expenses/checklists/complete:
+    post:
+      summary: Complete checklist item
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteChecklistItemRequest"
+      responses:
+        "201":
+          description: Entry created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseEntry"
+  /api/expenses/recurring:
+    post:
+      summary: Upsert recurring template
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertTemplateRequest"
+      responses:
+        "200":
+          description: Upserted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseTemplate"
+  /api/expenses/recurring/{id}:
+    delete:
+      summary: Delete recurring template
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+  /api/expenses/sheet/close:
+    post:
+      summary: Close current expenses sheet
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Closed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpenseSheet"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        userId:
+          type: string
+      required:
+        - accessToken
+        - tokenType
+        - expiresAt
+        - userId
+    SessionResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+        sessionId:
+          type: string
+      required:
+        - userId
+        - sessionId
+    Refill:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        date:
+          type: string
+        weightKg:
+          type: number
+          format: float
+        bags:
+          type: integer
+        temperature:
+          type: number
+          format: float
+          nullable: true
+        season:
+          type: string
+          nullable: true
+      required:
+        - id
+        - userId
+        - date
+        - weightKg
+        - bags
+    CreateRefillRequest:
+      type: object
+      properties:
+        date:
+          type: string
+        weightKg:
+          type: number
+          format: float
+        bags:
+          type: integer
+        temperature:
+          type: number
+          format: float
+          nullable: true
+      required:
+        - date
+        - weightKg
+        - bags
+    CalorieLog:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        dateTime:
+          type: string
+        calories:
+          type: integer
+        proteinGrams:
+          type: integer
+        carbGrams:
+          type: integer
+          nullable: true
+        fatGrams:
+          type: integer
+          nullable: true
+        title:
+          type: string
+          nullable: true
+      required:
+        - id
+        - userId
+        - dateTime
+        - calories
+        - proteinGrams
+    CalorieTarget:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        targetCalories:
+          type: integer
+        targetProteinGrams:
+          type: integer
+        targetCarbGrams:
+          type: integer
+          nullable: true
+        targetFatGrams:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - userId
+        - targetCalories
+        - targetProteinGrams
+        - createdAt
+        - updatedAt
+    CreateCalorieLogRequest:
+      type: object
+      properties:
+        calories:
+          type: integer
+        proteinGrams:
+          type: integer
+        carbGrams:
+          type: integer
+          nullable: true
+        fatGrams:
+          type: integer
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        date:
+          type: string
+          nullable: true
+        time:
+          type: string
+          nullable: true
+      required:
+        - calories
+        - proteinGrams
+    UpdateCalorieTargetRequest:
+      type: object
+      properties:
+        targetCalories:
+          type: integer
+        targetProteinGrams:
+          type: integer
+        targetCarbGrams:
+          type: integer
+          nullable: true
+        targetFatGrams:
+          type: integer
+          nullable: true
+      required:
+        - targetCalories
+        - targetProteinGrams
+    ExpensesSettings:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        income:
+          type: number
+          format: float
+        ratioFund:
+          type: integer
+        ratioFun:
+          type: integer
+        ratioFuture:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - userId
+        - income
+        - ratioFund
+        - ratioFun
+        - ratioFuture
+        - createdAt
+        - updatedAt
+    ExpenseTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+        amount:
+          type: number
+          format: float
+        category:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - userId
+        - title
+        - amount
+        - category
+        - createdAt
+        - updatedAt
+    ExpensesSettingsView:
+      type: object
+      properties:
+        settings:
+          $ref: "#/components/schemas/ExpensesSettings"
+        checklist:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExpenseTemplate"
+        recurring:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExpenseTemplate"
+      required:
+        - settings
+        - checklist
+        - recurring
+    UpdateExpensesSettingsRequest:
+      type: object
+      properties:
+        income:
+          type: number
+          format: float
+        ratioFund:
+          type: integer
+        ratioFun:
+          type: integer
+        ratioFuture:
+          type: integer
+      required:
+        - income
+        - ratioFund
+        - ratioFun
+        - ratioFuture
+    CreateExpenseEntryRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+          format: float
+        category:
+          type: string
+          nullable: true
+        date:
+          type: string
+          nullable: true
+      required:
+        - title
+        - amount
+    ExpenseEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        sheetId:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+        amount:
+          type: number
+          format: float
+        category:
+          type: string
+        date:
+          type: string
+        type:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - sheetId
+        - userId
+        - title
+        - amount
+        - category
+        - date
+        - type
+        - createdAt
+    UpsertTemplateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        title:
+          type: string
+        amount:
+          type: number
+          format: float
+        category:
+          type: string
+          nullable: true
+      required:
+        - title
+        - amount
+    CompleteChecklistItemRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          nullable: true
+      required:
+        - id
+    ExpenseSheet:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        periodKey:
+          type: string
+        createdAt:
+          type: string
+        closedAt:
+          type: string
+          nullable: true
+      required:
+        - id
+        - userId
+        - periodKey
+        - createdAt

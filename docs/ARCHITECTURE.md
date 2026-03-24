@@ -2,7 +2,7 @@
 
 This document defines the Trackstack system shape, the backend target vocabulary, and the current migration status. It replaces the need for a separate backend target note.
 
-`apps/server-next` is now the reference backend architecture and the replacement path for the legacy `apps/server` workspace. Intentional frontend/backend contract breaks are tracked separately in `docs/BACKEND_BREAKING_CHANGES.md`.
+The rebuilt backend now lives at `apps/server`. Intentional frontend/backend contract breaks are tracked separately in `docs/BACKEND_BREAKING_CHANGES.md`.
 
 ## System Flow
 
@@ -30,16 +30,16 @@ Key points:
 ## Source Of Truth
 
 - `apps/web` owns pages, layouts, browser interaction, and the static frontend shell.
-- `apps/server-next` owns backend contracts, domain rules, auth issuance/verification, and backend-owned tooling.
-- `apps/server` remains the legacy compatibility workspace until the frontend and deploy paths finish migrating, but it is no longer the architecture reference.
+- `apps/server` owns backend contracts, domain rules, auth issuance/verification, and backend-owned tooling.
+- Historical references to the legacy compatibility backend remain in migration notes only; the repository path `apps/server` now refers to the rebuilt backend described here.
 - Frontend pages should talk to Go-owned `/api/*` endpoints rather than direct databases or Astro-owned API adapters.
 
 ## Reference Backend Shape
 
-The target backend structure is the one implemented in `apps/server-next`:
+The target backend structure is the one implemented in `apps/server`:
 
 ```text
-apps/server-next/
+apps/server/
 ├── cmd/
 │   ├── lambda/                    # AWS Lambda custom-runtime entrypoint
 │   ├── seed-user/                 # backend-owned db tooling for e2e/local flows
@@ -189,27 +189,27 @@ Rules:
 
 ## Runtime Assembly
 
-The shared runtime is built once in `apps/server-next/internal/app/bootstrap` and reused by all deployment targets.
+The shared runtime is built once in `apps/server/internal/app/bootstrap` and reused by all deployment targets.
 
 ### Local HTTP Runtime
 
-- `apps/server-next/cmd/server/main.go` is intentionally thin
+- `apps/server/cmd/server/main.go` is intentionally thin
 - it loads `.env`, builds the runtime, starts `http.Server`, and handles graceful shutdown
 
 ### Lambda Runtime
 
-- `apps/server-next/cmd/lambda/main.go` is intentionally thin
-- it builds the same runtime and passes the assembled `http.Handler` into `apps/server-next/internal/platform/aws/functionurl`
+- `apps/server/cmd/lambda/main.go` is intentionally thin
+- it builds the same runtime and passes the assembled `http.Handler` into `apps/server/internal/platform/aws/functionurl`
 - the Function URL adapter is a deployment/runtime concern, not a domain transport concern
 
 ### Backend-Owned Tooling
 
-- `apps/server-next/cmd/seed-user` creates or updates the e2e/local test user directly in the users database
+- `apps/server/cmd/seed-user` creates or updates the e2e/local test user directly in the users database
 - backend-owned CLI tools may reuse the same runtime config family without needing the full HTTP runtime
 
 ## Authentication And Identity Flow
 
-`apps/server-next` uses stateless bearer auth.
+`apps/server` uses stateless bearer auth.
 
 Flow:
 
@@ -233,7 +233,7 @@ Current auth contract:
 
 Important migration note:
 
-- the current Astro frontend is still behind this auth contract and is not yet fully compatible with `apps/server-next`
+- the current Astro frontend is still behind this auth contract and is not yet fully compatible with `apps/server`
 
 ## Transport Contract
 
@@ -286,13 +286,13 @@ Shared transport rules:
 - JSON errors use `{ "error": "..." }`
 - CORS is configured globally at the router level
 - OpenAPI is served by the backend and must stay in sync with the route surface
-- the aggregate `GET /api/dashboard` route is intentionally removed from `apps/server-next`
+- the aggregate `GET /api/dashboard` route is intentionally removed from `apps/server`
 
 Intentional compatibility breaks live in `docs/BACKEND_BREAKING_CHANGES.md`, not in this file.
 
 ## Current Context Status
 
-The reference backend shape is no longer hypothetical. `apps/server-next` currently includes:
+The reference backend shape is no longer hypothetical. `apps/server` currently includes:
 
 - `auth`
 - `users`
@@ -308,7 +308,7 @@ Current replacement-oriented runtime capabilities:
 - CORS middleware
 - OpenAPI endpoint
 - backend-owned user seeding command
-- curl-based end-to-end smoke coverage in `apps/server-next/scripts/e2e.sh`
+- curl-based end-to-end smoke coverage in `apps/server/scripts/e2e.sh`
 
 Current intentional gaps vs the legacy backend:
 
@@ -329,7 +329,7 @@ In local development, browser requests should stay same-origin and rely on the f
 
 ### Backend Runtime
 
-The `apps/server-next` runtime currently depends on:
+The `apps/server` runtime currently depends on:
 
 - `APP_ENV`
 - `PORT`
@@ -349,7 +349,7 @@ The `apps/server-next` runtime currently depends on:
 - `DB_CONN_MAX_LIFETIME_SECONDS`
 - `DB_CONN_MAX_IDLE_TIME_SECONDS`
 
-Backend-owned commands under `apps/server-next/cmd/**` should align with this same runtime family unless a command intentionally narrows the required config surface.
+Backend-owned commands under `apps/server/cmd/**` should align with this same runtime family unless a command intentionally narrows the required config surface.
 
 ### CI/CD And Runtime Secrets
 

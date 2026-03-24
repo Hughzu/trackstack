@@ -38,21 +38,21 @@ cd apps/web
 pnpm test:e2e
 ```
 
-`pnpm test:e2e` seeds the configured users database through the backend-owned seed command before running browser flows. The test workflow remains compatible with `apps/web/.env` for `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD`; the backend command also supports `apps/server/.env` or exported environment variables for DB config.
+`pnpm test:e2e` runs the Playwright browser flows against the currently running frontend/backend pair. If you want to refresh the backend test user first, run `pnpm seed:e2e-user` from `apps/web` on the host or `go run ./cmd/seed-user` from `apps/server`.
 
-### Backend-First `server-next` Smoke Checks
+### Backend-First Smoke Checks
 
 Run the rebuild backend directly:
 
 ```bash
-cd apps/server-next
+cd apps/server
 go run ./cmd/server
 ```
 
 In another shell:
 
 ```bash
-cd apps/server-next
+cd apps/server
 go run ./cmd/seed-user
 ./scripts/e2e.sh
 ```
@@ -60,8 +60,8 @@ go run ./cmd/seed-user
 Notes:
 
 - `./scripts/e2e.sh` defaults to `BASE_URL=http://localhost:8080`.
-- It loads `apps/server-next/.env` automatically and requires `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` there or in the shell.
-- `go run ./cmd/seed-user` loads `apps/web/.env` first and `apps/server-next/.env` second.
+- It loads `apps/server/.env` automatically and requires `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` there or in the shell.
+- `go run ./cmd/seed-user` loads `apps/web/.env` first and `apps/server/.env` second.
 - Override `BASE_URL` when validating a non-default local port or remote environment.
 
 ## Compose Regression Workflow
@@ -78,32 +78,6 @@ docker compose exec -T astro-frontend sh -lc 'pnpm test:e2e'
 This is the default local loop after changing Astro auth routes, Go handlers, or request/response contracts between them.
 
 ## Current Regression Coverage
-
-- `apps/server/internal/transport/http/auth_test.go`
-  - Login JSON request
-  - Logout JSON request
-  - Session verification request
-  - Session touch refreshes cookie expiry without rotating the token
-  - Assert cookie issuance and auth transport behavior
-
-- `apps/server/internal/transport/http/calories_test.go`
-  - Authenticated `POST /api/calories/log` JSON request
-  - Auth middleware refreshes cookie expiry on touched sessions during protected requests
-  - Authenticated non-JSON `POST /api/calories/log` rejection
-  - Authenticated `POST /api/calories/target` JSON request
-  - Authenticated `DELETE /api/calories/log?id=...` request in the legacy backend contract
-  - Assert JSON-only transport behavior at the HTTP boundary
-
-- `apps/server/internal/transport/http/expenses_test.go`
-  - Authenticated `POST /api/expenses/settings` JSON request
-  - Authenticated `POST /api/expenses/checklists` JSON request
-  - Authenticated `POST /api/expenses/recurring` JSON request
-  - Authenticated non-JSON `POST /api/expenses/entries` rejection
-  - Assert removed legacy expense aliases return `404`
-
-- `apps/server/internal/contexts/heat/application/services/services_test.go`
-  - Direct use-case coverage for heat create, list, and dashboard services
-  - Season labeling, date normalization, and dashboard recent-slice behavior without routing through the compatibility facade
 
 - `apps/web/tests/forms.test.ts`
   - Required `data-api-form` attributes across mutation forms
@@ -151,7 +125,7 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Assert canonical `DELETE /api/heat/refills/{id}` succeeds and the list shrinks
   - Assert heat mutations target canonical Go-owned `/api/heat/refills` resources
 
-- `apps/server-next/scripts/e2e.sh`
+- `apps/server/scripts/e2e.sh`
   - Backend-first curl smoke coverage for the rebuild runtime
   - Logs in with bearer auth and validates `GET /api/auth/session`
   - Exercises heat create/list/delete
@@ -159,10 +133,10 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Exercises expenses settings read/update, entry create/delete, checklist create/delete, recurring create/delete, and dashboard read
   - Validates `POST /api/auth/logout` stays stateless and returns `204`
 
-- `apps/server-next/**`
-  - No dedicated Go regression test files yet
-  - The current rebuild safety net is the backend-owned seed command plus the curl e2e script
-  - Add focused Go tests next for handler parsing/status mapping and service invariants as contracts settle
+- `apps/server/**`
+  - No dedicated Go regression test files yet in the rebuilt backend workspace
+  - The current backend safety net is `go test ./...` plus the seed-user command and `./scripts/e2e.sh`
+  - Add focused Go tests next for handler parsing, auth behavior, and service invariants as contracts settle
 
 ## Adding Regression Tests
 
@@ -180,13 +154,13 @@ When a regression is found in the frontend/backend boundary:
 - If the homepage or any server-rendered page throws `fetch failed` in Docker:
   - rebuild `go-backend` after any `apps/server/go.mod` or Go runtime image change so the running container is not stuck on an older toolchain image.
 - If `pnpm test:e2e` fails before the browser starts:
-  - verify `apps/web/.env` contains valid `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` values, and verify `apps/server-next/.env` or your shell environment provides valid Turso users DB credentials if they are not already shared.
+  - verify Playwright browsers are installed in the environment where the command is running, and verify `apps/web/.env` contains valid `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` values.
 - If login e2e fails unexpectedly:
-  - rerun `pnpm test:e2e`; it reseeds the test credentials each run.
+  - rerun `pnpm seed:e2e-user` on the host or `go run ./cmd/seed-user` from `apps/server`, then rerun `pnpm test:e2e`.
 - If Go tools are missing in container runs:
   - execute the command through the `go-backend` service.
-- If `apps/server-next/scripts/e2e.sh` fails early:
-  - verify `apps/server-next` is running on the expected `BASE_URL`, rerun `go run ./cmd/seed-user`, and confirm `JWT_SECRET` plus `TURSO_*` env vars are set for the rebuild runtime.
+- If `apps/server/scripts/e2e.sh` fails early:
+  - verify `apps/server` is running on the expected `BASE_URL`, rerun `go run ./cmd/seed-user`, and confirm `JWT_SECRET` plus `TURSO_*` env vars are set for the rebuild runtime.
 ## Auth Boundary
 
 - Browser auth now talks directly to Go under `/api/auth/*`.
@@ -194,11 +168,11 @@ When a regression is found in the frontend/backend boundary:
 - Playwright login helpers now explicitly assert that `/api/auth/login` succeeds before continuing into module tests.
 - When auth transport behavior changes, update both Go auth transport tests and at least one browser flow that authenticates through `/api/auth/login`.
 
-For `apps/server-next`, bearer-auth changes should be validated backend-first with the rebuild runtime and `curl` before the frontend migration exists:
+For `apps/server`, bearer-auth changes should be validated backend-first with the rebuild runtime and `curl` before the frontend migration exists:
 
-- run `go run ./cmd/server` from `apps/server-next`
-- run `go run ./cmd/seed-user` from `apps/server-next`
-- run `./scripts/e2e.sh` from `apps/server-next`
+- run `go run ./cmd/server` from `apps/server`
+- run `go run ./cmd/seed-user` from `apps/server`
+- run `./scripts/e2e.sh` from `apps/server`
 - verify `POST /api/auth/login` returns a JSON bearer token payload and no auth cookie
 - verify `GET /api/auth/session` returns `401` without `Authorization: Bearer <jwt>` and `200` with it
 - verify protected routes under `/api/heat/*`, `/api/calories/*`, and `/api/expenses/*` reject missing bearer headers and succeed with a valid bearer token

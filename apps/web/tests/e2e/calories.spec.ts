@@ -3,6 +3,10 @@ import { test, expect } from '@playwright/test';
 const e2eEmail = process.env.E2E_TEST_EMAIL ?? '';
 const e2ePassword = process.env.E2E_TEST_PASSWORD ?? '';
 
+function uniqueSuffix() {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 async function login(page: import('@playwright/test').Page) {
     await page.goto('/login');
     const responsePromise = page.waitForResponse(response =>
@@ -90,30 +94,31 @@ test.describe('Calories Logging Flow', () => {
     test('User can delete a calorie log', async ({ page }) => {
         await login(page);
 
+        const mealTitle = `Delete Me ${uniqueSuffix()}`;
+
         await page.goto('/calories/new');
         await page.fill('input[name="calories"]', '510');
         await page.fill('input[name="proteinGrams"]', '35');
-        await page.fill('input[name="title"]', 'Delete Me');
+        await page.fill('input[name="title"]', mealTitle);
         await page.click('button[type="submit"]');
         await expect(page).toHaveURL('/calories');
 
-        const calorieRows = page.locator('button[data-calorie-delete]');
-        const initialCount = await calorieRows.count();
-        expect(initialCount).toBeGreaterThan(0);
+        const createdRow = page.locator('[data-calorie-logs-list] > div').filter({ hasText: mealTitle }).first();
+        await expect(createdRow).toBeVisible();
 
-        await calorieRows.first().click();
+        await createdRow.locator('button[data-calorie-delete]').click();
         const deleteModal = page.locator('#calorie-delete-modal');
         await expect(deleteModal).toBeVisible();
 
         const [deleteResponse] = await Promise.all([
             page.waitForResponse(response =>
-                response.url().includes('/api/calories/log?id=') && response.request().method() === 'DELETE'
+                response.url().includes('/api/calories/logs/') && response.request().method() === 'DELETE'
             ),
             deleteModal.locator('[data-confirm-modal]').click(),
         ]);
 
         expect(deleteResponse.ok()).toBeTruthy();
         await expect(deleteModal).toBeHidden();
-        await expect(page.locator('button[data-calorie-delete]')).toHaveCount(initialCount - 1);
+        await expect(page.locator('[data-calorie-logs-list] > div').filter({ hasText: mealTitle })).toHaveCount(0);
     });
 });
