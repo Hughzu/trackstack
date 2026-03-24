@@ -38,6 +38,10 @@ func ResolveSession(jwtSecret string) func(http.Handler) http.Handler {
 func bearerToken(r *http.Request) (string, bool) {
 	fields := strings.Fields(strings.TrimSpace(r.Header.Get("Authorization")))
 	if len(fields) != 2 || !strings.EqualFold(fields[0], "Bearer") || fields[1] == "" {
+		fields = strings.Fields(strings.TrimSpace(r.Header.Get("X-Trackstack-Authorization")))
+	}
+
+	if len(fields) != 2 || !strings.EqualFold(fields[0], "Bearer") || fields[1] == "" {
 		return "", false
 	}
 

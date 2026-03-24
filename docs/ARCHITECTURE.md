@@ -214,7 +214,7 @@ The shared runtime is built once in `apps/server/internal/app/bootstrap` and reu
 Flow:
 
 1. `POST /api/auth/login` verifies credentials through the users context and returns a signed JWT.
-2. `ResolveSession` middleware validates `Authorization: Bearer <jwt>` locally using `JWT_SECRET`.
+2. `ResolveSession` middleware validates bearer auth locally using `JWT_SECRET`. In direct/local runtimes it reads `Authorization: Bearer <jwt>`; in the CloudFront + Lambda Function URL deployment it also accepts `X-Trackstack-Authorization: Bearer <jwt>` because the origin request uses `Authorization` for SigV4 signing.
 3. The middleware injects `userID` into request context through `platform/authcontext`.
 4. Inbound handlers read that `userID` and pass it explicitly into application commands and queries.
 5. Domain and application layers never parse bearer headers or read cookies.

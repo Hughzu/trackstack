@@ -36,7 +36,7 @@ import { apiConfig } from "@/config/api";
       const token = window.localStorage.getItem("trackstack_token");
       const baseHeaders = { ...init.headers };
       if (token) {
-        baseHeaders["Authorization"] = `Bearer ${token}`;
+        baseHeaders["X-Trackstack-Authorization"] = `Bearer ${token}`;
       }
       
       const requestInit = { ...init, headers: baseHeaders };
@@ -132,7 +132,7 @@ import { apiConfig } from "@/config/api";
             "Content-Type": "application/json",
           };
           if (token && action !== "/api/auth/login") {
-            headers["Authorization"] = `Bearer ${token}`;
+            headers["X-Trackstack-Authorization"] = `Bearer ${token}`;
           }
 
           const response = await fetcher(resolveFormAction(action), {

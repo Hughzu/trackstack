@@ -175,7 +175,7 @@ import SectionHeader from "@/components/SectionHeader.astro";
     try {
       const token = window.localStorage.getItem("trackstack_token");
       const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (token) headers["X-Trackstack-Authorization"] = `Bearer ${token}`;
 
       const response = await fetch(resolveBrowserApiUrl("/api/calories/target"), {
         headers,

@@ -174,7 +174,7 @@ Local init:
 - GitHub deploy role is scoped to Trackstack resources and OIDC is restricted to the main branch.
 - Lambda execution role can only write logs and read runtime SSM parameters.
 - Assets bucket is not public and is only accessible via CloudFront OAC.
-- Lambda Function URL is IAM-authenticated and restricted to CloudFront.
+- Lambda Function URL is IAM-authenticated and restricted to CloudFront. Because CloudFront uses `Authorization` for SigV4 signing to the Function URL origin, browser bearer tokens must be forwarded in `X-Trackstack-Authorization` instead of `Authorization` on deployed app requests.
 
 ## FinOps Guardrails
 

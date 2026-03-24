@@ -72,7 +72,7 @@
 ### Authentication
 *The problem: We need a secure, custom session system that protects both API routes and server-rendered pages without constantly prop-drilling a `userId` through every UI component and business logic function.*
 
-- **How it works (`AuthBootstrap.astro`):** `apps/web/src/layouts/AuthBootstrap.astro` performs a browser-side session bootstrap against `GET /api/auth/session` and publishes auth readiness into the client runtime.
+- **How it works (`AuthBootstrap.astro`):** `apps/web/src/layouts/AuthBootstrap.astro` performs a browser-side session bootstrap against `GET /api/auth/session` and publishes auth readiness into the client runtime. In the CloudFront -> Lambda Function URL deployment, the browser token travels in `X-Trackstack-Authorization` so CloudFront can keep using `Authorization` for SigV4 origin signing.
 - **Current page guard:** protected pages now rely on browser-side auth bootstrap against `GET /api/auth/session` and redirect to `/login` on the client when the session is missing.
 - **Current auth flow:** login, logout, and session verification are all direct browser-to-Go interactions over `/api/auth/*`.
 - **Session behavior:** Go owns a sliding session window. When authenticated traffic extends the server-side idle expiry, the API also refreshes the auth cookie expiry so the browser keeps sending the DB-backed session token.

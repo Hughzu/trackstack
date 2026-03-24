@@ -268,7 +268,7 @@ import ConfirmModal from "@/components/ConfirmModal.astro";
     try {
       const token = window.localStorage.getItem("trackstack_token");
       const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (token) headers["X-Trackstack-Authorization"] = `Bearer ${token}`;
 
       const response = await fetch(resolveBrowserApiUrl("/api/expenses/settings"), {
         headers,

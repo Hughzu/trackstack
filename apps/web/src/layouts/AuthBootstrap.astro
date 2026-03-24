@@ -66,7 +66,7 @@ const { authMode = "none" } = Astro.props;
 
         const response = await fetch(resolveSessionUrl(), {
           headers: {
-            "Authorization": `Bearer ${token}`,
+            "X-Trackstack-Authorization": `Bearer ${token}`,
           },
         });
 
