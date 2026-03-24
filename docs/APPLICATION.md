@@ -48,13 +48,15 @@
 ### Mutations & Serverless Forms
 *The problem: The production application runs behind an AWS Lambda Function URL secured by AWS IAM. A standard HTML form submitted by the browser (`<form method="POST">`) doesn't know how to sign the payload with AWS SigV4 credentials, resulting in a `403 Forbidden` error.*
 
-- **How it works (`ApiFormHandler.astro`):** `apps/web/src/layouts/ApiFormHandler.astro` is a global interceptor script injected into the main layouts. 
+- **How it works (`ApiFormHandler.astro`):** `apps/web/src/layouts/ApiFormHandler.astro` is a global interceptor script injected into the main layouts.
   - **Interception:** It listens for submisssion events on any form carrying the `data-api-form` attribute and prevents the browser's default navigation behavior.
   - **Serialization:** It extracts the form inputs via the `FormData` API and serializes them into a clean JSON object.
   - **SigV4 Signing Prep:** AWS SigV4 requires the request payload to be hashed. The script uses the browser's native `window.crypto.subtle` API to calculate the `SHA-256` hash of the JSON body and injects it into the `x-amz-content-sha256` header.
-  - **Fetching & UI Feedback:** Finally, it performs an AJAX `fetch` request using `window.signedFetch` (which is configured elsewhere in `AppShell` to handle the final AWS signing). Based on the HTTP response status, it either reloads the page, navigates to `data-redirect`, or automatically reveals a hidden error element defined by `data-error-target` containing the JSON error message sent back by the server.
+  - **Auth wiring:** On successful `POST /api/auth/login`, it stores the returned bearer token in browser storage. On successful `POST /api/auth/logout`, it clears that client token before redirect or reload.
+  - **Fetching & UI Feedback:** Finally, it performs an AJAX `fetch` request using `window.signedFetch` (created by the runtime when needed). Based on the HTTP response status, it either reloads the page, navigates to `data-redirect`, or automatically reveals a hidden error element defined by `data-error-target` containing the JSON error message sent back by the server.
 - **Rule [API Mutations Only]:** UI components must never mutate data directly. Browser mutations must target canonical `/api/*` endpoints owned by Go.
 - **Deployment note:** In development, browser calls stay same-origin and use the Astro/Vite `/api` proxy. In production/static builds, browser calls target Go through `PUBLIC_API_BASE_URL`.
+- **Rule [Auth Header]:** Protected browser mutations and confirm-modal requests attach the bearer token through `X-Trackstack-Authorization` so the deployed CloudFront -> Lambda path stays compatible with SigV4 origin signing.
 - **Rule [SigV4 Forms - CRITICAL]:** ANY form triggering a mutation must use the `data-api-form` attribute to be intercepted by `ApiFormHandler.astro`.
 - **Rule [Go Boundary]:** The browser should call Go-owned `/api/*` endpoints directly. Astro does not own API adapter routes.
 - **Rule [Timestamp Ownership]:** Calorie quick-add and manual meal logging should let the Go backend stamp the current UTC timestamp unless the product explicitly adds a backdating feature.
@@ -72,15 +74,14 @@
 ### Authentication
 *The problem: We need a secure, custom session system that protects both API routes and server-rendered pages without constantly prop-drilling a `userId` through every UI component and business logic function.*
 
-- **How it works (`AuthBootstrap.astro`):** `apps/web/src/layouts/AuthBootstrap.astro` performs a browser-side session bootstrap against `GET /api/auth/session` and publishes auth readiness into the client runtime. In the CloudFront -> Lambda Function URL deployment, the browser token travels in `X-Trackstack-Authorization` so CloudFront can keep using `Authorization` for SigV4 origin signing.
-- **Current page guard:** protected pages now rely on browser-side auth bootstrap against `GET /api/auth/session` and redirect to `/login` on the client when the session is missing.
-- **Current auth flow:** login, logout, and session verification are all direct browser-to-Go interactions over `/api/auth/*`.
-- **Session behavior:** Go owns a sliding session window. When authenticated traffic extends the server-side idle expiry, the API also refreshes the auth cookie expiry so the browser keeps sending the DB-backed session token.
+- **How it works (`AuthBootstrap.astro`):** `apps/web/src/layouts/AuthBootstrap.astro` reads the stored bearer token, performs a browser-side session bootstrap against `GET /api/auth/session`, and publishes auth readiness into the client runtime. In the CloudFront -> Lambda Function URL deployment, the browser token travels in `X-Trackstack-Authorization` so CloudFront can keep using `Authorization` for SigV4 origin signing.
+- **Current page guard:** protected pages wait for browser-side auth bootstrap and redirect to `/login` on the client when the session is missing. Public-only pages redirect back to `/` once a valid session is confirmed.
+- **Current auth flow:** login, logout, and session verification are all direct browser-to-Go interactions over `/api/auth/*`. Successful login stores the bearer token client-side; successful logout clears it client-side after the stateless backend `204` response.
+- **Session behavior:** auth is now stateless bearer auth. Full page reloads and Astro navigations revalidate the stored token against `GET /api/auth/session` instead of relying on a server-managed auth cookie.
 - **Current split:** Go is the source of truth for login, logout, session verification, page data, and API contracts. The Astro app is now a static frontend shell plus client runtime.
 - **Milestone reached:** the home, calories, expenses, and heat dashboards plus the calories and expenses settings pages now load their authenticated read models in the browser after auth bootstrap, so they no longer depend on `getCurrentUserId()` or SSR request-local auth context.
 - **Overview behavior:** the home overview no longer waits on a single aggregated `/api/dashboard` response. It loads expenses, calories, and heat cards independently from their canonical module endpoints so one cold module path does not block the whole screen.
-
-`apps/server` is intentionally ahead of the current web app on auth transport: it now expects bearer tokens on protected requests and returns bearer tokens from login. Until the Astro frontend is migrated, browser auth flows remain incompatible with the rebuilt backend contract.
+- **Shared browser auth transport:** `ApiFormHandler.astro`, `ClientRuntime.astro`, and the client-loaded dashboard/settings modules attach `X-Trackstack-Authorization: Bearer <jwt>` on protected browser calls.
 
 ### Go Backend Boundary
 

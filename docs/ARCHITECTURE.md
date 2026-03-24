@@ -231,9 +231,9 @@ Current auth contract:
 - `POST /api/auth/logout` is stateless and returns `204`
 - protected domain routes under `/api/calories/*`, `/api/expenses/*`, and `/api/heat/*` require bearer auth
 
-Important migration note:
+Current frontend note:
 
-- the current Astro frontend is still behind this auth contract and is not yet fully compatible with `apps/server`
+- `apps/web` now stores the bearer token client-side after login, replays it during auth bootstrap, and uses the same auth contract for protected browser reads and mutations.
 
 ## Transport Contract
 
@@ -313,7 +313,6 @@ Current replacement-oriented runtime capabilities:
 Current intentional gaps vs the legacy backend:
 
 - the old aggregate `/api/dashboard` route is not carried forward
-- the current Astro shell still needs auth migration from cookie transport to bearer transport
 - accepted route/payload differences are documented in `docs/BACKEND_BREAKING_CHANGES.md`
 
 ## Environment Variables

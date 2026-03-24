@@ -87,7 +87,7 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
 
 - `apps/web/tests/read-paths.test.ts`
   - Guard that the home dashboard no longer imports SSR auth context
-  - Guard that the dashboard overview reads `/api/dashboard` in the browser after auth bootstrap
+  - Guard that the dashboard overview reads expenses, calories, and heat module endpoints independently in the browser after auth bootstrap
   - Guard that the calories dashboard no longer imports SSR auth context
   - Guard that the calories dashboard reads `/api/calories/dashboard` in the browser after auth bootstrap
   - Guard that the expenses and heat dashboards no longer import SSR auth context
@@ -100,6 +100,10 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Guard that Astro auth adapter route files are removed
   - Guard that legacy SSR auth helper files are removed
   - Guard that legacy SSR service wrappers are removed
+
+- `apps/web/tests/api-config.test.ts`
+  - Guard API path normalization for browser calls
+  - Guard that direct browser calls can target Go-owned auth and domain endpoints consistently
 
 - `apps/web/tests/e2e/calories.spec.ts`
   - Login through Astro
@@ -164,11 +168,12 @@ When a regression is found in the frontend/backend boundary:
 ## Auth Boundary
 
 - Browser auth now talks directly to Go under `/api/auth/*`.
-- Protected-page gating happens through `AuthBootstrap.astro` calling `GET /api/auth/session` and redirecting client-side.
+- `ApiFormHandler.astro` stores the login bearer token in browser storage and clears it on successful logout.
+- Protected-page gating happens through `AuthBootstrap.astro` calling `GET /api/auth/session` with `X-Trackstack-Authorization` and redirecting client-side.
 - Playwright login helpers now explicitly assert that `/api/auth/login` succeeds before continuing into module tests.
-- When auth transport behavior changes, update both Go auth transport tests and at least one browser flow that authenticates through `/api/auth/login`.
+- When auth transport behavior changes, update both Go auth transport tests and at least one browser flow that covers login plus post-login page bootstrap.
 
-For `apps/server`, bearer-auth changes should be validated backend-first with the rebuild runtime and `curl` before the frontend migration exists:
+For `apps/server`, bearer-auth changes should still be validated backend-first with the rebuild runtime and `curl`:
 
 - run `go run ./cmd/server` from `apps/server`
 - run `go run ./cmd/seed-user` from `apps/server`
@@ -177,3 +182,4 @@ For `apps/server`, bearer-auth changes should be validated backend-first with th
 - verify `GET /api/auth/session` returns `401` without `Authorization: Bearer <jwt>` and `200` with it
 - verify protected routes under `/api/heat/*`, `/api/calories/*`, and `/api/expenses/*` reject missing bearer headers and succeed with a valid bearer token
 - verify `POST /api/auth/logout` returns `204` and does not invalidate an already-issued token because the current rebuild stays stateless
+- verify browser login stores client auth state, a protected page reload reboots auth through `GET /api/auth/session`, and logout clears the client token before redirect
