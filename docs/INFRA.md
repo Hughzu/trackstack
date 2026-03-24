@@ -146,7 +146,7 @@ Composition:
 - `module.cost_guardrails`: monthly budget.
 - `s3.tf`: artifacts bucket used for Lambda package storage.
 - `ssm.tf`: publishes infra outputs to a dedicated `/trackstack/serverless-next` prefix.
-- `01-set-runtime-ssm.sh`: seeds the serverless-next runtime contract into SSM and now needs to provide `JWT_SECRET` for the bearer-auth rebuild runtime.
+- `01-set-runtime-ssm.sh`: seeds the serverless-next rebuild runtime into SSM with `APP_ENV`, `LOG_LEVEL`, `DB_CONNECTION_MODE`, `CORS_ALLOWED_ORIGIN`, `JWT_SECRET`, and `TURSO_*_{URL_HTTP,TOKEN}` values.
 
 Local init:
 - Uses a local `backend.hcl` (ignored by git) for state backend config.
@@ -189,8 +189,8 @@ Local init:
 - Run bootstrap scripts in `infra/bootstrap/bootstrap` once per account.
 - Create local `backend.hcl` files for Terraform init (not committed).
 - Set runtime secrets in SSM using `infra/environments/serverless/01-set-runtime-ssm.sh`.
-- For the migration environment, seed runtime config with `infra/environments/serverless-next/01-set-runtime-ssm.sh` before deploy validation; it should align with `apps/server/.env`, auto-load `TURSO_*_URL_HTTP` and `TURSO_*_TOKEN` when present, and exported env vars still win.
-- The migration runtime seed script must now include `JWT_SECRET`; legacy cookie/session settings are no longer part of the `apps/server` runtime contract.
+- For the migration environment, seed runtime config with `infra/environments/serverless-next/01-set-runtime-ssm.sh` before deploy validation; it should align with `apps/server/.env`, auto-load `JWT_SECRET` plus `TURSO_*_URL_HTTP` and `TURSO_*_TOKEN` when present, and exported env vars still win.
+- The shared Lambda module no longer injects legacy app-specific runtime defaults automatically; each environment must define its own runtime contract explicitly.
 
 ## CI/CD Touchpoints
 

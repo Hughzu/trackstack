@@ -1,14 +1,9 @@
-- wiring everything with front
 - redeploy
 - update docs
 - test split into microservices
 - front
 
 - Code deep dive
-    - understand what the fuck is going on in the go side
-        - update docs & focus on data flows (with ports / adapters)
-        - understand tests
-        - test microservices ? 
     - understand what the fuck is going on in the astro side
         - update docs & focus on DDD and dataflow
         - understand tests
