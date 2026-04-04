@@ -1,0 +1,115 @@
+services:
+  identity-api:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile.dev
+    working_dir: /app
+    command: go run ./cmd/identity-api
+    volumes:
+      - ./apps/server:/app
+      - microservices_go_mod:/opt/gomodcache
+    ports:
+      - "18081:18081"
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      PORT: 18081
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:4321}
+      JWT_SECRET: ${JWT_SECRET}
+      TURSO_USERS_URL_HTTP: ${TURSO_USERS_URL_HTTP}
+      TURSO_USERS_TOKEN: ${TURSO_USERS_TOKEN}
+      DB_MAX_OPEN_CONNS: ${DB_MAX_OPEN_CONNS:-10}
+      DB_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-5}
+      DB_CONN_MAX_LIFETIME_SECONDS: ${DB_CONN_MAX_LIFETIME_SECONDS:-300}
+      DB_CONN_MAX_IDLE_TIME_SECONDS: ${DB_CONN_MAX_IDLE_TIME_SECONDS:-60}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18081/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  heat-api:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile.dev
+    working_dir: /app
+    command: go run ./cmd/heat-api
+    volumes:
+      - ./apps/server:/app
+      - microservices_go_mod:/opt/gomodcache
+    ports:
+      - "18080:18080"
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      PORT: 18080
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:4321}
+      JWT_SECRET: ${JWT_SECRET}
+      TURSO_HEAT_URL_HTTP: ${TURSO_HEAT_URL_HTTP}
+      TURSO_HEAT_TOKEN: ${TURSO_HEAT_TOKEN}
+      DB_MAX_OPEN_CONNS: ${DB_MAX_OPEN_CONNS:-10}
+      DB_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-5}
+      DB_CONN_MAX_LIFETIME_SECONDS: ${DB_CONN_MAX_LIFETIME_SECONDS:-300}
+      DB_CONN_MAX_IDLE_TIME_SECONDS: ${DB_CONN_MAX_IDLE_TIME_SECONDS:-60}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18080/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  go-backend:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile.dev
+    working_dir: /app
+    command: go run ./cmd/server
+    volumes:
+      - ./apps/server:/app
+      - microservices_go_mod:/opt/gomodcache
+    env_file:
+      - ./apps/server/.env
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  api-edge:
+    image: nginx:1.29-alpine
+    depends_on:
+      identity-api:
+        condition: service_healthy
+      heat-api:
+        condition: service_healthy
+      go-backend:
+        condition: service_healthy
+    volumes:
+      - ./infra/local/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8088:8088"
+
+  astro-frontend:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./apps/web:/app
+      - web_node_modules:/app/node_modules
+    ports:
+      - "4321:4321"
+    environment:
+      API_PROXY_URL: http://api-edge:8088
+      PUBLIC_API_BASE_URL: http://localhost:8088
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    env_file:
+      - ./apps/web/.env
+    depends_on:
+      api-edge:
+        condition: service_started
+
+volumes:
+  microservices_go_mod:
+  web_node_modules:

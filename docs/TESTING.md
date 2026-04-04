@@ -114,6 +114,38 @@ Notes:
 - `POST /api/auth/login` should return a bearer token payload.
 - `GET /api/auth/session` should return `401` without a token and `200` with a valid token.
 
+### Split Compose Workflow: Identity + Heat
+
+Run the first split pair with explicit service-local env injection:
+
+```bash
+docker compose --env-file apps/server/.env -f docker-compose.microservices.yml up --build -d
+```
+
+Validate the services:
+
+```bash
+LOGIN_RESPONSE=$(curl -sS -X POST http://localhost:18081/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"test@test.be","password":"Test123*"}')
+
+TOKEN=$(printf '%s' "$LOGIN_RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["accessToken"])')
+
+curl http://localhost:4321
+curl http://localhost:8088/health
+curl http://localhost:18081/health
+curl -H "Authorization: Bearer $TOKEN" http://localhost:18081/api/auth/session
+curl -H "Authorization: Bearer $TOKEN" http://localhost:18080/api/heat/dashboard
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8088/api/heat/dashboard
+```
+
+Notes:
+
+- `astro-frontend` stays monolithic and talks to a local edge proxy at `http://localhost:8088`.
+- the edge proxy sends `/api/auth/*` to `identity-api`, `/api/heat/*` to `heat-api`, and everything else to the existing `go-backend`.
+- `go-backend` is internal-only in this compose file and is not published on a host port, which avoids fighting with an already-running local backend on `:8080`.
+- that hybrid setup is intentional: it lets the current frontend keep working while you peel services out one by one instead of breaking half the app for architectural purity theater.
+
 ## Compose Regression Workflow
 
 From repo root:
