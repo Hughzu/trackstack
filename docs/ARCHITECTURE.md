@@ -367,6 +367,7 @@ Current required runtimes:
 
 Current split-validation runtime:
 
+- `cmd/identity-api` for the standalone identity service process
 - `cmd/heat-api` for the standalone heat service process
 
 Possible later runtime:
@@ -417,6 +418,7 @@ Expected first extracted runtimes:
 
 The first extracted runtime now exists for local split validation:
 
+- `apps/server/cmd/identity-api`
 - `apps/server/cmd/heat-api`
 
 ## Macro Boundaries

@@ -86,6 +86,34 @@ Notes:
 - `GET /api/heat/dashboard` without a bearer token should return `401`.
 - `cmd/heat-api` loads only heat-service config: `TURSO_HEAT_*`, `JWT_SECRET`, shared DB pool envs, and standard runtime envs.
 
+### Split Validation: Identity Service
+
+Run the standalone identity service directly:
+
+```bash
+cd apps/server
+PORT=18081 go run ./cmd/identity-api
+```
+
+In another shell, validate login and session:
+
+```bash
+LOGIN_RESPONSE=$(curl -sS -X POST http://localhost:18081/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"'$E2E_TEST_EMAIL'","password":"'$E2E_TEST_PASSWORD'"}')
+
+TOKEN=$(printf '%s' "$LOGIN_RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["accessToken"])')
+
+curl http://localhost:18081/health
+curl -H "Authorization: Bearer $TOKEN" http://localhost:18081/api/auth/session
+```
+
+Notes:
+
+- `cmd/identity-api` loads only identity-service config: `TURSO_USERS_*`, `JWT_SECRET`, shared DB pool envs, and standard runtime envs.
+- `POST /api/auth/login` should return a bearer token payload.
+- `GET /api/auth/session` should return `401` without a token and `200` with a valid token.
+
 ## Compose Regression Workflow
 
 From repo root:
