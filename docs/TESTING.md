@@ -188,9 +188,9 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8088/api/heat/dashboard
 Notes:
 
 - `astro-frontend` stays monolithic and talks to a local edge proxy at `http://localhost:8088`.
-- the edge proxy sends `/api/auth/*` to `identity-api`, `/api/heat/*` to `heat-api`, and everything else to the existing `go-backend`.
-- the edge proxy sends `/api/calories/*` to `calories-api`, `/api/expenses/*` to `expenses-api`, `/api/auth/*` to `identity-api`, `/api/heat/*` to `heat-api`, and everything else to the existing `go-backend`.
-- `go-backend` is internal-only in this compose file and is not published on a host port, which avoids fighting with an already-running local backend on `:8080`.
+- the edge proxy sends `/api/calories/*` to `calories-api`, `/api/expenses/*` to `expenses-api`, `/api/auth/*` to `identity-api`, and `/api/heat/*` to `heat-api`.
+- the edge proxy serves `/health` and `/api/health` itself in split mode.
+- `/openapi.yaml` intentionally returns `404` in split compose because there is no single monolith spec worth pretending still exists there.
 - that hybrid setup is intentional: it lets the current frontend keep working while you peel services out one by one instead of breaking half the app for architectural purity theater.
 
 ## Compose Regression Workflow

@@ -371,7 +371,7 @@ Current split-validation runtime:
 - `cmd/expenses-api` for the standalone expenses service process
 - `cmd/identity-api` for the standalone identity service process
 - `cmd/heat-api` for the standalone heat service process
-- `docker-compose.microservices.yml` for running the first extracted services beside the monolith frontend, with a local edge proxy routing `/api/auth/*` to `identity` and `/api/heat/*` to `heat`
+- `docker-compose.microservices.yml` for running the extracted services beside the monolithic frontend, with a local edge proxy routing business API traffic directly to the split services and serving health locally
 
 Possible later runtime:
 
