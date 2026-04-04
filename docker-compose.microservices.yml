@@ -87,6 +87,34 @@ services:
       retries: 5
       start_period: 10s
 
+  expenses-api:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile.dev
+    working_dir: /app
+    command: go run ./cmd/expenses-api
+    volumes:
+      - ./apps/server:/app
+      - microservices_go_mod:/opt/gomodcache
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      PORT: 18083
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:4321}
+      JWT_SECRET: ${JWT_SECRET}
+      TURSO_EXPENSES_URL_HTTP: ${TURSO_EXPENSES_URL_HTTP}
+      TURSO_EXPENSES_TOKEN: ${TURSO_EXPENSES_TOKEN}
+      DB_MAX_OPEN_CONNS: ${DB_MAX_OPEN_CONNS:-10}
+      DB_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-5}
+      DB_CONN_MAX_LIFETIME_SECONDS: ${DB_CONN_MAX_LIFETIME_SECONDS:-300}
+      DB_CONN_MAX_IDLE_TIME_SECONDS: ${DB_CONN_MAX_IDLE_TIME_SECONDS:-60}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18083/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   go-backend:
     build:
       context: ./apps/server
@@ -113,6 +141,8 @@ services:
       heat-api:
         condition: service_healthy
       calories-api:
+        condition: service_healthy
+      expenses-api:
         condition: service_healthy
       go-backend:
         condition: service_healthy
