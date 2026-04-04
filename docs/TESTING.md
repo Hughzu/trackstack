@@ -86,6 +86,29 @@ Notes:
 - `GET /api/heat/dashboard` without a bearer token should return `401`.
 - `cmd/heat-api` loads only heat-service config: `TURSO_HEAT_*`, `JWT_SECRET`, shared DB pool envs, and standard runtime envs.
 
+### Split Validation: Calories Service
+
+Run the standalone calories service directly:
+
+```bash
+cd apps/server
+PORT=18082 go run ./cmd/calories-api
+```
+
+In another shell, validate the split runtime is alive:
+
+```bash
+curl http://localhost:18082/health
+curl -i http://localhost:18082/api/calories/dashboard
+```
+
+Notes:
+
+- `GET /health` should return `200` with `{"status":"ok"}`.
+- `GET /api/calories/dashboard` without a bearer token should return `401`.
+- `cmd/calories-api` loads only calories-service config: `TURSO_CALORIES_*`, `JWT_SECRET`, shared DB pool envs, and standard runtime envs.
+- in `docker-compose.microservices.yml`, `calories-api` is internal-only and is reached through the edge proxy rather than a published host port.
+
 ### Split Validation: Identity Service
 
 Run the standalone identity service directly:
@@ -143,6 +166,7 @@ Notes:
 
 - `astro-frontend` stays monolithic and talks to a local edge proxy at `http://localhost:8088`.
 - the edge proxy sends `/api/auth/*` to `identity-api`, `/api/heat/*` to `heat-api`, and everything else to the existing `go-backend`.
+- the edge proxy sends `/api/calories/*` to `calories-api`, `/api/auth/*` to `identity-api`, `/api/heat/*` to `heat-api`, and everything else to the existing `go-backend`.
 - `go-backend` is internal-only in this compose file and is not published on a host port, which avoids fighting with an already-running local backend on `:8080`.
 - that hybrid setup is intentional: it lets the current frontend keep working while you peel services out one by one instead of breaking half the app for architectural purity theater.
 
