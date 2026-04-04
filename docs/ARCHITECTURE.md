@@ -107,7 +107,7 @@ The current assembly pattern is intentionally split by concern:
 - `database.go` opens and closes domain database pools
 - `*_module.go` wires each context vertically
 - `router.go` mounts global middleware and route groups
-- `runtime.go` returns the assembled runtime used by both `cmd/server` and `cmd/lambda`
+- `runtime.go` returns the assembled runtime used by both `cmd/monolith-api` and `cmd/lambda`
 
 ### `contexts/<name>/domain/`
 
@@ -193,7 +193,7 @@ The shared runtime is built once in `apps/server/internal/app/monolithapi` and r
 
 ### Local HTTP Runtime
 
-- `apps/server/cmd/server/main.go` is intentionally thin
+- `apps/server/cmd/monolith-api/main.go` is intentionally thin
 - it loads `.env`, builds the runtime, starts `http.Server`, and handles graceful shutdown
 
 ### Lambda Runtime
@@ -379,7 +379,7 @@ Possible later runtime:
 
 Deployment rules:
 
-- `cmd/server` and `cmd/lambda` stay thin
+- `cmd/monolith-api` and `cmd/lambda` stay thin
 - runtime-specific adapters stay in `platform/`, not in contexts
 - contexts must not import server or Lambda packages
 - static frontend deployment stays separate from the Go API runtime

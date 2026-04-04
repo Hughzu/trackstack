@@ -3,6 +3,7 @@
 Date: 2026-03-10
 Strategy: The Infrastructure Matrix Monorepo
 Goal: Build TrackStack as a product and as a platform engineering portfolio piece, with Astro as the frontend shell and Go as the backend source of truth.
+About me : Platform engineer with an SRE title and a software engineering background, focused on reliability, automation, and end-to-end system design.
 
 ## 1. Core Philosophy
 
@@ -81,7 +82,7 @@ Goal: finish moving the app boundary so Go is the operational backend and Astro 
 Current progress:
 
 - Go backend module structure is in place.
-- Local HTTP server entrypoint exists in `apps/server/cmd/server/main.go`.
+- Local HTTP server entrypoint exists in `apps/server/cmd/monolith-api/main.go`.
 - Calories, expenses, heat, dashboard, and auth contracts are actively served by Go.
 - Browser auth and domain requests now call Go endpoints directly; Astro no longer proxies them.
 - Regression guardrails exist at three layers: Go transport tests, frontend contract tests, and Playwright browser flows.

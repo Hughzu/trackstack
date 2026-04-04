@@ -51,7 +51,7 @@ That is exactly what you want before a split.
 
 The backend already supports:
 
-- local HTTP via `cmd/server`
+- local HTTP via `cmd/monolith-api`
 - Lambda via `cmd/lambda`
 
 That shared-runtime discipline is useful. It proves the business code is not welded to one deployment target.
@@ -177,7 +177,7 @@ Expected direction:
 
 The current `cmd/` layout is correct for the monolith:
 
-- `cmd/server`
+- `cmd/monolith-api`
 - `cmd/lambda`
 - `cmd/seed-user`
 

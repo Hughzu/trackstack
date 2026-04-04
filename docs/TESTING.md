@@ -46,7 +46,7 @@ Run the rebuild backend directly:
 
 ```bash
 cd apps/server
-go run ./cmd/server
+go run ./cmd/monolith-api
 ```
 
 In another shell:
@@ -304,7 +304,7 @@ When a regression is found in the frontend/backend boundary:
 
 For `apps/server`, bearer-auth changes should still be validated backend-first with the rebuild runtime and `curl`:
 
-- run `go run ./cmd/server` from `apps/server`
+- run `go run ./cmd/monolith-api` from `apps/server`
 - run `go run ./cmd/seed-user` from `apps/server`
 - run `./scripts/e2e.sh` from `apps/server`
 - verify `POST /api/auth/login` returns a JSON bearer token payload and no auth cookie

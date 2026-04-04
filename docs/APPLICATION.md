@@ -86,7 +86,7 @@
 ### Go Backend Boundary
 
 - **Role:** Go backend business logic now centers on context-local boundaries under `apps/server/internal/contexts/{auth,users,heat,calories,expenses}/**`.
-- **Role:** Runtime assembly in `apps/server` lives under `apps/server/internal/app/monolithapi` and is shared by both `apps/server/cmd/server` and `apps/server/cmd/lambda`.
+- **Role:** Runtime assembly in `apps/server` lives under `apps/server/internal/app/monolithapi` and is shared by both `apps/server/cmd/monolith-api` and `apps/server/cmd/lambda`.
 - **Rule:** New domain behavior should be added in Go first.
 - **Rule:** Transport code in Go stays thin: parse request, call service, map status/error, serialize JSON.
 - **Rule:** Mutating Go endpoints should prefer a single JSON request contract; the frontend runtime may still submit JSON from forms, but Astro pages do not adapt requests server-side.
