@@ -365,6 +365,10 @@ Current required runtimes:
 - local HTTP server
 - AWS Lambda Function URL runtime
 
+Current split-validation runtime:
+
+- `cmd/heat-api` for the standalone heat service process
+
 Possible later runtime:
 
 - extracted service per approved service boundary
@@ -410,6 +414,10 @@ Expected first extracted runtimes:
 - `cmd/calories-api`
 - `cmd/expenses-api`
 - `cmd/heat-api`
+
+The first extracted runtime now exists for local split validation:
+
+- `apps/server/cmd/heat-api`
 
 ## Macro Boundaries
 

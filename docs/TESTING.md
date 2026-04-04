@@ -64,6 +64,28 @@ Notes:
 - `go run ./cmd/seed-user` loads `apps/web/.env` first and `apps/server/.env` second.
 - Override `BASE_URL` when validating a non-default local port or remote environment.
 
+### Split Validation: Heat Service
+
+Run the standalone heat service directly:
+
+```bash
+cd apps/server
+PORT=18080 go run ./cmd/heat-api
+```
+
+In another shell, validate the split runtime is alive:
+
+```bash
+curl http://localhost:18080/health
+curl -i http://localhost:18080/api/heat/dashboard
+```
+
+Notes:
+
+- `GET /health` should return `200` with `{"status":"ok"}`.
+- `GET /api/heat/dashboard` without a bearer token should return `401`.
+- `cmd/heat-api` loads only heat-service config: `TURSO_HEAT_*`, `JWT_SECRET`, shared DB pool envs, and standard runtime envs.
+
 ## Compose Regression Workflow
 
 From repo root:
