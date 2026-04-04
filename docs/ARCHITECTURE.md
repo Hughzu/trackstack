@@ -367,7 +367,7 @@ Current required runtimes:
 
 Possible later runtime:
 
-- extracted service per context
+- extracted service per approved service boundary
 
 Deployment rules:
 
@@ -375,6 +375,41 @@ Deployment rules:
 - runtime-specific adapters stay in `platform/`, not in contexts
 - contexts must not import server or Lambda packages
 - static frontend deployment stays separate from the Go API runtime
+
+## Approved Service Boundaries
+
+The next extraction step is not "one service per package because microservices are trendy." The approved service seams are:
+
+- `identity` service = `auth` + `users`
+- `calories` service
+- `expenses` service
+- `heat` service
+
+Rationale:
+
+- `calories`, `expenses`, and `heat` already behave like strong domain boundaries
+- `auth` and `users` do not currently behave like independent runtime boundaries and should be extracted together as one identity boundary
+- the service split should happen at runtime assembly boundaries, not by tearing apart context-internal hexagonal structure that is already working
+
+Identity rules:
+
+- the `identity` service owns login and JWT issuance
+- `users` remains a separate internal hexagon inside the identity service rather than a separate microservice
+- the `identity` service is not an API gateway
+
+JWT verification rules for the split:
+
+- each protected domain service validates JWTs locally
+- handlers still extract `userID` from verified claims and pass it explicitly into application commands and queries
+- domain services must not make a network call to `identity` on every request just to validate a token
+- if a service needs user data beyond JWT claims, it should call `identity` explicitly for that specific use case
+
+Expected first extracted runtimes:
+
+- `cmd/identity-api`
+- `cmd/calories-api`
+- `cmd/expenses-api`
+- `cmd/heat-api`
 
 ## Macro Boundaries
 

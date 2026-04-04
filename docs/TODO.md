@@ -1,5 +1,3 @@
-- redeploy
-- update docs
 - test split into microservices
 - front
 

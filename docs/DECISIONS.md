@@ -32,3 +32,4 @@ Update guidelines:
 2026-03-11 — Treat the Go backend as a frontend-agnostic JSON API and keep browser form/redirect adaptation in the web client so runtime or frontend changes do not alter backend contracts.
 2026-03-11 — Build Astro as a static frontend/PWA served from S3 and route all auth, health, and business API traffic directly to the Go runtime.
 2026-03-13 — Make Turso transport selection explicit by requiring `*_URL_HTTP` or `*_URL_WS` for the chosen `DB_CONNECTION_MODE`, so benchmarks and serverless behavior do not silently fall back to `libsql://` URLs.
+2026-04-04 — Define the first service seams as `identity` (`auth` + `users`), `calories`, `expenses`, and `heat`; keep JWT issuance in identity and require each domain service to validate JWTs locally so the split does not devolve into a distributed monolith.
