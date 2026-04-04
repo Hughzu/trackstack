@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/Hughzu/trackstack/apps/server/internal/app/bootstrap"
+	"github.com/Hughzu/trackstack/apps/server/internal/app/monolithapi"
 	functionurltransport "github.com/Hughzu/trackstack/apps/server/internal/platform/aws/functionurl"
 	"github.com/joho/godotenv"
 )
@@ -13,7 +13,7 @@ func init() {
 }
 
 func main() {
-	runtime, err := bootstrap.NewRuntime()
+	runtime, err := monolithapi.NewRuntime()
 	if err != nil {
 		_, _ = os.Stderr.WriteString("Startup error : " + err.Error() + "\n")
 		os.Exit(1)

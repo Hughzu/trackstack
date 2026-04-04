@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Hughzu/trackstack/apps/server/internal/app/bootstrap"
+	"github.com/Hughzu/trackstack/apps/server/internal/app/monolithapi"
 	"github.com/joho/godotenv"
 )
 
@@ -18,7 +18,7 @@ func init() {
 }
 
 func main() {
-	runtime, err := bootstrap.NewRuntime()
+	runtime, err := monolithapi.NewRuntime()
 	if err != nil {
 		_, _ = os.Stderr.WriteString("Startup error : " + err.Error() + "\n")
 		os.Exit(1)

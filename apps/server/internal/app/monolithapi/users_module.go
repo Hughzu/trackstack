@@ -1,4 +1,4 @@
-package bootstrap
+package monolithapi
 
 import (
 	"database/sql"

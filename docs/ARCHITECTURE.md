@@ -189,7 +189,7 @@ Rules:
 
 ## Runtime Assembly
 
-The shared runtime is built once in `apps/server/internal/app/bootstrap` and reused by all deployment targets.
+The shared runtime is built once in `apps/server/internal/app/monolithapi` and reused by all deployment targets.
 
 ### Local HTTP Runtime
 

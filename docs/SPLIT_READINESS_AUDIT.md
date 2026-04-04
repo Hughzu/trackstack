@@ -13,7 +13,7 @@ The main issue is not the domain packages. The main issue is the shared runtime 
 ## What Was Audited
 
 - Docs and intended backend shape in `docs/ARCHITECTURE.md`, `docs/APPLICATION.md`, and `docs/TESTING.md`
-- Runtime assembly in `apps/server/internal/app/bootstrap`
+- Runtime assembly in `apps/server/internal/app/monolithapi`
 - Current entrypoints in `apps/server/cmd`
 - Auth/session middleware and handler boundaries
 - Local validation with:
@@ -70,7 +70,7 @@ Important caveat: `go test ./...` currently acts as a compile check more than a 
 
 ### 1. The composition root is still monolithic
 
-`apps/server/internal/app/bootstrap/runtime.go` builds the whole system in one shot.
+`apps/server/internal/app/monolithapi/runtime.go` builds the whole system in one shot.
 
 Today the runtime:
 
@@ -91,7 +91,7 @@ For real services, each binary should load only what it actually needs.
 
 ### 3. Database wiring is all-or-nothing
 
-`apps/server/internal/app/bootstrap/database.go` opens:
+`apps/server/internal/app/monolithapi/database.go` opens:
 
 - calories DB
 - expenses DB
@@ -102,7 +102,7 @@ That is fine for the modular monolith. It is wrong for extracted services.
 
 ### 4. Auth and users are not separate service seams today
 
-`apps/server/internal/app/bootstrap/auth_module.go` builds auth by directly constructing the users service.
+`apps/server/internal/app/monolithapi/auth_module.go` builds auth by directly constructing the users service.
 
 That means `auth` and `users` are not really two service boundaries yet.
 
