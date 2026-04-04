@@ -1,15 +1,13 @@
-- test split into microservices
 - front
-
-- Code deep dive
-    - understand what the fuck is going on in the astro side
-        - update docs & focus on DDD and dataflow
-        - understand tests
-        - design system ? (implement skills to create new pages ?)
-        - UI flickering, ... 
+    - Code deep dive
+        - understand what the fuck is going on in the astro side
+            - update docs & focus on DDD and dataflow
+            - understand tests
+            - design system ? (implement skills to create new pages ?)
+            - UI flickering, ... 
 
 - Infra deep dive
-    - make a cli to understand what the fuck is going on in bootstrap 
+    - make a cli (???) to understand what the fuck is going on in bootstrap 
         - idea is to have an AWS cli set up (with root access)
         - github cli set up
         - turso cli set up
@@ -21,15 +19,15 @@
 
 
 
-
-- quid dependabot and security audits ? 
+- SRL Module ? (vacancy days, checklist per month with reminders, ...)
 
 - ECS Fargate
 
-- SRL Module ? (vacancy days, checklist per month with reminders, ...)
+- Blog ? 
+    - Sell platform engineering profile ? 
 
 - EKS
 
 - Observability
 
-- Other cloud platform ?
+- Other cloud platform ? VPS ? 
