@@ -8,9 +8,11 @@ Solid.js SPA scaffold for the Astro -> Solid migration described in `docs/FRONT_
 pnpm dev
 pnpm openapi:generate
 pnpm build
+pnpm test:e2e
 ```
 
 - `pnpm openapi:generate`: regenerates the typed client schema from `apps/server/internal/app/monolithapi/openapi.yaml` into `src/core/api/generated/schema.ts`; run it whenever the backend contract changes.
+- `pnpm test:e2e`: runs the Solid auth smoke flow against a running frontend/backend pair. It expects `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` in `apps/web-next/.env.local` or your shell.
 
 ## Structure
 

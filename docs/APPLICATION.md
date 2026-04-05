@@ -9,7 +9,7 @@
 
 ## Solid Migration Scaffold
 - **Location:** `apps/web-next/src`
-- **Rule:** `src/core/` owns shared config, theme runtime, auth token helpers, and the typed `openapi-fetch` client.
+- **Rule:** `src/core/` owns shared config, theme runtime, auth token helpers, refresh/bootstrap auth state, route guards, and the typed `openapi-fetch` client.
 - **Rule:** `src/components/ui/` is the only place where Tailwind utility composition should live in the Solid app.
 - **Rule:** `src/features/{auth,dashboard,calories,expenses,heat}` owns route entry pages plus domain-local API wrappers.
 - **Rule:** Solid feature files should compose UI primitives instead of spraying layout classes around like confetti.
@@ -85,6 +85,9 @@
 - **Current page guard:** protected pages wait for browser-side auth bootstrap and redirect to `/login` on the client when the session is missing. Public-only pages redirect back to `/` once a valid session is confirmed.
 - **Current auth flow:** login, logout, and session verification are all direct browser-to-Go interactions over `/api/auth/*`. Successful login stores the bearer token client-side; successful logout clears it client-side after the stateless backend `204` response.
 - **Session behavior:** auth is now stateless bearer auth. Full page reloads and Astro navigations revalidate the stored token against `GET /api/auth/session` instead of relying on a server-managed auth cookie.
+- **Solid auth flow:** `apps/web-next/src/core/auth/store.ts` bootstraps auth once on app start, keeps the access JWT in `sessionStorage`, protects routes through `apps/web-next/src/core/auth/guards.tsx`, and logs out from the shared `AppShell` UI.
+- **Solid refresh contract:** `apps/web-next/src/core/api/client.ts` retries protected requests once after `401` by calling `POST /api/auth/refresh` with `credentials: include`; if Go does not expose that route yet, the Solid app falls back to a clean guest state instead of pretending everything is fine.
+- **Solid logout behavior:** an explicit logout writes a browser-side logout marker so the SPA does not silently rehydrate itself from a still-valid refresh cookie during the same session window.
 - **Current split:** Go is the source of truth for login, logout, session verification, page data, and API contracts. The Astro app is now a static frontend shell plus client runtime.
 - **Milestone reached:** the home, calories, expenses, and heat dashboards plus the calories and expenses settings pages now load their authenticated read models in the browser after auth bootstrap, so they no longer depend on `getCurrentUserId()` or SSR request-local auth context.
 - **Overview behavior:** the home overview no longer waits on a single aggregated `/api/dashboard` response. It loads expenses, calories, and heat cards independently from their canonical module endpoints so one cold module path does not block the whole screen.

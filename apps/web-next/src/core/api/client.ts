@@ -1,11 +1,24 @@
 import createClient from 'openapi-fetch'
 
+import { refreshAccessToken } from '../auth/refresh'
+import { setGuest } from '../auth/state'
 import { readAccessToken } from '../auth/token'
 import { resolveBrowserApiUrl } from '../config/api'
 import type { paths } from './generated/schema'
 
-const runtimeFetch: typeof fetch = async (input, init) => {
-  const token = readAccessToken()
+let refreshPromise: Promise<string | null> | null = null
+
+const authPaths = new Set(['/api/auth/login', '/api/auth/logout', '/api/auth/session', '/api/auth/refresh'])
+
+const resolvePathname = (value: string) => {
+  try {
+    return new URL(value, window.location.origin).pathname
+  } catch {
+    return value
+  }
+}
+
+const createHeaders = (init: RequestInit | undefined, token: string | null) => {
   const headers = new Headers(init?.headers)
 
   headers.set('Accept', 'application/json')
@@ -14,26 +27,81 @@ const runtimeFetch: typeof fetch = async (input, init) => {
     headers.set('X-Trackstack-Authorization', `Bearer ${token}`)
   }
 
+  return headers
+}
+
+const executeRequest = async (input: RequestInfo | URL, init: RequestInit | undefined, token: string | null) => {
+  const headers = createHeaders(init, token)
+
   if (typeof input === 'string') {
     return fetch(resolveBrowserApiUrl(input), {
       ...init,
       headers,
+      credentials: init?.credentials ?? 'include',
     })
   }
 
   if (input instanceof Request) {
-    return fetch(
-      new Request(resolveBrowserApiUrl(input.url), {
-        ...input,
-        headers,
-      }),
-    )
+    const request = input.clone()
+    const method = init?.method ?? request.method
+    let body = init?.body
+
+    if (body === undefined && method !== 'GET' && method !== 'HEAD') {
+      const serializedBody = await request.text()
+      body = serializedBody ? serializedBody : undefined
+    }
+
+    return fetch(resolveBrowserApiUrl(request.url), {
+      method,
+      headers,
+      body,
+      credentials: init?.credentials ?? request.credentials ?? 'include',
+      cache: init?.cache ?? request.cache,
+      mode: init?.mode ?? request.mode,
+      redirect: init?.redirect ?? request.redirect,
+      referrer: init?.referrer ?? request.referrer,
+      referrerPolicy: init?.referrerPolicy ?? request.referrerPolicy,
+      integrity: init?.integrity ?? request.integrity,
+      keepalive: init?.keepalive ?? request.keepalive,
+      signal: init?.signal ?? request.signal,
+    })
   }
 
   return fetch(input, {
     ...init,
     headers,
+    credentials: init?.credentials ?? 'include',
   })
+}
+
+const refreshOnce = async () => {
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken()
+      .then((payload) => payload?.accessToken ?? null)
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+
+  return refreshPromise
+}
+
+const runtimeFetch: typeof fetch = async (input, init) => {
+  const path = resolvePathname(typeof input === 'string' ? input : input instanceof Request ? input.url : String(input))
+  const response = await executeRequest(input, init, readAccessToken())
+
+  if (response.status !== 401 || authPaths.has(path)) {
+    return response
+  }
+
+  const refreshedToken = await refreshOnce()
+
+  if (!refreshedToken) {
+    setGuest('Session expired')
+    return response
+  }
+
+  return executeRequest(input, init, refreshedToken)
 }
 
 export const apiClient = createClient<paths>({

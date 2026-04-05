@@ -40,6 +40,15 @@ pnpm test:e2e
 
 `pnpm test:e2e` runs the Playwright browser flows against the currently running frontend/backend pair. If you want to refresh the backend test user first, run `pnpm seed:e2e-user` from `apps/web` on the host or `go run ./cmd/seed-user` from `apps/server`.
 
+For the Solid migration app:
+
+```bash
+cd apps/web-next
+pnpm test:e2e
+```
+
+The Solid Playwright flow currently covers guest redirect to `/login`, login success, authenticated shell visibility, logout, and re-protection of private routes. It expects `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` in `apps/web-next/.env.local` or your shell and assumes the Solid dev server plus Go API are already running.
+
 ### Backend-First Smoke Checks
 
 Run the rebuild backend directly:
@@ -258,6 +267,12 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Assert canonical `DELETE /api/heat/refills/{id}` succeeds and the list shrinks
   - Assert heat mutations target canonical Go-owned `/api/heat/refills` resources
 
+- `apps/web-next/tests/e2e/auth.spec.ts`
+  - Redirect a guest from a protected Solid route to `/login`
+  - Log in through the Solid SPA and assert `/api/auth/login` succeeds
+  - Assert the authenticated shell shows private navigation plus logout
+  - Log out through the shared shell and verify protected routes bounce back to `/login`
+
 - `apps/server/scripts/e2e.sh`
   - Backend-first curl smoke coverage for the rebuild runtime
   - Logs in with bearer auth and validates `GET /api/auth/session`
@@ -300,6 +315,7 @@ When a regression is found in the frontend/backend boundary:
 - `ApiFormHandler.astro` stores the login bearer token in browser storage and clears it on successful logout.
 - Protected-page gating happens through `AuthBootstrap.astro` calling `GET /api/auth/session` with `X-Trackstack-Authorization` and redirecting client-side.
 - Playwright login helpers now explicitly assert that `/api/auth/login` succeeds before continuing into module tests.
+- The Solid migration app has its own Playwright config in `apps/web-next/playwright.config.ts` and currently focuses on auth smoke coverage first.
 - When auth transport behavior changes, update both Go auth transport tests and at least one browser flow that covers login plus post-login page bootstrap.
 
 For `apps/server`, bearer-auth changes should still be validated backend-first with the rebuild runtime and `curl`:

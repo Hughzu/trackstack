@@ -1,7 +1,11 @@
 import type { JSX } from 'solid-js'
+import { createMemo, createSignal } from 'solid-js'
+import { useNavigate } from '@solidjs/router'
 
+import { authState, logout } from '../../core/auth/store'
 import { appConfig } from '../../core/config/app'
 import { resolveTheme } from '../../core/config/theme'
+import { ActionButton } from './ActionButton'
 import { DomainTabs } from './DomainTabs'
 
 type AppShellProps = {
@@ -13,13 +17,37 @@ type AppShellProps = {
 }
 
 export function AppShell(props: AppShellProps) {
+  const navigate = useNavigate()
   const theme = resolveTheme(import.meta.env.VITE_DEPLOY_TARGET)
+  const [isLoggingOut, setIsLoggingOut] = createSignal(false)
   const initials = appConfig.appName
     .split(' ')
     .map((part) => part[0])
     .join('')
     .slice(0, 2)
     .toUpperCase()
+  const visibleDomains = createMemo(() => {
+    if (authState().status === 'authenticated') {
+      return appConfig.domains.filter((domain) => domain.id !== 'auth')
+    }
+
+    return appConfig.domains.filter((domain) => domain.id === 'auth')
+  })
+
+  const handleLogout = async () => {
+    if (isLoggingOut()) {
+      return
+    }
+
+    setIsLoggingOut(true)
+
+    try {
+      await logout()
+      void navigate('/login', { replace: true })
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <div class="min-h-screen bg-background text-text-main antialiased selection:bg-accent/30">
@@ -30,12 +58,20 @@ export function AppShell(props: AppShellProps) {
             <div class="text-[0.68rem] uppercase tracking-[0.28em] text-text-muted">{theme.label}</div>
           </div>
 
-          <div class="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-panel text-xs font-bold text-text-main">
+          <div class="flex items-center gap-3">
+            {authState().status === 'authenticated' ? (
+              <ActionButton tone="ghost" disabled={isLoggingOut()} busy={isLoggingOut()} onClick={handleLogout}>
+                {isLoggingOut() ? 'Logging out...' : 'Logout'}
+              </ActionButton>
+            ) : null}
+
+            <div class="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-panel text-xs font-bold text-text-main">
               {initials}
+            </div>
           </div>
         </div>
 
-        <DomainTabs currentDomain={props.currentDomain} domains={appConfig.domains} />
+        <DomainTabs currentDomain={props.currentDomain} domains={visibleDomains()} />
       </header>
 
       <main class="mx-auto flex min-h-[60vh] max-w-3xl flex-col gap-6 px-4 pb-24 pt-6 animate-rise-in">
