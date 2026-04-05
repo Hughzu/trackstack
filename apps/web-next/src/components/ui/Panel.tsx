@@ -1,4 +1,5 @@
 import type { JSX } from 'solid-js'
+import { A } from '@solidjs/router'
 
 type PanelProps = {
   title: string
@@ -27,9 +28,9 @@ function PanelBody(props: PanelProps) {
 export function Panel(props: PanelProps) {
   if (props.href) {
     return (
-      <a href={props.href} class={`${frameClass} hover:border-accent/30 hover:shadow-lg hover:shadow-black/30 hover:ring-1 hover:ring-accent/20`}>
+      <A href={props.href} class={`${frameClass} hover:border-accent/30 hover:shadow-lg hover:shadow-black/30 hover:ring-1 hover:ring-accent/20`}>
         <PanelBody {...props} />
-      </a>
+      </A>
     )
   }
 

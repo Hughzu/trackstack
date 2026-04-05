@@ -7,21 +7,21 @@ export default function AuthPage() {
     <AppShell
       currentDomain="auth"
       eyebrow="Auth"
-      title="Bearer auth gets first-class treatment"
-      description="The Solid app now has a shared token helper and typed auth transport, which saves us from inventing new weirdness later."
+      title="Auth scaffold is in place"
+      description="Shared token helpers and typed auth calls are wired so the real flow has a clean place to land."
     >
       <SectionTitle
         eyebrow="Ready"
-        title="Auth transport scaffold"
-        description="Login, logout, and session calls can hang off the generated OpenAPI client instead of hand-rolled fetch soup."
+        title="Typed auth transport"
+        description="Login, logout, and session calls already hang off the generated API client."
       />
 
-      <FeaturePlaceholder
-        title="Session bootstrap"
-        route="/"
-        description="Use this lane to wire guarded routes and client-side session hydration next."
-        bullets={['`POST /api/auth/login`', '`GET /api/auth/session`', '`POST /api/auth/logout`']}
-      />
+        <FeaturePlaceholder
+          title="Session bootstrap"
+          route="/"
+          description="Next step: route guards, session bootstrap, and logout handling."
+          bullets={['`POST /api/auth/login`', '`GET /api/auth/session`', '`POST /api/auth/logout`']}
+        />
     </AppShell>
   )
 }

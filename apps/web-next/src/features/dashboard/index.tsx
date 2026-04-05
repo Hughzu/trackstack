@@ -7,17 +7,17 @@ import { SectionTitle } from '../../components/ui/SectionTitle'
 const domains = [
   {
     title: 'Auth first',
-    description: 'Session bootstrap, token storage, and route protection belong in core before any domain gets clever.',
+    description: 'Session bootstrap and route protection belong in core before feature work starts.',
     bullets: ['Typed login + session calls are scaffolded', 'UI shell is ready for auth-aware routing'],
   },
   {
     title: 'Domain slices',
-    description: 'Calories, expenses, and heat now have isolated entry pages plus domain-local API wrappers.',
+    description: 'Calories, expenses, and heat each have their own route and thin API wrapper.',
     bullets: ['No feature-owned Tailwind', 'Route-level lazy loading stays explicit'],
   },
   {
     title: 'Theme by target',
-    description: 'Serverless, VPS, and K8s each get distinct runtime branding from one codebase.',
+    description: 'Serverless, VPS, and K8s each get runtime branding from one codebase.',
     bullets: ['`VITE_DEPLOY_TARGET` drives CSS variables', 'PWA shell keeps one build, many moods'],
   },
 ]
@@ -27,13 +27,13 @@ export default function Dashboard() {
     <AppShell
       currentDomain="home"
       eyebrow="Migration Blueprint"
-      title="Solid scaffold, minus the bullshit"
-      description="The new frontend now has the right bones: shared core, typed API client, reusable UI, and domain-first routes."
+      title="Solid scaffold in place"
+      description="The bootstrap covers shared core utilities, typed API access, reusable UI, and domain routes."
     >
       <SectionTitle
         eyebrow="Control Room"
         title="What is ready"
-        description="This is the migration dashboard, not the finished product. It exists to keep the rewrite disciplined."
+        description="This page tracks the scaffold, not feature parity."
       />
 
       <ContentDeck>
@@ -51,26 +51,26 @@ export default function Dashboard() {
       <SectionTitle
         eyebrow="Domains"
         title="Rewrite lanes"
-        description="Each route gets a dedicated placeholder page so the migration can move one feature at a time without turning into soup."
+        description="Each route has a placeholder so feature work can land one slice at a time."
       />
 
       <ContentDeck>
         <FeaturePlaceholder
           title="Expenses"
           route="/expenses"
-          description="Budget settings and current sheet reads have typed wrappers ready for the first real screen."
+          description="Settings and current-sheet reads are ready for the first real screen."
           bullets={['`GET /api/expenses/settings`', '`GET /api/expenses/sheet/current`']}
         />
         <FeaturePlaceholder
           title="Calories"
           route="/calories"
-          description="Target reads and meal logging can move over once the UI shell is locked in."
+          description="Target reads and meal logging can move once the shell is stable."
           bullets={['`GET /api/calories/target`', '`POST /api/calories/log`']}
         />
         <FeaturePlaceholder
           title="Heat"
           route="/heat"
-          description="Refills already have a typed contract, so this one should be the cleanest migration of the lot."
+          description="Refills already have a typed contract, so this should be the cleanest first slice."
           bullets={['`GET /api/heat/refills`', '`POST /api/heat/refills`']}
         />
       </ContentDeck>

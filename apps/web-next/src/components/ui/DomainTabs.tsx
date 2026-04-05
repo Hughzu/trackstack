@@ -1,4 +1,5 @@
 import { For } from 'solid-js'
+import { A } from '@solidjs/router'
 
 import type { AppDomain } from '../../core/config/app'
 
@@ -13,7 +14,7 @@ export function DomainTabs(props: DomainTabsProps) {
       <div class="flex min-w-max gap-6">
         <For each={props.domains}>
           {(domain) => (
-            <a
+            <A
               href={domain.href}
               aria-current={props.currentDomain === domain.id ? 'page' : undefined}
               class={
@@ -23,7 +24,7 @@ export function DomainTabs(props: DomainTabsProps) {
               }
             >
               {domain.label}
-            </a>
+            </A>
           )}
         </For>
       </div>

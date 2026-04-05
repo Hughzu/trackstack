@@ -7,21 +7,21 @@ export default function HeatPage() {
     <AppShell
       currentDomain="heat"
       eyebrow="Heat"
-      title="Pellet tracking should be the easy win"
-      description="The refill contract is already explicit and clean, so this domain can prove the Solid migration without ceremonial pain."
+      title="Heat scaffold is ready"
+      description="The refill contract is already clear, so this domain is a good first feature slice."
     >
       <SectionTitle
         eyebrow="Contract"
         title="Typed heat transport"
-        description="Refill reads and writes are ready to wrap real screens once the auth flow is connected."
+        description="Refill reads and writes are ready for real screens once auth is connected."
       />
 
-      <FeaturePlaceholder
-        title="Heat domain"
-        route="/heat"
-        description="Port the refill history and seasonal snapshot after the dashboard shell settles."
-        bullets={['`GET /api/heat/refills`', '`POST /api/heat/refills`', '`DELETE /api/heat/refills/{id}`']}
-      />
+        <FeaturePlaceholder
+          title="Heat domain"
+          route="/heat"
+          description="Port refill history and seasonal snapshot after the dashboard shell settles."
+          bullets={['`GET /api/heat/refills`', '`POST /api/heat/refills`', '`DELETE /api/heat/refills/{id}`']}
+        />
     </AppShell>
   )
 }
