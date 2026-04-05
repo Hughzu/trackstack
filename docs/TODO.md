@@ -8,6 +8,8 @@
     - button logout un peu dégueu, à voir ce que je peux faire en termes de design pour le coin en haut à droite
     - fix design douteux de chacune des pages
 
+    - première fois avec le lazy loading j'ai vraiment un screen flickering chiant quand je change de page, je peux pas réduire ça ? 
+
 - front
     - Code deep dive
         - understand what the fuck is going on in the astro side
