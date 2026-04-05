@@ -76,3 +76,4 @@ apps/web/playwright-report/
 apps/web/test-results/
 apps/server/seed-user
 apps/server/lambda
+apps/web-next/dev-dist/*
