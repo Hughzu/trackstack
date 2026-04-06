@@ -10,12 +10,8 @@ export function RouteStatus() {
           <SkeletonText class="h-4 w-1/4" />
         </header>
 
-        <SkeletonPanel class="p-5 space-y-6">
-          <header class="mb-4">
-            <SkeletonText class="h-3 w-16 bg-accent/20" />
-          </header>
-          
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <SkeletonPanel titleVariant="md">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <SkeletonBlock class="h-24" />
             <SkeletonBlock class="h-24" />
             <SkeletonBlock class="h-24" />

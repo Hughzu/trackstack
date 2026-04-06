@@ -66,6 +66,13 @@ To maintain a premium feel and zero Cumulative Layout Shift (CLS):
 *   **App Shell Persistence:** Never hide the `AppShell` (header/nav) during loading. Only skeletonize the `main` content area.
 *   **Animation:** Use `animate-pulse` for placeholders. Use `animate-in fade-in` for the final data arrival to smooth the transition.
 
+## 8. Collaborative UI Design & Mocking Process
+When iterating on feature mocks and UI design, we enforce a strict, challenge-driven workflow:
+*   **Semantic Strictness:** All UI atoms (`Stat`, `ProgressBar`, `Skeleton`) strictly communicate through UI design-system enums (e.g., `variant="lg"`, `color="danger"`, `titleVariant="md"`). We NEVER pass raw margin, padding, or width/height Tailwind utility classes as component props (down to the skeleton text block level). The logic mapping a semantic variant to a structural width/height is encapsulated entirely inside `src/components/ui/`.
+*   **Zero-Redundancy Mocks:** We actively eliminate redundant information. If detailed breakdown text natively exists, summary visualizers (like progress bar legend labels) are stripped away. This allows elements to stack tightly and naturally without relying on arbitrary layout spacing hacks.
+*   **Contextual Track Visibility:** Empty states and progress tracks must communicate scale intuitively. We explicitly style empty tracks in low-contrast thematic scales (e.g., `bg-border/50`) so partial completions are immediately recognizable against the card backgrounds.
+*   **Challenge Assumptions (No Boilerplate Padding):** We actively challenge layout spacing defaults. We strip out boilerplate mobile padding classes (e.g. `pb-24`) that create dead space and artificial scrollbars when desktop interfaces fit neatly in the viewport.
+
 ---
 
 ### Why this approach? (Note for LLMs)

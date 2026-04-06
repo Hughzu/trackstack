@@ -61,7 +61,7 @@ export function AppShell(props: AppShellProps) {
         <DomainTabs currentDomain={props.currentDomain} domains={visibleDomains()} />
       </header>
 
-      <main class="mx-auto flex min-h-[60vh] max-w-3xl flex-col gap-6 px-4 pb-24 pt-6 animate-rise-in">
+      <main class="mx-auto flex min-h-[60vh] max-w-3xl flex-col gap-6 px-4 pb-6 pt-6 animate-rise-in">
         {props.children}
       </main>
     </div>
