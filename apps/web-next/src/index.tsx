@@ -1,4 +1,5 @@
 /* @refresh reload */
+import { onMount } from 'solid-js'
 import { render } from 'solid-js/web'
 import { Router } from '@solidjs/router'
 
@@ -11,6 +12,12 @@ const root = document.getElementById('root')
 
 applyTheme(document.documentElement, resolveTheme(import.meta.env.VITE_DEPLOY_TARGET))
 
-void bootstrapAuth().finally(() => {
-  render(() => <Router>{routes}</Router>, root!)
-})
+function App() {
+  onMount(() => {
+    void bootstrapAuth()
+  })
+
+  return <Router>{routes}</Router>
+}
+
+render(() => <App />, root!)
