@@ -78,4 +78,4 @@ apps/server/seed-user
 apps/server/lambda
 apps/web-next/dev-dist/*
 apps/web-next/test-results/.last-run.json
-apps/web-next/test-results/auth-Auth-smoke-flow-redirects-guests-logs-in-and-logs-out-chromium/error-context.md
+apps/web-next/test-results/*

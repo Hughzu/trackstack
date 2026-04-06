@@ -1,12 +1,7 @@
 import { AppShell } from './AppShell'
 import { SkeletonPanel, SkeletonText, SkeletonBlock } from './Skeleton'
 
-type RouteStatusProps = {
-  title: string
-  description?: string
-}
-
-export function RouteStatus(_props: RouteStatusProps) {
+export function RouteStatus() {
   return (
     <AppShell currentDomain="">
       <div class="space-y-8 animate-in fade-in duration-500">

@@ -17,7 +17,7 @@ export function ProtectedRoute(props: GuardProps) {
         <Navigate href="/login" />
       </Match>
       <Match when>
-        <RouteStatus title="Checking session" />
+        <RouteStatus />
       </Match>
     </Switch>
   )
@@ -31,7 +31,7 @@ export function PublicOnlyRoute(props: GuardProps) {
         <Navigate href="/" />
       </Match>
       <Match when>
-        <RouteStatus title="Checking session" />
+        <RouteStatus />
       </Match>
     </Switch>
   )
