@@ -20,7 +20,7 @@ export function DomainTabs(props: DomainTabsProps) {
               class={
                 props.currentDomain === domain.id
                   ? 'select-none whitespace-nowrap border-b-2 border-accent pb-1 text-sm font-medium text-accent transition-all duration-200'
-                  : 'select-none whitespace-nowrap pb-1 text-sm font-medium text-text-muted transition-all duration-200 hover:text-text-main'
+                  : 'select-none whitespace-nowrap border-b-2 border-transparent pb-1 text-sm font-medium text-text-muted transition-all duration-200 hover:text-text-main'
               }
             >
               {domain.label}

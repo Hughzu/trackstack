@@ -1,4 +1,4 @@
-import { createMemo, createResource, Show } from 'solid-js'
+import { createMemo, createResource, Show, Suspense } from 'solid-js'
 
 import { ContentDeck } from '../../components/ui/ContentDeck'
 import { DataCell, DataRow } from '../../components/ui/DataRow'
@@ -192,17 +192,23 @@ export default function Dashboard() {
       </Show>
 
       <ContentDeck layout="stacked" animate>
-        <Show when={expenses()} fallback={expenses.error ? <ErrorCard title="Expenses" message="Expenses dashboard failed to load." /> : <ExpensesSkeleton />}>
-          {(dashboard) => <ExpensesCard dashboard={dashboard()} />}
-        </Show>
+        <Suspense fallback={<ExpensesSkeleton />}>
+          <Show when={expenses()} fallback={expenses.error ? <ErrorCard title="Expenses" message="Expenses dashboard failed to load." /> : <ExpensesSkeleton />}>
+            {(dashboard) => <ExpensesCard dashboard={dashboard()} />}
+          </Show>
+        </Suspense>
 
-        <Show when={calories()} fallback={calories.error ? <ErrorCard title="Daily Intake" message="Calories dashboard failed to load." /> : <CaloriesSkeleton />}>
-          {(dashboard) => <CaloriesCard dashboard={dashboard()} />}
-        </Show>
+        <Suspense fallback={<CaloriesSkeleton />}>
+          <Show when={calories()} fallback={calories.error ? <ErrorCard title="Daily Intake" message="Calories dashboard failed to load." /> : <CaloriesSkeleton />}>
+            {(dashboard) => <CaloriesCard dashboard={dashboard()} />}
+          </Show>
+        </Suspense>
 
-        <Show when={heat()} fallback={heat.error ? <ErrorCard title="Heating" message="Heat dashboard failed to load." /> : <HeatSkeleton />}>
-          {(dashboard) => <HeatCard dashboard={dashboard()} />}
-        </Show>
+        <Suspense fallback={<HeatSkeleton />}>
+          <Show when={heat()} fallback={heat.error ? <ErrorCard title="Heating" message="Heat dashboard failed to load." /> : <HeatSkeleton />}>
+            {(dashboard) => <HeatCard dashboard={dashboard()} />}
+          </Show>
+        </Suspense>
       </ContentDeck>
     </>
   )
