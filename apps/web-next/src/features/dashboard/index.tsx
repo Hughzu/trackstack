@@ -1,6 +1,5 @@
 import { createSignal, onMount, Show } from 'solid-js'
 
-import { AppShell } from '../../components/ui/AppShell'
 import { ContentDeck } from '../../components/ui/ContentDeck'
 import { Panel } from '../../components/ui/Panel'
 import { DataRow, DataCell } from '../../components/ui/DataRow'
@@ -141,23 +140,21 @@ export default function Dashboard() {
   })
 
   return (
-    <AppShell currentDomain="home">
-      <Show 
-        when={!isLoading()} 
-        fallback={
-          <ContentDeck layout="stacked">
-            <ExpensesSkeleton />
-            <CaloriesSkeleton />
-            <HeatSkeleton />
-          </ContentDeck>
-        }
-      >
-        <ContentDeck layout="stacked" animate>
-          <ExpensesCard />
-          <CaloriesCard />
-          <HeatCard />
+    <Show
+      when={!isLoading()}
+      fallback={
+        <ContentDeck layout="stacked">
+          <ExpensesSkeleton />
+          <CaloriesSkeleton />
+          <HeatSkeleton />
         </ContentDeck>
-      </Show>
-    </AppShell>
+      }
+    >
+      <ContentDeck layout="stacked" animate>
+        <ExpensesCard />
+        <CaloriesCard />
+        <HeatCard />
+      </ContentDeck>
+    </Show>
   )
 }

@@ -2,7 +2,6 @@ import { createSignal } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
 
 import { ActionButton } from '../../components/ui/ActionButton'
-import { AppShell } from '../../components/ui/AppShell'
 import { Notice } from '../../components/ui/Notice'
 import { Panel } from '../../components/ui/Panel'
 import { FormStack, FormActions } from '../../components/ui/Form'
@@ -41,40 +40,37 @@ export default function AuthPage() {
   }
 
   return (
-    <AppShell currentDomain="auth">
+    <Panel title="Access">
+      <FormStack onSubmit={handleSubmit}>
+        <TextField
+          id="email"
+          name="email"
+          label="Email"
+          type="email"
+          value={email()}
+          autocomplete="email"
+          required
+          onInput={(event) => setEmail(event.currentTarget.value)}
+        />
+        <TextField
+          id="password"
+          name="password"
+          label="Password"
+          type="password"
+          value={password()}
+          autocomplete="current-password"
+          required
+          onInput={(event) => setPassword(event.currentTarget.value)}
+        />
 
-      <Panel title="Access">
-        <FormStack onSubmit={handleSubmit}>
-          <TextField
-            id="email"
-            name="email"
-            label="Email"
-            type="email"
-            value={email()}
-            autocomplete="email"
-            required
-            onInput={(event) => setEmail(event.currentTarget.value)}
-          />
-          <TextField
-            id="password"
-            name="password"
-            label="Password"
-            type="password"
-            value={password()}
-            autocomplete="current-password"
-            required
-            onInput={(event) => setPassword(event.currentTarget.value)}
-          />
+        {errorMessage() ? <Notice tone="error" message={errorMessage()!} /> : null}
 
-          {errorMessage() ? <Notice tone="error" message={errorMessage()!} /> : null}
-
-          <FormActions>
-            <ActionButton type="submit" disabled={isSubmitting()} busy={isSubmitting()}>
-              {isSubmitting() ? 'Signing in...' : 'Sign in'}
-            </ActionButton>
-          </FormActions>
-        </FormStack>
-      </Panel>
-    </AppShell>
+        <FormActions>
+          <ActionButton type="submit" disabled={isSubmitting()} busy={isSubmitting()}>
+            {isSubmitting() ? 'Signing in...' : 'Sign in'}
+          </ActionButton>
+        </FormActions>
+      </FormStack>
+    </Panel>
   )
 }

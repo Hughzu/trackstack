@@ -1,11 +1,17 @@
-- login WIP :
-    - finish refresh
-        2. I can sketch the exact Go refresh contract so backend work is dead simple
-        3. I can wire automatic pre-expiry refresh using expiresAt instead of waiting for the first 401
-    - audit de gpt sur ce qui est fait
+- SOLID WIP :
     - mock up de chacunes des pages
+        - dashboard done
+        - expenses
+            - read 
+            - write
+        - calories
+            - read
+            - write
+        - heat
+            - read
+            - write
 
-    - première fois avec le lazy loading j'ai vraiment un screen flickering chiant quand je change de page, je peux pas réduire ça ? 
+        - wiring of all the above
 
 - front
     - Code deep dive

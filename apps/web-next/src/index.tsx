@@ -4,6 +4,7 @@ import { render } from 'solid-js/web'
 import { Router } from '@solidjs/router'
 
 import { bootstrapAuth } from './core/auth/store'
+import { AppRoot } from './components/ui/AppRoot'
 import './styles/global.css'
 import { applyTheme, resolveTheme } from './core/config/theme'
 import { routes } from './routes'
@@ -17,7 +18,11 @@ function App() {
     void bootstrapAuth()
   })
 
-  return <Router>{routes}</Router>
+  return (
+    <Router root={AppRoot} preload={true}>
+      {routes}
+    </Router>
+  )
 }
 
 render(() => <App />, root!)
