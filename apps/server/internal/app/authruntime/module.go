@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	authhttpserver "github.com/Hughzu/trackstack/apps/server/internal/contexts/auth/adapters/inbound/http"
@@ -14,6 +15,7 @@ import (
 	authservices "github.com/Hughzu/trackstack/apps/server/internal/contexts/auth/application/services"
 	usersdb "github.com/Hughzu/trackstack/apps/server/internal/contexts/users/adapters/outbound/db"
 	usersservice "github.com/Hughzu/trackstack/apps/server/internal/contexts/users/application/services"
+	platformconfig "github.com/Hughzu/trackstack/apps/server/internal/platform/config"
 	platformmiddleware "github.com/Hughzu/trackstack/apps/server/internal/platform/middleware"
 )
 
@@ -104,8 +106,20 @@ func LoadConfig(getEnv func(string, string) string, getEnvInt func(string, int) 
 	return cfg, nil
 }
 
+func FromPlatformConfig(cfg platformconfig.Config) Config {
+	return Config{
+		JWTSecret:                    cfg.JWTSecret,
+		AccessTokenTTLMinutes:        cfg.AccessTokenTTLMinutes,
+		RefreshTokenTTLHours:         cfg.RefreshTokenTTLHours,
+		RefreshTokenAbsoluteTTLHours: cfg.RefreshTokenAbsoluteTTLHours,
+		RefreshCookieName:            cfg.RefreshCookieName,
+		RefreshCookieSecure:          cfg.RefreshCookieSecure,
+		RefreshCookieDomain:          cfg.RefreshCookieDomain,
+	}
+}
+
 func (cfg Config) Validate() error {
-	if cfg.JWTSecret == "" {
+	if strings.TrimSpace(cfg.JWTSecret) == "" {
 		return fmt.Errorf("JWT_SECRET must not be empty")
 	}
 	if cfg.AccessTokenTTLMinutes <= 0 {
@@ -117,7 +131,7 @@ func (cfg Config) Validate() error {
 	if cfg.RefreshTokenAbsoluteTTLHours < cfg.RefreshTokenTTLHours {
 		return fmt.Errorf("REFRESH_TOKEN_ABSOLUTE_TTL_HOURS must be greater than or equal to REFRESH_TOKEN_TTL_HOURS")
 	}
-	if cfg.RefreshCookieName == "" {
+	if strings.TrimSpace(cfg.RefreshCookieName) == "" {
 		return fmt.Errorf("REFRESH_COOKIE_NAME must not be empty")
 	}
 
