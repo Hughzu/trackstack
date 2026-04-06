@@ -10,21 +10,25 @@ import (
 
 type Issuer struct {
 	secret string
+	ttl    time.Duration
 }
 
 var _ ports.TokenIssuer = (*Issuer)(nil)
 
-func NewIssuer(secret string) *Issuer {
-	return &Issuer{secret: secret}
+func NewIssuer(secret string, ttl time.Duration) *Issuer {
+	return &Issuer{secret: secret, ttl: ttl}
 }
 
-func (i *Issuer) IssueToken(userID string) (ports.IssuedToken, error) {
+func (i *Issuer) IssueToken(input ports.IssueTokenInput) (ports.IssuedToken, error) {
 	now := time.Now().UTC()
-	expiresAt := now.Add(30 * 24 * time.Hour)
+	expiresAt := now.Add(i.ttl)
 
 	claims := domain.SessionClaims{
-		UserID: userID,
+		UserID:    input.UserID,
+		SessionID: input.SessionID,
+		TokenUse:  domain.TokenUseAccess,
 		RegisteredClaims: jwtv5.RegisteredClaims{
+			Subject:   input.UserID,
 			ExpiresAt: jwtv5.NewNumericDate(expiresAt),
 			IssuedAt:  jwtv5.NewNumericDate(now),
 			NotBefore: jwtv5.NewNumericDate(now),

@@ -27,6 +27,7 @@ fi
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
+COOKIE_JAR="$TMP_DIR/cookies.txt"
 
 TODAY_UTC="$(date -u +%F)"
 TIME_UTC="$(date -u +%H:%M)"
@@ -51,6 +52,8 @@ request() {
     -w "%{http_code}"
     -X "$method"
     -H "Accept: application/json"
+    -b "$COOKIE_JAR"
+    -c "$COOKIE_JAR"
   )
 
   if [[ -n "$auth_header" ]]; then
@@ -167,6 +170,10 @@ assert_status 200
 assert_json_equals tokenType Bearer
 assert_json_equals userId "$(json_get userId)"
 assert_json_nonempty accessToken
+if ! grep -q 'trackstack_refresh' "$COOKIE_JAR"; then
+  printf 'Expected refresh cookie after login\n' >&2
+  exit 1
+fi
 TOKEN="$(json_get accessToken)"
 USER_ID="$(json_get userId)"
 
@@ -174,7 +181,23 @@ log "session"
 request GET /api/auth/session "" "$TOKEN"
 assert_status 200
 assert_json_equals userId "$USER_ID"
-assert_json_equals sessionId stateless-jwt
+assert_json_nonempty sessionId
+
+log "refresh"
+request POST /api/auth/refresh
+assert_status 200
+assert_json_equals userId "$USER_ID"
+assert_json_equals tokenType Bearer
+assert_json_nonempty accessToken
+REFRESHED_TOKEN="$(json_get accessToken)"
+
+log "session after refresh"
+request GET /api/auth/session "" "$REFRESHED_TOKEN"
+assert_status 200
+assert_json_equals userId "$USER_ID"
+assert_json_nonempty sessionId
+
+TOKEN="$REFRESHED_TOKEN"
 
 log "heat create"
 request POST /api/heat/refills '{"date":"2026-03-01","weightKg":12.5,"bags":4,"temperature":7.5}' "$TOKEN"
@@ -264,6 +287,14 @@ assert_status 204
 log "logout"
 request POST /api/auth/logout "" "$TOKEN"
 assert_status 204
+if grep -q 'trackstack_refresh' "$COOKIE_JAR"; then
+  printf 'Expected refresh cookie to be cleared on logout\n' >&2
+  exit 1
+fi
+
+log "refresh after logout fails"
+request POST /api/auth/refresh
+assert_status 401
 
 log "done"
 printf 'All backend curl e2e checks passed.\n'

@@ -209,15 +209,16 @@ The shared runtime is built once in `apps/server/internal/app/monolithapi` and r
 
 ## Authentication And Identity Flow
 
-`apps/server` uses stateless bearer auth.
+`apps/server` uses bearer access tokens plus stateful refresh sessions.
 
 Flow:
 
-1. `POST /api/auth/login` verifies credentials through the users context and returns a signed JWT.
-2. `ResolveSession` middleware validates bearer auth locally using `JWT_SECRET`. In direct/local runtimes it reads `Authorization: Bearer <jwt>`; in the CloudFront + Lambda Function URL deployment it also accepts `X-Trackstack-Authorization: Bearer <jwt>` because the origin request uses `Authorization` for SigV4 signing.
-3. The middleware injects `userID` into request context through `platform/authcontext`.
-4. Inbound handlers read that `userID` and pass it explicitly into application commands and queries.
-5. Domain and application layers never parse bearer headers or read cookies.
+1. `POST /api/auth/login` verifies credentials through the users context, creates a refresh session in `users.sessions`, returns a signed access JWT, and sets an `HttpOnly` refresh cookie.
+2. `POST /api/auth/refresh` accepts only the refresh cookie, rotates the refresh session, and returns a new access JWT plus a rotated cookie.
+3. `ResolveSession` middleware validates bearer auth locally using `JWT_SECRET`. In direct/local runtimes it reads `Authorization: Bearer <jwt>`; in the CloudFront + Lambda Function URL deployment it also accepts `X-Trackstack-Authorization: Bearer <jwt>` because the origin request uses `Authorization` for SigV4 signing.
+4. The middleware injects `userID` and `sessionID` into request context through `platform/authcontext`.
+5. Inbound handlers read that identity and pass explicit values into application commands and queries.
+6. Domain and application layers never parse bearer headers, and non-auth routes never treat the refresh cookie as proof of identity.
 
 Design note:
 
@@ -226,9 +227,10 @@ Design note:
 
 Current auth contract:
 
-- `POST /api/auth/login` returns JSON with `accessToken`, `tokenType`, `expiresAt`, and `userId`
+- `POST /api/auth/login` returns JSON with `accessToken`, `tokenType`, `expiresAt`, and `userId`, and sets a refresh cookie
+- `POST /api/auth/refresh` rotates the refresh cookie and returns the same JSON token shape as login
 - `GET /api/auth/session` requires bearer auth
-- `POST /api/auth/logout` is stateless and returns `204`
+- `POST /api/auth/logout` revokes the presented refresh session, clears the refresh cookie, and returns `204`
 - protected domain routes under `/api/calories/*`, `/api/expenses/*`, and `/api/heat/*` require bearer auth
 
 Current frontend note:
@@ -248,6 +250,7 @@ Global runtime endpoints:
 Auth endpoints:
 
 - `POST /api/auth/login`
+- `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `GET /api/auth/session`
 

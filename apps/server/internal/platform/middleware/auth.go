@@ -29,7 +29,15 @@ func ResolveSession(jwtSecret string) func(http.Handler) http.Handler {
 				return
 			}
 
+			if claims.TokenUse != domain.TokenUseAccess {
+				writeUnauthorized(w)
+				return
+			}
+
 			ctx := authcontext.WithUserID(r.Context(), claims.UserID)
+			if claims.SessionID != "" {
+				ctx = authcontext.WithSessionID(ctx, claims.SessionID)
+			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

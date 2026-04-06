@@ -70,6 +70,27 @@ paths:
       responses:
         "204":
           description: Logged out
+  /api/auth/refresh:
+    post:
+      summary: Rotate refresh session and issue a new access token
+      responses:
+        "200":
+          description: Refreshed
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Rotated HttpOnly refresh cookie
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/auth/session:
     get:
       summary: Read current bearer session

@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -29,6 +30,13 @@ type Config struct {
 	DBConnMaxIdleTimeSeconds int
 
 	JWTSecret string
+
+	AccessTokenTTLMinutes        int
+	RefreshTokenTTLHours         int
+	RefreshTokenAbsoluteTTLHours int
+	RefreshCookieName            string
+	RefreshCookieSecure          bool
+	RefreshCookieDomain          string
 }
 
 func Load() (Config, error) {
@@ -50,6 +58,9 @@ func Load() (Config, error) {
 		TursoUsersToken:      getEnv("TURSO_USERS_TOKEN", ""),
 
 		JWTSecret: getEnv("JWT_SECRET", ""),
+
+		RefreshCookieName:   getEnv("REFRESH_COOKIE_NAME", "trackstack_refresh"),
+		RefreshCookieDomain: getEnv("REFRESH_COOKIE_DOMAIN", ""),
 	}
 
 	cfg.DBMaxOpenConns, err = getEnvInt("DB_MAX_OPEN_CONNS", 10)
@@ -71,6 +82,23 @@ func Load() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+
+	cfg.AccessTokenTTLMinutes, err = getEnvInt("ACCESS_TOKEN_TTL_MINUTES", 15)
+	if err != nil {
+		return Config{}, err
+	}
+
+	cfg.RefreshTokenTTLHours, err = getEnvInt("REFRESH_TOKEN_TTL_HOURS", 24*30)
+	if err != nil {
+		return Config{}, err
+	}
+
+	cfg.RefreshTokenAbsoluteTTLHours, err = getEnvInt("REFRESH_TOKEN_ABSOLUTE_TTL_HOURS", 24*30)
+	if err != nil {
+		return Config{}, err
+	}
+
+	cfg.RefreshCookieSecure = getEnvBool("REFRESH_COOKIE_SECURE", cfg.Env != "local")
 
 	if err := cfg.Validate(); err != nil {
 		return Config{}, err
@@ -120,7 +148,39 @@ func (cfg Config) Validate() error {
 		return fmt.Errorf("JWT_SECRET must not be empty.")
 	}
 
+	if cfg.AccessTokenTTLMinutes <= 0 {
+		return fmt.Errorf("ACCESS_TOKEN_TTL_MINUTES must be greater than zero.")
+	}
+
+	if cfg.RefreshTokenTTLHours <= 0 {
+		return fmt.Errorf("REFRESH_TOKEN_TTL_HOURS must be greater than zero.")
+	}
+
+	if cfg.RefreshTokenAbsoluteTTLHours <= 0 {
+		return fmt.Errorf("REFRESH_TOKEN_ABSOLUTE_TTL_HOURS must be greater than zero.")
+	}
+
+	if cfg.RefreshTokenAbsoluteTTLHours < cfg.RefreshTokenTTLHours {
+		return fmt.Errorf("REFRESH_TOKEN_ABSOLUTE_TTL_HOURS must be greater than or equal to REFRESH_TOKEN_TTL_HOURS.")
+	}
+
+	if strings.TrimSpace(cfg.RefreshCookieName) == "" {
+		return fmt.Errorf("REFRESH_COOKIE_NAME must not be empty.")
+	}
+
 	return nil
+}
+
+func (cfg Config) AccessTokenTTL() time.Duration {
+	return time.Duration(cfg.AccessTokenTTLMinutes) * time.Minute
+}
+
+func (cfg Config) RefreshTokenTTL() time.Duration {
+	return time.Duration(cfg.RefreshTokenTTLHours) * time.Hour
+}
+
+func (cfg Config) RefreshTokenAbsoluteTTL() time.Duration {
+	return time.Duration(cfg.RefreshTokenAbsoluteTTLHours) * time.Hour
 }
 
 func getEnv(key, fallback string) string {
@@ -140,4 +200,18 @@ func getEnvInt(key string, fallback int) (int, error) {
 		return 0, fmt.Errorf("invalid %s: %w", key, err)
 	}
 	return parsed, nil
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return fallback
+	}
+
+	return parsed
 }

@@ -165,6 +165,7 @@ Migration: `packages/db/migrations/users/001_init.sql`
 **sessions**
 - `id` TEXT PK
 - `user_id` TEXT NOT NULL (FK → users.id)
+- `token_hash` TEXT NOT NULL UNIQUE
 - `created_at` TEXT NOT NULL
 - `expires_at` TEXT NOT NULL
 - `rotated_at` TEXT NOT NULL
@@ -177,6 +178,7 @@ Migration: `packages/db/migrations/users/001_init.sql`
 
 Indexes:
 - `sessions_user_id_idx`
+- `sessions_token_hash_idx`
 - `sessions_expires_at_idx`
 - `sessions_absolute_expires_at_idx`
 

@@ -323,8 +323,9 @@ For `apps/server`, bearer-auth changes should still be validated backend-first w
 - run `go run ./cmd/monolith-api` from `apps/server`
 - run `go run ./cmd/seed-user` from `apps/server`
 - run `./scripts/e2e.sh` from `apps/server`
-- verify `POST /api/auth/login` returns a JSON bearer token payload and no auth cookie
+- verify `POST /api/auth/login` returns a JSON bearer token payload and sets the refresh cookie
+- verify `POST /api/auth/refresh` succeeds with the cookie, rotates it, and returns a fresh access token payload
 - verify `GET /api/auth/session` returns `401` without `Authorization: Bearer <jwt>` and `200` with it
 - verify protected routes under `/api/heat/*`, `/api/calories/*`, and `/api/expenses/*` reject missing bearer headers and succeed with a valid bearer token
-- verify `POST /api/auth/logout` returns `204` and does not invalidate an already-issued token because the current rebuild stays stateless
+- verify `POST /api/auth/logout` returns `204`, clears the refresh cookie, and causes a later refresh attempt to fail
 - verify browser login stores client auth state, a protected page reload reboots auth through `GET /api/auth/session`, and logout clears the client token before redirect

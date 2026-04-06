@@ -12,7 +12,9 @@ import (
 	"time"
 
 	authhttpserver "github.com/Hughzu/trackstack/apps/server/internal/contexts/auth/adapters/inbound/http"
+	authdb "github.com/Hughzu/trackstack/apps/server/internal/contexts/auth/adapters/outbound/db"
 	"github.com/Hughzu/trackstack/apps/server/internal/contexts/auth/adapters/outbound/jwt"
+	authtoken "github.com/Hughzu/trackstack/apps/server/internal/contexts/auth/adapters/outbound/token"
 	authservices "github.com/Hughzu/trackstack/apps/server/internal/contexts/auth/application/services"
 	usersdb "github.com/Hughzu/trackstack/apps/server/internal/contexts/users/adapters/outbound/db"
 	usersservice "github.com/Hughzu/trackstack/apps/server/internal/contexts/users/application/services"
@@ -24,11 +26,17 @@ import (
 )
 
 type Config struct {
-	Env               string
-	Port              string
-	LogLevel          string
-	CORSAllowedOrigin string
-	JWTSecret         string
+	Env                          string
+	Port                         string
+	LogLevel                     string
+	CORSAllowedOrigin            string
+	JWTSecret                    string
+	AccessTokenTTLMinutes        int
+	RefreshTokenTTLHours         int
+	RefreshTokenAbsoluteTTLHours int
+	RefreshCookieName            string
+	RefreshCookieSecure          bool
+	RefreshCookieDomain          string
 
 	TursoUsersURLHTTP string
 	TursoUsersToken   string
@@ -78,7 +86,7 @@ func NewRuntime() (*Runtime, error) {
 		return nil, fmt.Errorf("connect users database: %w", err)
 	}
 
-	authModule := buildAuthModule(usersDB, cfg.JWTSecret)
+	authModule := buildAuthModule(usersDB, cfg)
 
 	return &Runtime{
 		Config:  cfg,
@@ -107,13 +115,15 @@ func (r *Runtime) Close() error {
 func LoadConfig() (Config, error) {
 	var err error
 	cfg := Config{
-		Env:               getEnv("APP_ENV", "local"),
-		Port:              getEnv("PORT", "8080"),
-		LogLevel:          getEnv("LOG_LEVEL", "info"),
-		CORSAllowedOrigin: getEnv("CORS_ALLOWED_ORIGIN", ""),
-		JWTSecret:         getEnv("JWT_SECRET", ""),
-		TursoUsersURLHTTP: getEnv("TURSO_USERS_URL_HTTP", ""),
-		TursoUsersToken:   getEnv("TURSO_USERS_TOKEN", ""),
+		Env:                 getEnv("APP_ENV", "local"),
+		Port:                getEnv("PORT", "8080"),
+		LogLevel:            getEnv("LOG_LEVEL", "info"),
+		CORSAllowedOrigin:   getEnv("CORS_ALLOWED_ORIGIN", ""),
+		JWTSecret:           getEnv("JWT_SECRET", ""),
+		RefreshCookieName:   getEnv("REFRESH_COOKIE_NAME", "trackstack_refresh"),
+		RefreshCookieDomain: getEnv("REFRESH_COOKIE_DOMAIN", ""),
+		TursoUsersURLHTTP:   getEnv("TURSO_USERS_URL_HTTP", ""),
+		TursoUsersToken:     getEnv("TURSO_USERS_TOKEN", ""),
 	}
 
 	cfg.DBMaxOpenConns, err = getEnvInt("DB_MAX_OPEN_CONNS", 10)
@@ -136,6 +146,23 @@ func LoadConfig() (Config, error) {
 		return Config{}, err
 	}
 
+	cfg.AccessTokenTTLMinutes, err = getEnvInt("ACCESS_TOKEN_TTL_MINUTES", 15)
+	if err != nil {
+		return Config{}, err
+	}
+
+	cfg.RefreshTokenTTLHours, err = getEnvInt("REFRESH_TOKEN_TTL_HOURS", 24*30)
+	if err != nil {
+		return Config{}, err
+	}
+
+	cfg.RefreshTokenAbsoluteTTLHours, err = getEnvInt("REFRESH_TOKEN_ABSOLUTE_TTL_HOURS", 24*30)
+	if err != nil {
+		return Config{}, err
+	}
+
+	cfg.RefreshCookieSecure = getEnvBool("REFRESH_COOKIE_SECURE", cfg.Env != "local")
+
 	if err := cfg.Validate(); err != nil {
 		return Config{}, err
 	}
@@ -156,8 +183,32 @@ func (cfg Config) Validate() error {
 	if strings.TrimSpace(cfg.JWTSecret) == "" {
 		return fmt.Errorf("JWT_SECRET must not be empty")
 	}
+	if cfg.AccessTokenTTLMinutes <= 0 {
+		return fmt.Errorf("ACCESS_TOKEN_TTL_MINUTES must be greater than zero")
+	}
+	if cfg.RefreshTokenTTLHours <= 0 {
+		return fmt.Errorf("REFRESH_TOKEN_TTL_HOURS must be greater than zero")
+	}
+	if cfg.RefreshTokenAbsoluteTTLHours < cfg.RefreshTokenTTLHours {
+		return fmt.Errorf("REFRESH_TOKEN_ABSOLUTE_TTL_HOURS must be greater than or equal to REFRESH_TOKEN_TTL_HOURS")
+	}
+	if strings.TrimSpace(cfg.RefreshCookieName) == "" {
+		return fmt.Errorf("REFRESH_COOKIE_NAME must not be empty")
+	}
 
 	return nil
+}
+
+func (cfg Config) AccessTokenTTL() time.Duration {
+	return time.Duration(cfg.AccessTokenTTLMinutes) * time.Minute
+}
+
+func (cfg Config) RefreshTokenTTL() time.Duration {
+	return time.Duration(cfg.RefreshTokenTTLHours) * time.Hour
+}
+
+func (cfg Config) RefreshTokenAbsoluteTTL() time.Duration {
+	return time.Duration(cfg.RefreshTokenAbsoluteTTLHours) * time.Hour
 }
 
 func connectDatabase(cfg Config) (*sql.DB, error) {
@@ -171,15 +222,30 @@ func connectDatabase(cfg Config) (*sql.DB, error) {
 	return platformdb.Open(cfg.TursoUsersURLHTTP, cfg.TursoUsersToken, poolCfg)
 }
 
-func buildAuthModule(db *sql.DB, jwtSecret string) *AuthModule {
+func buildAuthModule(db *sql.DB, cfg Config) *AuthModule {
 	userService := buildUsersModule(db)
 	userProvider := &userProviderAdapter{svc: userService}
-	tokenIssuer := jwt.NewIssuer(jwtSecret)
-	authService := authservices.NewAuthService(userProvider, tokenIssuer)
+	tokenIssuer := jwt.NewIssuer(cfg.JWTSecret, cfg.AccessTokenTTL())
+	sessionRepo := authdb.NewSessionRepository(db)
+	refreshTokenManager := authtoken.NewManager()
+	authService := authservices.NewAuthService(
+		userProvider,
+		tokenIssuer,
+		sessionRepo,
+		refreshTokenManager,
+		cfg.RefreshTokenTTL(),
+		cfg.RefreshTokenAbsoluteTTL(),
+	)
 
 	return &AuthModule{
-		Handler:    authhttpserver.NewAuthHandler(authService),
-		Middleware: middleware.ResolveSession(jwtSecret),
+		Handler: authhttpserver.NewAuthHandler(authService, authhttpserver.CookieConfig{
+			Name:     cfg.RefreshCookieName,
+			Domain:   cfg.RefreshCookieDomain,
+			Path:     "/api/auth",
+			Secure:   cfg.RefreshCookieSecure,
+			SameSite: http.SameSiteLaxMode,
+		}),
+		Middleware: middleware.ResolveSession(cfg.JWTSecret),
 	}
 }
 
@@ -234,4 +300,18 @@ func getEnvInt(key string, fallback int) (int, error) {
 	}
 
 	return parsed, nil
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return fallback
+	}
+
+	return parsed
 }
