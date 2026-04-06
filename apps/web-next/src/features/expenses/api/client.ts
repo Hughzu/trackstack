@@ -1,5 +1,22 @@
 import { apiClient, unwrap } from '../../../core/api/client'
-import type { ExpensesSettings, ExpensesSettingsView, UpdateExpensesSettingsRequest } from '../../../core/api/types'
+import type {
+  ExpensesDashboard,
+  ExpensesSettings,
+  ExpensesSettingsView,
+  UpdateExpensesSettingsRequest,
+} from '../../../core/api/types'
+
+export const readExpensesDashboard = async (): Promise<ExpensesDashboard> => {
+  const { data, error } = await apiClient.GET('/api/expenses/sheet/current', {
+    params: {
+      query: {
+        historyLimit: 50,
+      },
+    },
+  })
+
+  return unwrap(data, error, 'Unable to read expenses dashboard')
+}
 
 export const readExpensesSettings = async (): Promise<ExpensesSettingsView> => {
   const { data, error } = await apiClient.GET('/api/expenses/settings')

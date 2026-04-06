@@ -114,9 +114,22 @@ paths:
       summary: Get heat dashboard
       security:
         - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
       responses:
         "200":
           description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeatDashboard"
   /api/heat/refills:
     get:
       summary: List heat refills
@@ -179,9 +192,22 @@ paths:
       summary: Get calories dashboard
       security:
         - bearerAuth: []
+      parameters:
+        - in: query
+          name: recentLimit
+          schema:
+            type: integer
+        - in: query
+          name: logsLimit
+          schema:
+            type: integer
       responses:
         "200":
           description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaloriesDashboard"
   /api/calories/target:
     get:
       summary: Get calorie target
@@ -283,9 +309,18 @@ paths:
       summary: Get current expenses dashboard
       security:
         - bearerAuth: []
+      parameters:
+        - in: query
+          name: historyLimit
+          schema:
+            type: integer
       responses:
         "200":
           description: Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpensesDashboard"
   /api/expenses/entries:
     post:
       summary: Add expense entry
@@ -516,6 +551,76 @@ components:
         - date
         - weightKg
         - bags
+    HeatSeasonSnapshot:
+      type: object
+      properties:
+        seasonLabel:
+          type: string
+        seasonToDate:
+          type: integer
+        lastSeasonToDate:
+          type: integer
+        delta:
+          type: integer
+        deltaPct:
+          type: integer
+          nullable: true
+      required:
+        - seasonLabel
+        - seasonToDate
+        - lastSeasonToDate
+        - delta
+    HeatDashboard:
+      type: object
+      properties:
+        daysSinceRefill:
+          type: integer
+        seasonSnapshot:
+          $ref: "#/components/schemas/HeatSeasonSnapshot"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/Refill"
+      required:
+        - daysSinceRefill
+        - seasonSnapshot
+        - history
+    CaloriesDashboardSummary:
+      type: object
+      properties:
+        consumedCalories:
+          type: integer
+        proteinGrams:
+          type: integer
+        carbGrams:
+          type: integer
+        fatGrams:
+          type: integer
+        target:
+          $ref: "#/components/schemas/CalorieTarget"
+      required:
+        - consumedCalories
+        - proteinGrams
+        - carbGrams
+        - fatGrams
+        - target
+    CaloriesDashboard:
+      type: object
+      properties:
+        summary:
+          $ref: "#/components/schemas/CaloriesDashboardSummary"
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalorieLog"
+        recentMeals:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalorieLog"
+      required:
+        - summary
+        - logs
+        - recentMeals
     CalorieLog:
       type: object
       properties:
@@ -685,6 +790,136 @@ components:
         - settings
         - checklist
         - recurring
+    ExpenseChecklistItem:
+      type: object
+      properties:
+        id:
+          type: string
+        sheetId:
+          type: string
+        templateId:
+          type: string
+          nullable: true
+        title:
+          type: string
+        amount:
+          type: number
+          format: float
+        category:
+          type: string
+        createdAt:
+          type: string
+        completedAt:
+          type: string
+          nullable: true
+        expenseId:
+          type: string
+          nullable: true
+      required:
+        - id
+        - sheetId
+        - title
+        - amount
+        - category
+        - createdAt
+    ExpensesDashboardBalance:
+      type: object
+      properties:
+        remaining:
+          type: number
+          format: float
+        income:
+          type: number
+          format: float
+      required:
+        - remaining
+        - income
+    ExpensesDashboardSpent:
+      type: object
+      properties:
+        fund:
+          type: number
+          format: float
+        fun:
+          type: number
+          format: float
+        future:
+          type: number
+          format: float
+      required:
+        - fund
+        - fun
+        - future
+    ExpensesDashboardBudget:
+      type: object
+      properties:
+        fund:
+          type: integer
+        fun:
+          type: integer
+        future:
+          type: integer
+      required:
+        - fund
+        - fun
+        - future
+    ExpensesDashboardRatio:
+      type: object
+      properties:
+        percent:
+          type: integer
+        categoryId:
+          type: string
+        label:
+          type: string
+        value:
+          type: number
+          format: float
+        budget:
+          type: integer
+        target:
+          type: integer
+        over:
+          type: boolean
+      required:
+        - percent
+        - categoryId
+        - label
+        - value
+        - budget
+        - target
+        - over
+    ExpensesDashboard:
+      type: object
+      properties:
+        periodKey:
+          type: string
+        balance:
+          $ref: "#/components/schemas/ExpensesDashboardBalance"
+        spent:
+          $ref: "#/components/schemas/ExpensesDashboardSpent"
+        budget:
+          $ref: "#/components/schemas/ExpensesDashboardBudget"
+        ratios:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExpensesDashboardRatio"
+        pendingObligations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExpenseChecklistItem"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExpenseEntry"
+      required:
+        - periodKey
+        - balance
+        - spent
+        - budget
+        - ratios
+        - pendingObligations
+        - history
     UpdateExpensesSettingsRequest:
       type: object
       properties:

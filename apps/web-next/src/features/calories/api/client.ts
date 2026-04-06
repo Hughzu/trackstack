@@ -1,5 +1,18 @@
 import { apiClient, unwrap } from '../../../core/api/client'
-import type { CalorieLog, CalorieTarget, CreateCalorieLogRequest } from '../../../core/api/types'
+import type { CalorieLog, CalorieTarget, CaloriesDashboard, CreateCalorieLogRequest } from '../../../core/api/types'
+
+export const readCaloriesDashboard = async (): Promise<CaloriesDashboard> => {
+  const { data, error } = await apiClient.GET('/api/calories/dashboard', {
+    params: {
+      query: {
+        recentLimit: 8,
+        logsLimit: 50,
+      },
+    },
+  })
+
+  return unwrap(data, error, 'Unable to read calories dashboard')
+}
 
 export const readCalorieTarget = async (): Promise<CalorieTarget> => {
   const { data, error } = await apiClient.GET('/api/calories/target')

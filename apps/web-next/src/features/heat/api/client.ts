@@ -1,5 +1,18 @@
 import { apiClient, unwrap } from '../../../core/api/client'
-import type { CreateRefillRequest, Refill } from '../../../core/api/types'
+import type { CreateRefillRequest, HeatDashboard, Refill } from '../../../core/api/types'
+
+export const readHeatDashboard = async (): Promise<HeatDashboard> => {
+  const { data, error } = await apiClient.GET('/api/heat/dashboard', {
+    params: {
+      query: {
+        page: 1,
+        limit: 20,
+      },
+    },
+  })
+
+  return unwrap(data, error, 'Unable to read heat dashboard')
+}
 
 export const listRefills = async (): Promise<Refill[]> => {
   const { data, error } = await apiClient.GET('/api/heat/refills')

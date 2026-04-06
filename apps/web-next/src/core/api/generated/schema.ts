@@ -204,6 +204,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rotate refresh session and issue a new access token */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Refreshed */
+                200: {
+                    headers: {
+                        /** @description Rotated HttpOnly refresh cookie */
+                        "Set-Cookie"?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LoginResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/session": {
         parameters: {
             query?: never;
@@ -259,7 +306,10 @@ export interface paths {
         /** Get heat dashboard */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    page?: number;
+                    limit?: number;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -271,7 +321,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["HeatDashboard"];
+                    };
                 };
             };
         };
@@ -407,7 +459,10 @@ export interface paths {
         /** Get calories dashboard */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    recentLimit?: number;
+                    logsLimit?: number;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -419,7 +474,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["CaloriesDashboard"];
+                    };
                 };
             };
         };
@@ -646,7 +703,9 @@ export interface paths {
         /** Get current expenses dashboard */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    historyLimit?: number;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -658,7 +717,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["ExpensesDashboard"];
+                    };
                 };
             };
         };
@@ -1019,6 +1080,30 @@ export interface components {
             /** Format: float */
             temperature?: number | null;
         };
+        HeatSeasonSnapshot: {
+            seasonLabel: string;
+            seasonToDate: number;
+            lastSeasonToDate: number;
+            delta: number;
+            deltaPct?: number | null;
+        };
+        HeatDashboard: {
+            daysSinceRefill: number;
+            seasonSnapshot: components["schemas"]["HeatSeasonSnapshot"];
+            history: components["schemas"]["Refill"][];
+        };
+        CaloriesDashboardSummary: {
+            consumedCalories: number;
+            proteinGrams: number;
+            carbGrams: number;
+            fatGrams: number;
+            target: components["schemas"]["CalorieTarget"];
+        };
+        CaloriesDashboard: {
+            summary: components["schemas"]["CaloriesDashboardSummary"];
+            logs: components["schemas"]["CalorieLog"][];
+            recentMeals: components["schemas"]["CalorieLog"][];
+        };
         CalorieLog: {
             id: string;
             userId: string;
@@ -1079,6 +1164,56 @@ export interface components {
             settings: components["schemas"]["ExpensesSettings"];
             checklist: components["schemas"]["ExpenseTemplate"][];
             recurring: components["schemas"]["ExpenseTemplate"][];
+        };
+        ExpenseChecklistItem: {
+            id: string;
+            sheetId: string;
+            templateId?: string | null;
+            title: string;
+            /** Format: float */
+            amount: number;
+            category: string;
+            createdAt: string;
+            completedAt?: string | null;
+            expenseId?: string | null;
+        };
+        ExpensesDashboardBalance: {
+            /** Format: float */
+            remaining: number;
+            /** Format: float */
+            income: number;
+        };
+        ExpensesDashboardSpent: {
+            /** Format: float */
+            fund: number;
+            /** Format: float */
+            fun: number;
+            /** Format: float */
+            future: number;
+        };
+        ExpensesDashboardBudget: {
+            fund: number;
+            fun: number;
+            future: number;
+        };
+        ExpensesDashboardRatio: {
+            percent: number;
+            categoryId: string;
+            label: string;
+            /** Format: float */
+            value: number;
+            budget: number;
+            target: number;
+            over: boolean;
+        };
+        ExpensesDashboard: {
+            periodKey: string;
+            balance: components["schemas"]["ExpensesDashboardBalance"];
+            spent: components["schemas"]["ExpensesDashboardSpent"];
+            budget: components["schemas"]["ExpensesDashboardBudget"];
+            ratios: components["schemas"]["ExpensesDashboardRatio"][];
+            pendingObligations: components["schemas"]["ExpenseChecklistItem"][];
+            history: components["schemas"]["ExpenseEntry"][];
         };
         UpdateExpensesSettingsRequest: {
             /** Format: float */
