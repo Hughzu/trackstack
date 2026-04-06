@@ -1,7 +1,7 @@
 - login WIP :
     - finish refresh
         2. I can sketch the exact Go refresh contract so backend work is dead simple
-3. I can wire automatic pre-expiry refresh using expiresAt instead of waiting for the first 401
+        3. I can wire automatic pre-expiry refresh using expiresAt instead of waiting for the first 401
     - audit de gpt sur ce qui est fait
     - fix design AFFREUX de la page de login
     - loading entre login et redirect

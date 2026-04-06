@@ -4,7 +4,7 @@ import { Pill } from './Pill'
 type FeaturePlaceholderProps = {
   title: string
   route: string
-  description: string
+  description?: string
   bullets: string[]
 }
 

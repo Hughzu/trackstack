@@ -5,7 +5,7 @@ import { ActionButton } from '../../components/ui/ActionButton'
 import { AppShell } from '../../components/ui/AppShell'
 import { Notice } from '../../components/ui/Notice'
 import { Panel } from '../../components/ui/Panel'
-import { SectionTitle } from '../../components/ui/SectionTitle'
+import { FormStack, FormActions } from '../../components/ui/Form'
 import { TextField } from '../../components/ui/TextField'
 import { login } from '../../core/auth/store'
 
@@ -41,15 +41,10 @@ export default function AuthPage() {
   }
 
   return (
-    <AppShell
-      currentDomain="auth"
-      eyebrow="Auth"
-      title="Sign in"
-      description="Short-lived access tokens stay in session storage. Protected routes revalidate on boot and try a refresh before kicking you out."
-    >
+    <AppShell currentDomain="auth">
 
-      <Panel title="Access" description="Use your account credentials to unlock the protected routes.">
-        <form class="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <Panel title="Access">
+        <FormStack onSubmit={handleSubmit}>
           <TextField
             id="email"
             name="email"
@@ -73,13 +68,12 @@ export default function AuthPage() {
 
           {errorMessage() ? <Notice tone="error" message={errorMessage()!} /> : null}
 
-          <div class="flex items-center justify-between gap-3">
-            <div class="text-sm leading-6 text-text-muted">Routes stay locked until `/api/auth/session` confirms the JWT.</div>
+          <FormActions>
             <ActionButton type="submit" disabled={isSubmitting()} busy={isSubmitting()}>
               {isSubmitting() ? 'Signing in...' : 'Sign in'}
             </ActionButton>
-          </div>
-        </form>
+          </FormActions>
+        </FormStack>
       </Panel>
     </AppShell>
   )

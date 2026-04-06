@@ -17,7 +17,7 @@ export function ProtectedRoute(props: GuardProps) {
         <Navigate href="/login" />
       </Match>
       <Match when>
-        <RouteStatus title="Checking session" description="Hold on. We are validating your access token before the app opens." />
+        <RouteStatus title="Checking session" />
       </Match>
     </Switch>
   )
@@ -31,7 +31,7 @@ export function PublicOnlyRoute(props: GuardProps) {
         <Navigate href="/" />
       </Match>
       <Match when>
-        <RouteStatus title="Checking session" description="If you are already signed in, we will skip the login screen." />
+        <RouteStatus title="Checking session" />
       </Match>
     </Switch>
   )
