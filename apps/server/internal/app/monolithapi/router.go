@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Hughzu/trackstack/apps/server/internal/app/authruntime"
 	caloriesinboundhttp "github.com/Hughzu/trackstack/apps/server/internal/contexts/calories/adapters/inbound/http"
 	expensesinboundhttp "github.com/Hughzu/trackstack/apps/server/internal/contexts/expenses/adapters/inbound/http"
 	heatinboundhttp "github.com/Hughzu/trackstack/apps/server/internal/contexts/heat/adapters/inbound/http"
@@ -15,7 +16,7 @@ import (
 func newRouter(
 	logger *slog.Logger,
 	corsAllowedOrigin string,
-	authModule *AuthModule,
+	authModule *authruntime.Module,
 	heatHandler *heatinboundhttp.RefillHandler,
 	caloriesHandler *caloriesinboundhttp.CaloriesHandler,
 	expensesHandler *expensesinboundhttp.ExpensesHandler,

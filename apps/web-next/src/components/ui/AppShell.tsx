@@ -17,12 +17,6 @@ export function AppShell(props: AppShellProps) {
   const navigate = useNavigate()
   const theme = resolveTheme(import.meta.env.VITE_DEPLOY_TARGET)
   const [isLoggingOut, setIsLoggingOut] = createSignal(false)
-  const initials = appConfig.appName
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
   const visibleDomains = createMemo(() => {
     if (authState().status === 'authenticated') {
       return appConfig.domains.filter((domain) => domain.id !== 'auth')

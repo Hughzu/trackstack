@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Hughzu/trackstack/apps/server/internal/app/authruntime"
 	"github.com/Hughzu/trackstack/apps/server/internal/platform/config"
 	"github.com/Hughzu/trackstack/apps/server/internal/platform/logging"
 )
@@ -33,7 +34,15 @@ func NewRuntime() (*Runtime, error) {
 	heatHandler := buildHeatModule(dbs.Heat)
 	caloriesHandler := buildCaloriesModule(dbs.Calories)
 	expensesHandler := buildExpensesModule(dbs.Expenses)
-	authModule := buildAuthModule(dbs.Users, cfg)
+	authModule := authruntime.NewModule(dbs.Users, authruntime.Config{
+		JWTSecret:                    cfg.JWTSecret,
+		AccessTokenTTLMinutes:        cfg.AccessTokenTTLMinutes,
+		RefreshTokenTTLHours:         cfg.RefreshTokenTTLHours,
+		RefreshTokenAbsoluteTTLHours: cfg.RefreshTokenAbsoluteTTLHours,
+		RefreshCookieName:            cfg.RefreshCookieName,
+		RefreshCookieSecure:          cfg.RefreshCookieSecure,
+		RefreshCookieDomain:          cfg.RefreshCookieDomain,
+	})
 
 	runtime := &Runtime{
 		Config:  cfg,
