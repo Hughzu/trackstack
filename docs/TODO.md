@@ -3,10 +3,7 @@
         2. I can sketch the exact Go refresh contract so backend work is dead simple
         3. I can wire automatic pre-expiry refresh using expiresAt instead of waiting for the first 401
     - audit de gpt sur ce qui est fait
-    - fix design AFFREUX de la page de login
-    - loading entre login et redirect
-    - button logout un peu dégueu, à voir ce que je peux faire en termes de design pour le coin en haut à droite
-    - fix design douteux de chacune des pages
+    - mock up de chacunes des pages
 
     - première fois avec le lazy loading j'ai vraiment un screen flickering chiant quand je change de page, je peux pas réduire ça ? 
 

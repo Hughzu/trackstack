@@ -1,16 +1,38 @@
+import { AppShell } from './AppShell'
+import { SkeletonPanel, SkeletonText, SkeletonBlock } from './Skeleton'
+
 type RouteStatusProps = {
   title: string
   description?: string
 }
 
-export function RouteStatus(props: RouteStatusProps) {
+export function RouteStatus(_props: RouteStatusProps) {
   return (
-    <div class="flex min-h-screen items-center justify-center bg-background px-4 text-text-main">
-      <section class="w-full max-w-md rounded-3xl border border-border bg-surface p-8 shadow-xl shadow-black/20">
-        <div class="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-accent">TrackStack</div>
-        <h1 class="text-2xl font-bold tracking-tight">{props.title}</h1>
-        {props.description ? <p class="mt-3 text-sm leading-6 text-text-muted">{props.description}</p> : null}
-      </section>
-    </div>
+    <AppShell currentDomain="">
+      <div class="space-y-8 animate-in fade-in duration-500">
+        <header>
+          <SkeletonText class="h-8 w-1/3 mb-2" />
+          <SkeletonText class="h-4 w-1/4" />
+        </header>
+
+        <SkeletonPanel class="p-5 space-y-6">
+          <header class="mb-4">
+            <SkeletonText class="h-3 w-16 bg-accent/20" />
+          </header>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <SkeletonBlock class="h-24" />
+            <SkeletonBlock class="h-24" />
+            <SkeletonBlock class="h-24" />
+          </div>
+
+          <div class="space-y-3 pt-4">
+            <SkeletonText class="h-4 w-full" />
+            <SkeletonText class="h-4 w-11/12" />
+            <SkeletonText class="h-4 w-4/5" />
+          </div>
+        </SkeletonPanel>
+      </div>
+    </AppShell>
   )
 }
