@@ -9,13 +9,16 @@ export type StatProps = {
   subtext?: string | JSX.Element // Rendered below or inline depending on variant
   align?: 'left' | 'right' | 'center'
   variant?: 'hero' | 'lg' | 'md' | 'sm' | 'mono' | 'inline'
-  color?: 'main' | 'accent' | 'muted'
+  color?: 'main' | 'accent' | 'muted' | 'danger' | 'warning' | 'success'
 }
 
 const colorMap = {
   main: 'text-text-main',
   accent: 'text-accent',
   muted: 'text-text-muted',
+  danger: 'text-danger',
+  warning: 'text-warning',
+  success: 'text-success',
 }
 
 export function Stat(props: StatProps) {

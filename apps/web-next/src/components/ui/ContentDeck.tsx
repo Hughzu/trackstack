@@ -4,15 +4,20 @@ type ContentDeckProps = {
   children: JSX.Element
   layout?: 'grid' | 'stacked'
   animate?: boolean
+  hasFloatingActions?: boolean
 }
 
 export function ContentDeck(props: ContentDeckProps) {
   let baseClass = props.layout === 'stacked' 
-    ? 'flex flex-col gap-6' 
-    : 'grid gap-5 md:grid-cols-2'
+    ? 'flex flex-col gap-4 sm:gap-6' 
+    : 'grid gap-4 sm:gap-5 md:grid-cols-2'
     
   if (props.animate) {
     baseClass += ' animate-in fade-in slide-in-from-bottom-2 duration-700'
+  }
+
+  if (props.hasFloatingActions) {
+    baseClass += ' pb-24'
   }
 
   return <section class={baseClass}>{props.children}</section>
