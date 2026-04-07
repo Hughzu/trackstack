@@ -1,4 +1,4 @@
-import { createResource, createSignal, createMemo, Show, Suspense } from 'solid-js'
+import { createMemo, createResource, createSignal, Show, Suspense } from 'solid-js'
 
 import { ActionButton, CheckToggleButton, FloatingActionGroup, IconButton } from '../../components/ui/ActionButton'
 import { BudgetBreakdown, type BudgetBreakdownItem, SkeletonBudgetBreakdown } from '../../components/ui/BudgetBreakdown'
@@ -15,7 +15,7 @@ import type { ExpenseChecklistItem, ExpenseEntry, ExpensesDashboard } from '../.
 import { authState } from '../../core/auth/state'
 import { formatEuro } from '../../core/format/money'
 import { createExpenseBudgetBreakdownItems, createExpenseHistoryFilterOptions, getExpenseCategoryMeta } from './display'
-import { readExpensesDashboard } from './api/client'
+import { closeExpenseSheet, completeChecklistItem, deleteExpenseEntry, readExpensesDashboard } from './api/client'
 
 const formatDateLabel = (dateValue: string) => {
   const date = new Date(`${dateValue}T00:00:00`)
@@ -49,7 +49,7 @@ function SummaryCard(props: { dashboard: ExpensesDashboard }) {
   )
 }
 
-function ObligationsCard(props: { obligations: ExpenseChecklistItem[] }) {
+function ObligationsCard(props: { obligations: ExpenseChecklistItem[], busyId?: string, onComplete: (item: ExpenseChecklistItem) => void }) {
   return (
     <Panel
       title="Obligations"
@@ -59,11 +59,12 @@ function ObligationsCard(props: { obligations: ExpenseChecklistItem[] }) {
       <List emptyMessage="All obligations paid for this month!" variant="flush">
         {props.obligations.map((item) => (
           <ListItem
+            id={item.id}
             title={item.title}
             value={`-${formatEuro(item.amount)}`}
             valueTone="danger"
             valueStyle="mono"
-            prefix={<CheckToggleButton />}
+            prefix={<CheckToggleButton disabled={props.busyId === item.id} onClick={() => props.onComplete(item)} />}
           />
         ))}
       </List>
@@ -77,7 +78,7 @@ const DeleteIcon = () => (
   </svg>
 )
 
-function HistoryCard(props: { history: ExpenseEntry[] }) {
+function HistoryCard(props: { history: ExpenseEntry[], deletingId?: string, onDelete: (entry: ExpenseEntry) => void }) {
   const [filter, setFilter] = createSignal('all')
   const options = createExpenseHistoryFilterOptions()
 
@@ -97,6 +98,7 @@ function HistoryCard(props: { history: ExpenseEntry[] }) {
 
           return (
           <ListItem
+            id={tx.id}
             title={tx.title}
             subtitle={
               <ListMeta>
@@ -111,7 +113,7 @@ function HistoryCard(props: { history: ExpenseEntry[] }) {
             valueTone="danger"
             valueStyle="mono"
             action={
-              <IconButton icon={<DeleteIcon />} textDanger />
+              <IconButton ariaLabel={`Delete ${tx.title}`} disabled={props.deletingId === tx.id} icon={<DeleteIcon />} textDanger onClick={() => props.onDelete(tx)} />
             }
           />
           )
@@ -136,27 +138,88 @@ function DashboardSkeleton() {
 }
 
 export default function ExpensesPage() {
-  const [dashboard] = createResource(readyKey, readExpensesDashboard)
+  const [dashboard, { refetch }] = createResource(readyKey, readExpensesDashboard)
+  const [isClosingMonth, setIsClosingMonth] = createSignal(false)
+  const [busyObligationId, setBusyObligationId] = createSignal<string | undefined>()
+  const [deletingEntryId, setDeletingEntryId] = createSignal<string | undefined>()
+  const [actionError, setActionError] = createSignal<string | undefined>()
 
-  const mockObligations = [
-    { id: 'mock-1', title: 'Car Insurance', amount: 125.50, category: 'fund' },
-    { id: 'mock-2', title: 'Gym Membership', amount: 35.00, category: 'fund' }
-  ] as ExpenseChecklistItem[]
+  const refreshDashboard = async () => {
+    await refetch()
+  }
+
+  const handleCloseMonth = async () => {
+    if (isClosingMonth()) return
+
+    setActionError(undefined)
+    setIsClosingMonth(true)
+
+    try {
+      await closeExpenseSheet()
+      await refreshDashboard()
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Unable to close month')
+    } finally {
+      setIsClosingMonth(false)
+    }
+  }
+
+  const handleCompleteObligation = async (item: ExpenseChecklistItem) => {
+    if (busyObligationId()) return
+
+    setActionError(undefined)
+    setBusyObligationId(item.id)
+
+    try {
+      await completeChecklistItem({ id: item.id })
+      await refreshDashboard()
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Unable to complete obligation')
+    } finally {
+      setBusyObligationId(undefined)
+    }
+  }
+
+  const handleDeleteEntry = async (entry: ExpenseEntry) => {
+    if (deletingEntryId()) return
+
+    setActionError(undefined)
+    setDeletingEntryId(entry.id)
+
+    try {
+      await deleteExpenseEntry(entry.id)
+      await refreshDashboard()
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Unable to delete expense entry')
+    } finally {
+      setDeletingEntryId(undefined)
+    }
+  }
 
   return (
     <ContentDeck layout="stacked" animate hasFloatingActions>
       <DataRow variant="header">
-        <Stat label="Period" value={dashboard()?.periodKey || '...'} variant="md" />
-        <ActionButton tone="ghost" busy={dashboard.loading && !dashboard()}>Close month</ActionButton>
+        <div data-testid="expenses-period">
+          <Stat label="Period" value={dashboard()?.periodKey || '...'} variant="md" />
+        </div>
+        <ActionButton tone="ghost" busy={isClosingMonth()} onClick={handleCloseMonth}>Close month</ActionButton>
       </DataRow>
+
+      <Show when={actionError()}>
+        {(message) => <Notice tone="error" message={message()} />}
+      </Show>
 
       <Suspense fallback={<DashboardSkeleton />}>
         <Show when={dashboard()} fallback={<Notice tone="error" message="Expenses dashboard failed to load." />}>
           {(data) => (
             <>
               <SummaryCard dashboard={data()} />
-              <ObligationsCard obligations={data().pendingObligations?.length ? data().pendingObligations : mockObligations} />
-              <HistoryCard history={data().history ?? []} />
+              <ObligationsCard
+                obligations={data().pendingObligations ?? []}
+                busyId={busyObligationId()}
+                onComplete={handleCompleteObligation}
+              />
+              <HistoryCard history={data().history ?? []} deletingId={deletingEntryId()} onDelete={handleDeleteEntry} />
             </>
           )}
         </Show>

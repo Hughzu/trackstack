@@ -33,7 +33,7 @@ export function FilterGroup(props: FilterGroupProps) {
             return base + 'text-text-muted border border-transparent hover:text-text-main hover:bg-surface/50'
           }
           return (
-            <button type="button" class={getClasses()} onClick={() => props.onChange(option.value)}>
+            <button type="button" class={getClasses()} onClick={() => props.onChange(option.value)} aria-pressed={isActive()}>
               {option.label}
             </button>
           )

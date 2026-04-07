@@ -6,6 +6,7 @@ export type ActionButtonProps = {
   busy?: boolean
   tone?: 'primary' | 'ghost'
   block?: boolean
+  ariaLabel?: string
   onClick?: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent>
   children: JSX.Element
 }
@@ -22,6 +23,7 @@ export function ActionButton(props: ActionButtonProps) {
     <button
       type={props.type ?? 'button'}
       disabled={props.disabled || props.busy}
+      aria-label={props.ariaLabel}
       onClick={props.onClick}
       class={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${toneClass} ${blockClass}`}
     >
@@ -47,23 +49,24 @@ export function FloatingActionGroup(props: { children: JSX.Element }) {
 }
 
 
-export function IconButton(props: { icon: JSX.Element, textDanger?: boolean, onClick?: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent> }) {
+export function IconButton(props: { icon: JSX.Element, ariaLabel?: string, disabled?: boolean, textDanger?: boolean, onClick?: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent> }) {
   const c = props.textDanger 
    ? "h-8 w-8 rounded-full flex flex-shrink-0 items-center justify-center text-text-muted transition-colors hover:text-danger hover:bg-danger/10 outline-none focus-visible:ring-2 focus-visible:ring-accent"
    : "h-8 w-8 rounded-full flex flex-shrink-0 items-center justify-center text-text-muted transition-colors hover:text-text-main hover:bg-surface outline-none focus-visible:ring-2 focus-visible:ring-accent"
   
    return (
-    <button type="button" class={c} onClick={props.onClick}>
+    <button type="button" class={`${c} ${props.disabled ? 'cursor-not-allowed opacity-50' : ''}`} onClick={props.onClick} aria-label={props.ariaLabel} disabled={props.disabled}>
       {props.icon}
     </button>
   )
 }
 
-export function CheckToggleButton(props: { onClick?: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent> }) {
+export function CheckToggleButton(props: { disabled?: boolean, onClick?: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent> }) {
   return (
     <button
       type="button"
-      class="group/btn flex h-5 w-5 items-center justify-center rounded-md border border-border/70 outline-none transition-all hover:border-success hover:bg-success/20 focus-visible:ring-2 focus-visible:ring-accent"
+      disabled={props.disabled}
+      class="group/btn flex h-5 w-5 items-center justify-center rounded-md border border-border/70 outline-none transition-all disabled:cursor-not-allowed disabled:opacity-50 hover:border-success hover:bg-success/20 focus-visible:ring-2 focus-visible:ring-accent"
       onClick={props.onClick}
       aria-label="Mark as complete"
     >

@@ -22,6 +22,7 @@ export function List(props: ListProps) {
 }
 
 type ListItemProps = {
+  id?: string
   title: string
   subtitle?: JSX.Element | string
   value?: JSX.Element | string
@@ -60,7 +61,7 @@ export function ListItem(props: ListItemProps) {
   }
 
   return (
-    <div class="group flex items-center justify-between p-4 transition-colors hover:bg-surface/50">
+    <div class="group flex items-center justify-between p-4 transition-colors hover:bg-surface/50" data-list-item-id={props.id}>
       <div class="flex min-w-0 items-center gap-3">
         {props.prefix}
         <div class="flex flex-col min-w-0">
