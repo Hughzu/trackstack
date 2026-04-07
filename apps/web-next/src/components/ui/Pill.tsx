@@ -32,3 +32,12 @@ export function Pill(props: PillProps) {
   return <span class={className}>{props.children}</span>
 }
 
+type CounterPillProps = {
+  tone?: 'accent' | 'neutral' | 'success' | 'warning' | 'danger'
+  value: JSX.Element | string | number
+  label: JSX.Element | string
+}
+
+export function CounterPill(props: CounterPillProps) {
+  return <Pill tone={props.tone} size="sm">{props.value} {props.label}</Pill>
+}

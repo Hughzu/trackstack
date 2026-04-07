@@ -1,7 +1,8 @@
 import { createMemo, createResource, Show, Suspense } from 'solid-js'
 
+import { BudgetBreakdown, SkeletonBudgetBreakdown, type BudgetBreakdownItem } from '../../components/ui/BudgetBreakdown'
 import { ContentDeck } from '../../components/ui/ContentDeck'
-import { DataCell, DataRow } from '../../components/ui/DataRow'
+import { DataRow } from '../../components/ui/DataRow'
 import { Notice } from '../../components/ui/Notice'
 import { Panel } from '../../components/ui/Panel'
 import { ProgressBar } from '../../components/ui/ProgressBar'
@@ -29,31 +30,39 @@ const formatCount = (value: number) => wholeNumberFormatter.format(value)
 const readyKey = () => (authState().status === 'authenticated' ? 'ready' : undefined)
 
 function ExpensesCard(props: { dashboard: ExpensesDashboard }) {
+  const ratioPercent = (categoryId: string) => props.dashboard.ratios.find((ratio) => ratio.categoryId === categoryId)?.percent || 0
+
+  const items: BudgetBreakdownItem[] = [
+    {
+      label: 'Fund',
+      value: formatEuro(props.dashboard.spent.fund),
+      subtext: `/ ${formatEuro(props.dashboard.budget.fund)}`,
+      percent: ratioPercent('fund'),
+      barColor: 'danger',
+    },
+    {
+      label: 'Fun',
+      value: formatEuro(props.dashboard.spent.fun),
+      subtext: `/ ${formatEuro(props.dashboard.budget.fun)}`,
+      percent: ratioPercent('fun'),
+      barColor: 'warning',
+    },
+    {
+      label: 'Future',
+      value: formatEuro(props.dashboard.spent.future),
+      subtext: `/ ${formatEuro(props.dashboard.budget.future)}`,
+      percent: ratioPercent('future'),
+      barColor: 'success',
+    },
+  ]
+
   return (
     <Panel title="Expenses" href="/expenses">
-      <DataRow variant="header">
-        <Stat label="Remaining" value={formatEuro(props.dashboard.balance.remaining)} variant="lg" />
-        <Stat label="Income" value={formatEuro(props.dashboard.balance.income)} variant="mono" align="right" />
-      </DataRow>
-
-      <ProgressBar
-        segments={props.dashboard.ratios.map((ratio) => ({
-          percent: ratio.percent,
-          color: ratio.categoryId === 'fun' ? 'warning' : ratio.categoryId === 'future' ? 'success' : 'danger',
-        }))}
+      <BudgetBreakdown
+        remaining={formatEuro(props.dashboard.balance.remaining)}
+        income={formatEuro(props.dashboard.balance.income)}
+        items={items}
       />
-
-      <DataRow variant="divided">
-        <DataCell flex>
-          <Stat label="Fund" value={formatEuro(props.dashboard.spent.fund)} subtext={`/ ${formatEuro(props.dashboard.budget.fund)}`} variant="sm" align="center" />
-        </DataCell>
-        <DataCell flex>
-          <Stat label="Fun" value={formatEuro(props.dashboard.spent.fun)} subtext={`/ ${formatEuro(props.dashboard.budget.fun)}`} variant="sm" align="center" />
-        </DataCell>
-        <DataCell flex>
-          <Stat label="Future" value={formatEuro(props.dashboard.spent.future)} subtext={`/ ${formatEuro(props.dashboard.budget.future)}`} variant="sm" align="center" />
-        </DataCell>
-      </DataRow>
     </Panel>
   )
 }
@@ -128,27 +137,7 @@ function ErrorCard(props: { title: string; message: string }) {
 }
 
 function ExpensesSkeleton() {
-  return (
-    <SkeletonPanel titleVariant="md">
-      <DataRow variant="header">
-        <SkeletonStat variant="lg" />
-        <SkeletonStat variant="mono" align="right" />
-      </DataRow>
-      <SkeletonProgressBar />
-
-      <DataRow variant="divided">
-        <DataCell flex>
-          <SkeletonStat variant="sm" align="center" />
-        </DataCell>
-        <DataCell flex>
-          <SkeletonStat variant="sm" align="center" />
-        </DataCell>
-        <DataCell flex>
-          <SkeletonStat variant="sm" align="center" />
-        </DataCell>
-      </DataRow>
-    </SkeletonPanel>
-  )
+  return <SkeletonBudgetBreakdown />
 }
 
 function CaloriesSkeleton() {

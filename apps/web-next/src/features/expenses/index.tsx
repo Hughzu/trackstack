@@ -1,16 +1,16 @@
 import { createResource, createSignal, createMemo, Show, Suspense } from 'solid-js'
 
-import { ActionButton, FloatingActionGroup, IconButton } from '../../components/ui/ActionButton'
+import { ActionButton, CheckToggleButton, FloatingActionGroup, IconButton } from '../../components/ui/ActionButton'
+import { BudgetBreakdown, type BudgetBreakdownItem, SkeletonBudgetBreakdown } from '../../components/ui/BudgetBreakdown'
 import { ContentDeck } from '../../components/ui/ContentDeck'
 import { DataCell, DataRow } from '../../components/ui/DataRow'
 import { FilterGroup, type FilterOption } from '../../components/ui/FilterGroup'
-import { List, ListItem, SkeletonListItem } from '../../components/ui/List'
+import { List, ListItem, ListMeta, ListMetaDivider, SkeletonListItem } from '../../components/ui/List'
 import { Notice } from '../../components/ui/Notice'
 import { Panel } from '../../components/ui/Panel'
-import { Pill } from '../../components/ui/Pill'
-import { ProgressBar } from '../../components/ui/ProgressBar'
-import { SkeletonPanel, SkeletonProgressBar } from '../../components/ui/Skeleton'
-import { SkeletonStat, Stat } from '../../components/ui/Stat'
+import { CounterPill, Pill } from '../../components/ui/Pill'
+import { SkeletonPanel } from '../../components/ui/Skeleton'
+import { Stat } from '../../components/ui/Stat'
 import type { ExpenseChecklistItem, ExpenseEntry, ExpensesDashboard } from '../../core/api/types'
 import { authState } from '../../core/auth/state'
 import { readExpensesDashboard } from './api/client'
@@ -59,62 +59,59 @@ function SummaryCard(props: { dashboard: ExpensesDashboard }) {
   const fund = getRatioData('fund')
   const fun = getRatioData('fun')
   const future = getRatioData('future')
+  const items: BudgetBreakdownItem[] = [
+    {
+      label: 'Fund.',
+      value: formatEuro(props.dashboard.spent.fund),
+      subtext: `/ ${formatEuro(fund.budget)} (${fund.percent}%)`,
+      percent: fund.percent,
+      color: fund.over ? 'danger' : 'main',
+      barColor: 'danger',
+    },
+    {
+      label: 'Fun',
+      value: formatEuro(props.dashboard.spent.fun),
+      subtext: `/ ${formatEuro(fun.budget)} (${fun.percent}%)`,
+      percent: fun.percent,
+      color: fun.over ? 'danger' : 'main',
+      barColor: 'warning',
+    },
+    {
+      label: 'Future',
+      value: formatEuro(props.dashboard.spent.future),
+      subtext: `/ ${formatEuro(future.budget)} (${future.percent}%)`,
+      percent: future.percent,
+      color: future.over ? 'danger' : 'main',
+      barColor: 'success',
+    },
+  ]
 
   return (
     <Panel title="Summary">
-      <DataRow variant="header">
-        <Stat label="Remaining" value={formatEuro(props.dashboard.balance.remaining)} variant="lg" />
-        <Stat label="Income" value={formatEuro(props.dashboard.balance.income)} variant="mono" align="right" />
-      </DataRow>
-
-      <ProgressBar
-        segments={props.dashboard.ratios.map((ratio) => ({
-          percent: ratio.percent,
-          color: getCategoryTone(ratio.categoryId) as any,
-        }))}
+      <BudgetBreakdown
+        remaining={formatEuro(props.dashboard.balance.remaining)}
+        income={formatEuro(props.dashboard.balance.income)}
+        items={items}
       />
-
-      <DataRow variant="divided">
-        <DataCell flex>
-          <Stat label="Fund." value={formatEuro(props.dashboard.spent.fund)} subtext={`/ ${formatEuro(fund.budget)} (${fund.percent}%)`} color={fund.over ? 'danger' : 'main'} variant="sm" align="center" />
-        </DataCell>
-        <DataCell flex>
-          <Stat label="Fun" value={formatEuro(props.dashboard.spent.fun)} subtext={`/ ${formatEuro(fun.budget)} (${fun.percent}%)`} color={fun.over ? 'danger' : 'main'} variant="sm" align="center" />
-        </DataCell>
-        <DataCell flex>
-          <Stat label="Future" value={formatEuro(props.dashboard.spent.future)} subtext={`/ ${formatEuro(future.budget)} (${future.percent}%)`} color={future.over ? 'danger' : 'main'} variant="sm" align="center" />
-        </DataCell>
-      </DataRow>
     </Panel>
   )
 }
 
 function ObligationsCard(props: { obligations: ExpenseChecklistItem[] }) {
-  const countPill = <span class="flex h-5 items-center rounded-full bg-accent/10 px-2 text-[0.65rem] font-bold text-accent">{props.obligations.length} Left</span>
-
   return (
-    <Panel title="Obligations" description={props.obligations.length > 0 ? countPill : undefined} collapsibleId="expenses_obligations">
+    <Panel
+      title="Obligations"
+      description={props.obligations.length > 0 ? <CounterPill value={props.obligations.length} label="Left" /> : undefined}
+      collapsibleId="expenses_obligations"
+    >
       <List emptyMessage="All obligations paid for this month!" variant="flush">
         {props.obligations.map((item) => (
           <ListItem
             title={item.title}
-            value={
-              <span class="text-danger">-{formatEuro(item.amount)}</span>
-            }
-            prefix={
-              <button
-                type="button"
-                class="group/btn flex h-5 w-5 items-center justify-center rounded-md border border-border/70 outline-none transition-all hover:border-success hover:bg-success/20 focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                <svg
-                  class="h-3.5 w-3.5 text-success opacity-0 group-hover/btn:opacity-100"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
-                </svg>
-              </button>
-            }
+            value={`-${formatEuro(item.amount)}`}
+            valueTone="danger"
+            valueStyle="mono"
+            prefix={<CheckToggleButton />}
           />
         ))}
       </List>
@@ -146,24 +143,24 @@ function HistoryCard(props: { history: ExpenseEntry[] }) {
   return (
     <Panel 
       title="History" 
-      description={<FilterGroup options={options} value={filter()} onChange={setFilter} />}
+      headerAction={<FilterGroup options={options} value={filter()} onChange={setFilter} />}
     >
       <List emptyMessage="No expenses match this filter." variant="flush">
         {visibleHistory().map((tx) => (
           <ListItem
             title={tx.title}
             subtitle={
-              <div class="flex items-center gap-1.5 mt-1.5">
+              <ListMeta>
                 <span>{formatDateLabel(tx.date)}</span>
-                <span class="text-border/50">•</span>
+                <ListMetaDivider />
                 <Pill size="sm" tone={getCategoryTone(tx.category) as any}>{formatCategory(tx.category)}</Pill>
                 {tx.type === 'recurring' ? <Pill size="sm" tone="neutral">AUTO</Pill> : null}
                 {tx.type === 'checklist' ? <Pill size="sm" tone="neutral">CHECK</Pill> : null}
-              </div>
+              </ListMeta>
             }
-            value={
-              <span class="text-sm font-mono text-danger">-{formatEuro(tx.amount)}</span>
-            }
+            value={`-${formatEuro(tx.amount)}`}
+            valueTone="danger"
+            valueStyle="mono"
             action={
               <IconButton icon={<DeleteIcon />} textDanger />
             }
@@ -177,18 +174,7 @@ function HistoryCard(props: { history: ExpenseEntry[] }) {
 function DashboardSkeleton() {
   return (
     <>
-      <SkeletonPanel titleVariant="md">
-        <DataRow variant="header">
-          <SkeletonStat variant="lg" />
-          <SkeletonStat variant="mono" align="right" />
-        </DataRow>
-        <SkeletonProgressBar />
-        <DataRow variant="divided">
-          <DataCell flex><SkeletonStat variant="sm" align="center" /></DataCell>
-          <DataCell flex><SkeletonStat variant="sm" align="center" /></DataCell>
-          <DataCell flex><SkeletonStat variant="sm" align="center" /></DataCell>
-        </DataRow>
-      </SkeletonPanel>
+      <SkeletonBudgetBreakdown />
       <SkeletonPanel titleVariant="md">
         <List variant="flush">
           <SkeletonListItem />

@@ -5,6 +5,7 @@ import { A } from '@solidjs/router'
 type PanelProps = {
   title: string
   description?: string | JSX.Element
+  headerAction?: JSX.Element
   href?: string
   collapsibleId?: string
   children?: JSX.Element
@@ -13,11 +14,14 @@ type PanelProps = {
 const frameClass =
   'relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface p-5 text-text-main transition-all duration-300'
 
-function PanelHeader(props: { title: string, description?: string | JSX.Element }) {
+function PanelHeader(props: { title: string, description?: string | JSX.Element, headerAction?: JSX.Element }) {
   return (
     <div class="mb-4 flex items-center justify-between">
       <h2 class="text-xs font-bold uppercase tracking-widest text-accent">{props.title}</h2>
-      {props.description ? <div class="text-[0.68rem] text-text-muted">{props.description}</div> : null}
+      <div class="flex items-center gap-2 text-[0.68rem] text-text-muted">
+        {props.description ? <div>{props.description}</div> : null}
+        {props.headerAction}
+      </div>
     </div>
   )
 }
@@ -25,7 +29,7 @@ function PanelHeader(props: { title: string, description?: string | JSX.Element 
 function PanelBody(props: PanelProps) {
   return (
     <>
-      <PanelHeader title={props.title} description={props.description} />
+      <PanelHeader title={props.title} description={props.description} headerAction={props.headerAction} />
       <div class="flex flex-1 flex-col gap-3 text-sm leading-6 text-text-main">
         {props.children}
       </div>
@@ -63,7 +67,10 @@ export function Panel(props: PanelProps) {
                 <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
               </svg>
             </h2>
-            {props.description ? <div class="text-[0.68rem] text-text-muted">{props.description}</div> : null}
+            <div class="flex items-center gap-2 text-[0.68rem] text-text-muted">
+              {props.description ? <div>{props.description}</div> : null}
+              {props.headerAction}
+            </div>
           </div>
         </button>
         <Show when={isOpen()}>
@@ -81,4 +88,3 @@ export function Panel(props: PanelProps) {
     </section>
   )
 }
-

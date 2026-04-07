@@ -13,6 +13,7 @@
 - **Rule:** `src/components/ui/` is the only place where Tailwind utility composition should live in the Solid app.
 - **Rule:** `src/features/{auth,dashboard,calories,expenses,heat}` owns route entry pages plus domain-local API wrappers.
 - **Rule:** Solid feature files should compose UI primitives instead of spraying layout classes around like confetti.
+- **Rule:** Repeated screen chrome in the Solid app belongs in semantic UI primitives first - think `Panel` header actions, list meta rows, compact counter pills, and action toggles - so feature files stay focused on domain mapping and state.
 
 ---
 
