@@ -9,7 +9,7 @@
 
 ## Solid Migration Scaffold
 - **Location:** `apps/web-next/src`
-- **Rule:** `src/core/` owns shared config, theme runtime, auth token helpers, refresh/bootstrap auth state, route guards, and the typed `openapi-fetch` client.
+- **Rule:** `src/core/` owns shared config, theme runtime, auth token helpers, refresh/bootstrap auth state, route guards, shared formatters, and the typed `openapi-fetch` client.
 - **Rule:** `src/components/ui/` is the only place where Tailwind utility composition should live in the Solid app.
 - **Rule:** `src/features/{auth,dashboard,calories,expenses,heat}` owns route entry pages plus domain-local API wrappers.
 - **Rule:** Solid feature files should compose UI primitives instead of spraying layout classes around like confetti.

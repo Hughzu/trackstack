@@ -4,7 +4,7 @@ import { ActionButton, CheckToggleButton, FloatingActionGroup, IconButton } from
 import { BudgetBreakdown, type BudgetBreakdownItem, SkeletonBudgetBreakdown } from '../../components/ui/BudgetBreakdown'
 import { ContentDeck } from '../../components/ui/ContentDeck'
 import { DataCell, DataRow } from '../../components/ui/DataRow'
-import { FilterGroup, type FilterOption } from '../../components/ui/FilterGroup'
+import { FilterGroup } from '../../components/ui/FilterGroup'
 import { List, ListItem, ListMeta, ListMetaDivider, SkeletonListItem } from '../../components/ui/List'
 import { Notice } from '../../components/ui/Notice'
 import { Panel } from '../../components/ui/Panel'
@@ -13,16 +13,9 @@ import { SkeletonPanel } from '../../components/ui/Skeleton'
 import { Stat } from '../../components/ui/Stat'
 import type { ExpenseChecklistItem, ExpenseEntry, ExpensesDashboard } from '../../core/api/types'
 import { authState } from '../../core/auth/state'
+import { formatEuro } from '../../core/format/money'
+import { createExpenseBudgetBreakdownItems, createExpenseHistoryFilterOptions, getExpenseCategoryMeta } from './display'
 import { readExpensesDashboard } from './api/client'
-
-const euroFormatter = new Intl.NumberFormat('en-IE', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
-const formatEuro = (value: number) => euroFormatter.format(value)
 
 const formatDateLabel = (dateValue: string) => {
   const date = new Date(`${dateValue}T00:00:00`)
@@ -35,56 +28,15 @@ const formatDateLabel = (dateValue: string) => {
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
 }
 
-const formatCategory = (category: string) => {
-  if (category === 'fun') return 'Fun'
-  if (category === 'future') return 'Future'
-  return 'Fund.'
-}
-
-const getCategoryTone = (category: string) => {
-  if (category === 'fun') return 'warning'
-  if (category === 'future') return 'success'
-  return 'danger'
-}
-
 const readyKey = () => (authState().status === 'authenticated' ? 'ready' : undefined)
 
 function SummaryCard(props: { dashboard: ExpensesDashboard }) {
-  const getRatioData = (id: string) => {
-    const ratio = props.dashboard.ratios.find(r => r.categoryId === id)
-    if (!ratio) return { percent: 0, budget: 0, over: false }
-    return ratio
-  }
-
-  const fund = getRatioData('fund')
-  const fun = getRatioData('fun')
-  const future = getRatioData('future')
-  const items: BudgetBreakdownItem[] = [
-    {
-      label: 'Fund.',
-      value: formatEuro(props.dashboard.spent.fund),
-      subtext: `/ ${formatEuro(fund.budget)} (${fund.percent}%)`,
-      percent: fund.percent,
-      color: fund.over ? 'danger' : 'main',
-      barColor: 'danger',
-    },
-    {
-      label: 'Fun',
-      value: formatEuro(props.dashboard.spent.fun),
-      subtext: `/ ${formatEuro(fun.budget)} (${fun.percent}%)`,
-      percent: fun.percent,
-      color: fun.over ? 'danger' : 'main',
-      barColor: 'warning',
-    },
-    {
-      label: 'Future',
-      value: formatEuro(props.dashboard.spent.future),
-      subtext: `/ ${formatEuro(future.budget)} (${future.percent}%)`,
-      percent: future.percent,
-      color: future.over ? 'danger' : 'main',
-      barColor: 'success',
-    },
-  ]
+  const items: BudgetBreakdownItem[] = createExpenseBudgetBreakdownItems(props.dashboard, formatEuro, {
+    compactFundLabel: true,
+    includePercent: true,
+    highlightOverBudget: true,
+    budgetSource: 'ratio',
+  })
 
   return (
     <Panel title="Summary">
@@ -127,13 +79,7 @@ const DeleteIcon = () => (
 
 function HistoryCard(props: { history: ExpenseEntry[] }) {
   const [filter, setFilter] = createSignal('all')
-  
-  const options: FilterOption[] = [
-    { value: 'all', label: 'All' },
-    { value: 'fund', label: 'Fund.', tone: 'danger' },
-    { value: 'fun', label: 'Fun', tone: 'warning' },
-    { value: 'future', label: 'Future', tone: 'success' },
-  ]
+  const options = createExpenseHistoryFilterOptions()
 
   const visibleHistory = createMemo(() => {
     if (filter() === 'all') return props.history
@@ -146,14 +92,17 @@ function HistoryCard(props: { history: ExpenseEntry[] }) {
       headerAction={<FilterGroup options={options} value={filter()} onChange={setFilter} />}
     >
       <List emptyMessage="No expenses match this filter." variant="flush">
-        {visibleHistory().map((tx) => (
+        {visibleHistory().map((tx) => {
+          const category = getExpenseCategoryMeta(tx.category)
+
+          return (
           <ListItem
             title={tx.title}
             subtitle={
               <ListMeta>
                 <span>{formatDateLabel(tx.date)}</span>
                 <ListMetaDivider />
-                <Pill size="sm" tone={getCategoryTone(tx.category) as any}>{formatCategory(tx.category)}</Pill>
+                <Pill size="sm" tone={category.tone}>{category.compactLabel}</Pill>
                 {tx.type === 'recurring' ? <Pill size="sm" tone="neutral">AUTO</Pill> : null}
                 {tx.type === 'checklist' ? <Pill size="sm" tone="neutral">CHECK</Pill> : null}
               </ListMeta>
@@ -165,7 +114,8 @@ function HistoryCard(props: { history: ExpenseEntry[] }) {
               <IconButton icon={<DeleteIcon />} textDanger />
             }
           />
-        ))}
+          )
+        })}
       </List>
     </Panel>
   )

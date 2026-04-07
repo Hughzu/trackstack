@@ -10,51 +10,20 @@ import { SkeletonPanel, SkeletonProgressBar } from '../../components/ui/Skeleton
 import { Stat, SkeletonStat } from '../../components/ui/Stat'
 import type { CaloriesDashboard, ExpensesDashboard, HeatDashboard } from '../../core/api/types'
 import { authState } from '../../core/auth/state'
+import { formatEuro } from '../../core/format/money'
+import { createExpenseBudgetBreakdownItems } from '../expenses/display'
 import { readCaloriesDashboard } from '../calories/api/client'
 import { readExpensesDashboard } from '../expenses/api/client'
 import { readHeatDashboard } from '../heat/api/client'
 
-const euroFormatter = new Intl.NumberFormat('en-IE', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
 const wholeNumberFormatter = new Intl.NumberFormat('en-IE')
-
-const formatEuro = (value: number) => euroFormatter.format(value)
 
 const formatCount = (value: number) => wholeNumberFormatter.format(value)
 
 const readyKey = () => (authState().status === 'authenticated' ? 'ready' : undefined)
 
 function ExpensesCard(props: { dashboard: ExpensesDashboard }) {
-  const ratioPercent = (categoryId: string) => props.dashboard.ratios.find((ratio) => ratio.categoryId === categoryId)?.percent || 0
-
-  const items: BudgetBreakdownItem[] = [
-    {
-      label: 'Fund',
-      value: formatEuro(props.dashboard.spent.fund),
-      subtext: `/ ${formatEuro(props.dashboard.budget.fund)}`,
-      percent: ratioPercent('fund'),
-      barColor: 'danger',
-    },
-    {
-      label: 'Fun',
-      value: formatEuro(props.dashboard.spent.fun),
-      subtext: `/ ${formatEuro(props.dashboard.budget.fun)}`,
-      percent: ratioPercent('fun'),
-      barColor: 'warning',
-    },
-    {
-      label: 'Future',
-      value: formatEuro(props.dashboard.spent.future),
-      subtext: `/ ${formatEuro(props.dashboard.budget.future)}`,
-      percent: ratioPercent('future'),
-      barColor: 'success',
-    },
-  ]
+  const items: BudgetBreakdownItem[] = createExpenseBudgetBreakdownItems(props.dashboard, formatEuro)
 
   return (
     <Panel title="Expenses" href="/expenses">
