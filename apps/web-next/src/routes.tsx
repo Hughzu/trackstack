@@ -5,10 +5,13 @@ import { ProtectedRoute, PublicOnlyRoute } from './core/auth/guards'
 const DashboardPage = lazy(() => import('./features/dashboard'))
 const AuthPage = lazy(() => import('./features/auth'))
 const CaloriesPage = lazy(() => import('./features/calories'))
+const NewCaloriesPage = lazy(() => import('./features/calories/new'))
+const CaloriesSettingsPage = lazy(() => import('./features/calories/settings'))
 const ExpensesPage = lazy(() => import('./features/expenses'))
 const NewExpensePage = lazy(() => import('./features/expenses/new'))
 const ExpenseSettingsPage = lazy(() => import('./features/expenses/settings'))
 const HeatPage = lazy(() => import('./features/heat'))
+const NewHeatRefillPage = lazy(() => import('./features/heat/new'))
 
 const withProtectedRoute = (Page: Component): Component => {
   return () => (
@@ -40,6 +43,14 @@ export const routes = [
     component: withProtectedRoute(CaloriesPage),
   },
   {
+    path: '/calories/new',
+    component: withProtectedRoute(NewCaloriesPage),
+  },
+  {
+    path: '/calories/settings',
+    component: withProtectedRoute(CaloriesSettingsPage),
+  },
+  {
     path: '/expenses',
     component: withProtectedRoute(ExpensesPage),
   },
@@ -54,5 +65,9 @@ export const routes = [
   {
     path: '/heat',
     component: withProtectedRoute(HeatPage),
+  },
+  {
+    path: '/heat/new',
+    component: withProtectedRoute(NewHeatRefillPage),
   },
 ]
