@@ -4,8 +4,11 @@ import { useNavigate } from '@solidjs/router'
 import { ActionButton } from '../../components/ui/ActionButton'
 import { AmountHeroField } from '../../components/ui/AmountHeroField'
 import { ContentDeck } from '../../components/ui/ContentDeck'
+import { DataRow } from '../../components/ui/DataRow'
 import { FormActions, FormBackLink, FormFieldRow, FormSection, FormStack } from '../../components/ui/Form'
 import { Notice } from '../../components/ui/Notice'
+import { Panel } from '../../components/ui/Panel'
+import { Pill } from '../../components/ui/Pill'
 import { createHeatMockRefill } from './mock-state'
 import { TextField } from '../../components/ui/TextField'
 
@@ -74,9 +77,9 @@ export default function NewHeatRefillPage() {
 
   return (
     <ContentDeck layout="stacked" animate>
-      <div class="flex items-center justify-between gap-3">
+      <DataRow variant="header">
         <FormBackLink href="/heat">Back</FormBackLink>
-      </div>
+      </DataRow>
 
       <FormStack onSubmit={handleSubmit}>
         <FormSection>
@@ -89,34 +92,40 @@ export default function NewHeatRefillPage() {
             onInput={(event) => setBags(event.currentTarget.value)}
           />
 
-          <FormFieldRow>
-            <TextField
-              id="heat-weight"
-              name="weightKg"
-              label="Total weight"
-              type="number"
-              value={weightKg()}
-              onInput={(event) => setWeightKg(event.currentTarget.value)}
-            />
+          <Panel title="Refill details" description={<Pill tone="neutral">15 kg per bag baseline</Pill>}>
+            <div class="flex flex-col gap-5">
+              <FormFieldRow>
+                <TextField
+                  id="heat-weight"
+                  name="weightKg"
+                  label="Total weight"
+                  type="number"
+                  value={weightKg()}
+                  onInput={(event) => setWeightKg(event.currentTarget.value)}
+                />
 
-            <TextField
-              id="heat-date"
-              name="date"
-              label="Date"
-              type="date"
-              value={date()}
-              onInput={(event) => setDate(event.currentTarget.value)}
-            />
-          </FormFieldRow>
+                <TextField
+                  id="heat-date"
+                  name="date"
+                  label="Date"
+                  type="date"
+                  value={date()}
+                  onInput={(event) => setDate(event.currentTarget.value)}
+                />
+              </FormFieldRow>
 
-          <TextField
-            id="heat-temperature"
-            name="temperature"
-            label="Average temperature"
-            type="number"
-            value={temperature()}
-            onInput={(event) => setTemperature(event.currentTarget.value)}
-          />
+              <div class="border-t border-border/40 pt-4">
+                <TextField
+                  id="heat-temperature"
+                  name="temperature"
+                  label="Average temperature"
+                  type="number"
+                  value={temperature()}
+                  onInput={(event) => setTemperature(event.currentTarget.value)}
+                />
+              </div>
+            </div>
+          </Panel>
 
           <Show when={errorMessage()}>
             {(message) => <Notice tone="error" message={message()} />}
@@ -124,7 +133,7 @@ export default function NewHeatRefillPage() {
         </FormSection>
 
         <FormActions>
-          <ActionButton type="submit" disabled={isSubmitting()} busy={isSubmitting()} block>
+          <ActionButton type="submit" disabled={isSubmitting()} busy={isSubmitting()}>
             {isSubmitting() ? 'Saving...' : 'Log refill'}
           </ActionButton>
         </FormActions>

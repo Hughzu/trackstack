@@ -5,12 +5,49 @@ import { AmountHeroField } from '../../components/ui/AmountHeroField'
 import { ContentDeck } from '../../components/ui/ContentDeck'
 import { DataRow } from '../../components/ui/DataRow'
 import { FormActions, FormBackLink, FormSection, FormStack } from '../../components/ui/Form'
+import { Notice } from '../../components/ui/Notice'
 import { Panel } from '../../components/ui/Panel'
 import { Pill } from '../../components/ui/Pill'
 
 export default function CaloriesSettingsPage() {
   const [targetCalories, setTargetCalories] = createSignal('2400')
   const [targetProtein, setTargetProtein] = createSignal('180')
+  const [isSaving, setIsSaving] = createSignal(false)
+  const [feedbackMessage, setFeedbackMessage] = createSignal<string | undefined>()
+  const [errorMessage, setErrorMessage] = createSignal<string | undefined>()
+
+  const handleSubmit = async (event: SubmitEvent) => {
+    event.preventDefault()
+
+    if (isSaving()) return
+
+    const nextCalories = Number.parseFloat(targetCalories())
+    const nextProtein = Number.parseFloat(targetProtein())
+
+    if (!Number.isFinite(nextCalories) || nextCalories <= 0) {
+      setErrorMessage('Daily target needs to be above zero.')
+      setFeedbackMessage(undefined)
+      return
+    }
+
+    if (!Number.isFinite(nextProtein) || nextProtein <= 0) {
+      setErrorMessage('Protein target needs to be above zero.')
+      setFeedbackMessage(undefined)
+      return
+    }
+
+    setIsSaving(true)
+    setErrorMessage(undefined)
+    setFeedbackMessage(undefined)
+
+    try {
+      setFeedbackMessage('Settings saved. Your calorie targets are locked in.')
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to save calorie settings')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
     <ContentDeck layout="stacked" animate>
@@ -18,7 +55,10 @@ export default function CaloriesSettingsPage() {
         <FormBackLink href="/calories">Back</FormBackLink>
       </DataRow>
 
-      <FormStack>
+      {errorMessage() ? <Notice tone="error" message={errorMessage()!} /> : null}
+      {feedbackMessage() ? <Notice tone="info" message={feedbackMessage()!} /> : null}
+
+      <FormStack onSubmit={handleSubmit}>
         <FormSection>
           <AmountHeroField
             inputId="calories-target"
@@ -30,14 +70,13 @@ export default function CaloriesSettingsPage() {
             onInput={(event) => setTargetCalories(event.currentTarget.value)}
           />
 
-          <Panel title="Macros">
+          <Panel title="Macros" description={<Pill tone="success">Protein required</Pill>}>
             <div class="flex flex-col gap-4">
-              <div class="flex items-center justify-between gap-3">
-                <div class="text-sm text-text-muted">Protein is the only macro target worth pinning here.</div>
-                <Pill tone="success">Protein required</Pill>
+              <div class="border-b border-border/40 pb-4 text-sm text-text-muted">
+                Protein is the only macro target worth pinning here.
               </div>
 
-              <div class="divide-y divide-border/30 border-t border-border/40">
+              <div class="divide-y divide-border/30 rounded-2xl border border-border/40 bg-panel/35 px-4">
                 <MacroSettingRow
                   label="Protein"
                   tone="success"
@@ -45,15 +84,15 @@ export default function CaloriesSettingsPage() {
                   onInput={(event) => setTargetProtein(event.currentTarget.value)}
                 />
               </div>
-
-              <div class="border-t border-border/50 pt-4">
-                <FormActions>
-                  <ActionButton type="submit">Save settings</ActionButton>
-                </FormActions>
-              </div>
             </div>
           </Panel>
         </FormSection>
+
+        <FormActions>
+          <ActionButton type="submit" busy={isSaving()} disabled={isSaving()}>
+            {isSaving() ? 'Saving...' : 'Save settings'}
+          </ActionButton>
+        </FormActions>
       </FormStack>
     </ContentDeck>
   )

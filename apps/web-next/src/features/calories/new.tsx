@@ -1,20 +1,52 @@
 import { createSignal } from 'solid-js'
+import { useNavigate } from '@solidjs/router'
 
 import { ActionButton } from '../../components/ui/ActionButton'
 import { AmountHeroField } from '../../components/ui/AmountHeroField'
 import { ContentDeck } from '../../components/ui/ContentDeck'
 import { DataRow } from '../../components/ui/DataRow'
 import { FormActions, FormBackLink, FormFieldRow, FormSection, FormStack } from '../../components/ui/Form'
+import { Notice } from '../../components/ui/Notice'
 import { Panel } from '../../components/ui/Panel'
 import { Pill } from '../../components/ui/Pill'
 import { TextField } from '../../components/ui/TextField'
 
 export default function NewCaloriesPage() {
+  const navigate = useNavigate()
   const [calories, setCalories] = createSignal('520')
   const [title, setTitle] = createSignal('Oats + whey')
   const [protein, setProtein] = createSignal('38')
   const [carbs, setCarbs] = createSignal('56')
   const [fat, setFat] = createSignal('12')
+  const [isSubmitting, setIsSubmitting] = createSignal(false)
+  const [errorMessage, setErrorMessage] = createSignal<string | undefined>()
+
+  const handleSubmit = async (event: SubmitEvent) => {
+    event.preventDefault()
+
+    if (isSubmitting()) return
+
+    const numericValues = [calories(), protein(), carbs(), fat()].map((value) => Number.parseFloat(value))
+    if (numericValues.some((value) => !Number.isFinite(value) || value < 0)) {
+      setErrorMessage('Calories and macros need valid numbers.')
+      return
+    }
+
+    if (!title().trim()) {
+      setErrorMessage('Meal title cannot be empty.')
+      return
+    }
+
+    setIsSubmitting(true)
+    setErrorMessage(undefined)
+
+    try {
+      void navigate('/calories', { replace: true })
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to save meal')
+      setIsSubmitting(false)
+    }
+  }
 
   return (
     <ContentDeck layout="stacked" animate>
@@ -22,7 +54,7 @@ export default function NewCaloriesPage() {
         <FormBackLink href="/calories">Back</FormBackLink>
       </DataRow>
 
-      <FormStack>
+      <FormStack onSubmit={handleSubmit}>
         <FormSection>
           <AmountHeroField
             inputId="calorie-amount"
@@ -34,7 +66,7 @@ export default function NewCaloriesPage() {
             onInput={(event) => setCalories(event.currentTarget.value)}
           />
 
-          <Panel title="Meal log">
+          <Panel title="Meal log" description={<Pill tone="success">Protein first</Pill>}>
             <div class="flex flex-col gap-5">
               <TextField
                 id="calorie-title"
@@ -45,11 +77,7 @@ export default function NewCaloriesPage() {
               />
 
               <div class="flex flex-col gap-3 border-t border-border/40 pt-4">
-                <div class="flex items-center justify-between gap-3">
-                  <div class="text-sm font-semibold text-text-main">Macros</div>
-                  <Pill tone="success">Protein first</Pill>
-                </div>
-
+                <div class="text-sm font-semibold text-text-main">Macros</div>
                 <FormFieldRow>
                   <MacroField
                     id="calorie-protein"
@@ -82,15 +110,17 @@ export default function NewCaloriesPage() {
                   onInput={(event) => setFat(event.currentTarget.value)}
                 />
               </div>
-
-              <div class="border-t border-border/50 pt-4">
-                <FormActions>
-                  <ActionButton type="submit">Save meal</ActionButton>
-                </FormActions>
-              </div>
             </div>
           </Panel>
+
+          {errorMessage() ? <Notice tone="error" message={errorMessage()!} /> : null}
         </FormSection>
+
+        <FormActions>
+          <ActionButton type="submit" busy={isSubmitting()} disabled={isSubmitting()}>
+            {isSubmitting() ? 'Saving...' : 'Save meal'}
+          </ActionButton>
+        </FormActions>
       </FormStack>
     </ContentDeck>
   )
