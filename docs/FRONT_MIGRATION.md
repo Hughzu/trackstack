@@ -76,6 +76,15 @@ When iterating on feature mocks and UI design, we enforce a strict, challenge-dr
 *   **Zero-Redundancy Mocks:** We actively eliminate redundant information. If detailed breakdown text natively exists, summary visualizers (like progress bar legend labels) are stripped away. This allows elements to stack tightly and naturally without relying on arbitrary layout spacing hacks.
 *   **Contextual Track Visibility:** Empty states and progress tracks must communicate scale intuitively. We explicitly style empty tracks in low-contrast thematic scales (e.g., `bg-border/50`) so partial completions are immediately recognizable against the card backgrounds.
 *   **Challenge Assumptions (No Boilerplate Padding):** We actively challenge layout spacing defaults. We strip out boilerplate mobile padding classes (e.g. `pb-24`) that create dead space and artificial scrollbars when desktop interfaces fit neatly in the viewport.
+*   **Mobile-First By Default:** Start every mock from the phone layout first. Desktop is an adaptation of the mobile stack, not a separate composition exercise.
+*   **Single-Column Bias:** Default to a single-column layout even on larger screens. Only introduce multi-column sections when the user explicitly asks for them or the information architecture genuinely breaks in one column.
+*   **Minimal Surface Rule:** Avoid cards inside cards inside cards. A screen should usually have one primary surface level. Inner grouping should prefer dividers, spacing, subtle tinted zones, or list rows before adding another bordered panel.
+*   **Soft, Calm Composition:** Prefer the visual direction of `expenses/new` and the refined `expenses/settings` mock: one strong hero/input area, restrained supporting sections, flush lists, and quiet separators instead of dashboard-like card mosaics.
+*   **No Vanity Summaries:** Do not add decorative counters, template totals, duplicated pills, or derived recap text unless they directly help the next user action. If a piece of UI makes the user ask "why is this here?", cut it.
+*   **Header Restraint:** Do not automatically add eyebrow + title + descriptive intro blocks at the top of every page. If the page purpose is obvious from context, a back button or a single short title is enough.
+*   **Copy Must Earn Its Keep:** Keep helper text brutally short. Avoid motivational copy, product-poetry filler, and explanatory paragraphs that restate what the UI already says.
+*   **Action Placement:** Prefer simple inline or end-of-form actions over sticky floating action bars for settings and forms, unless the page length genuinely makes the action hard to reach.
+*   **Mock First, Extract Later:** During design exploration, it is acceptable to build a large temporary route-level TSX file to nail the UX quickly. Once the layout direction is approved, extract sections into `src/features/<domain>/components/` and promote repeated patterns into `src/components/ui/`.
 
 ---
 

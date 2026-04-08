@@ -7,6 +7,7 @@ const AuthPage = lazy(() => import('./features/auth'))
 const CaloriesPage = lazy(() => import('./features/calories'))
 const ExpensesPage = lazy(() => import('./features/expenses'))
 const NewExpensePage = lazy(() => import('./features/expenses/new'))
+const ExpenseSettingsPage = lazy(() => import('./features/expenses/settings'))
 const HeatPage = lazy(() => import('./features/heat'))
 
 const withProtectedRoute = (Page: Component): Component => {
@@ -45,6 +46,10 @@ export const routes = [
   {
     path: '/expenses/new',
     component: withProtectedRoute(NewExpensePage),
+  },
+  {
+    path: '/expenses/settings',
+    component: withProtectedRoute(ExpenseSettingsPage),
   },
   {
     path: '/heat',

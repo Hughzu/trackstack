@@ -119,7 +119,7 @@ export default function ExpensesPage() {
       </Suspense>
 
       <FloatingActionGroup>
-        <DataCell flex><ActionButton block tone="ghost" disabled ariaLabel="Settings coming soon">Settings</ActionButton></DataCell>
+        <DataCell flex><ActionLinkButton href="/expenses/settings" block tone="ghost">Settings</ActionLinkButton></DataCell>
         <DataCell flex><ActionLinkButton href="/expenses/new" block>Add Expense</ActionLinkButton></DataCell>
       </FloatingActionGroup>
     </ContentDeck>
