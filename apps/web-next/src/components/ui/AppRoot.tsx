@@ -1,5 +1,5 @@
-import { Suspense, createMemo } from 'solid-js'
-import { useLocation, type RouteSectionProps } from '@solidjs/router'
+import { Show, Suspense, createMemo } from 'solid-js'
+import { useIsRouting, useLocation, type RouteSectionProps } from '@solidjs/router'
 
 import { AppShell } from './AppShell'
 import { RouteStatus } from './RouteStatus'
@@ -26,13 +26,16 @@ const resolveCurrentDomain = (pathname: string) => {
 
 export function AppRoot(props: RouteSectionProps) {
   const location = useLocation()
+  const isRouting = useIsRouting()
   const currentDomain = createMemo(() => resolveCurrentDomain(location.pathname))
 
   return (
     <AppShell currentDomain={currentDomain()}>
-      <Suspense fallback={<RouteStatus />}>
-        {props.children}
-      </Suspense>
+      <Show when={!isRouting()} fallback={<RouteStatus />}>
+        <Suspense fallback={<RouteStatus />}>
+          {props.children}
+        </Suspense>
+      </Show>
     </AppShell>
   )
 }
