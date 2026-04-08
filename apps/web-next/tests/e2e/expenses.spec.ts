@@ -10,6 +10,10 @@ const createEntryUrl = /\/api\/expenses\/entries$/
 const deleteEntryUrl = /\/api\/expenses\/entries\//
 const dashboardUrl = /\/api\/expenses\/sheet\/current(\?|$)/
 
+function confirmSheet(page: Page) {
+  return page.locator('.fixed.inset-0.z-50').last()
+}
+
 async function loginAndOpenExpenses(page: Page) {
   await page.goto('/login')
   await page.getByLabel('Email').fill(e2eEmail)
@@ -108,10 +112,16 @@ test.describe('Expenses page', () => {
     const rowId = await row.getAttribute('data-list-item-id')
     expect(rowId).toBeTruthy()
 
+    await row.getByRole('button', { name: `Delete ${title}` }).click()
+
+    const sheet = confirmSheet(page)
+    await expect(sheet.getByRole('heading', { name: 'Delete expense' })).toBeVisible()
+    await expect(sheet.getByText(title, { exact: false })).toBeVisible()
+
     await Promise.all([
       page.waitForResponse((response) => deleteEntryUrl.test(response.url()) && response.request().method() === 'DELETE'),
       page.waitForResponse((response) => dashboardUrl.test(response.url()) && response.request().method() === 'GET'),
-      row.getByRole('button', { name: `Delete ${title}` }).click(),
+      sheet.getByRole('button', { name: 'Delete expense' }).click(),
     ])
 
     await expect(page.locator(`[data-list-item-id="${rowId}"]`)).toHaveCount(0)
@@ -123,10 +133,16 @@ test.describe('Expenses page', () => {
     const periodStat = page.getByTestId('expenses-period')
     const initialPeriod = await periodStat.textContent()
 
+    await page.getByRole('button', { name: 'Close month' }).click()
+
+    const sheet = confirmSheet(page)
+    await expect(sheet.getByRole('heading', { name: 'Close month' })).toBeVisible()
+    await expect(sheet.getByText('Period rollover')).toBeVisible()
+
     await Promise.all([
       page.waitForResponse((response) => closeMonthUrl.test(response.url()) && response.request().method() === 'POST'),
       page.waitForResponse((response) => dashboardUrl.test(response.url()) && response.request().method() === 'GET'),
-      page.getByRole('button', { name: 'Close month' }).click(),
+      sheet.getByRole('button', { name: 'Yes, close month' }).click(),
     ])
 
     await expect(page.getByRole('button', { name: 'Close month' })).toBeVisible()
