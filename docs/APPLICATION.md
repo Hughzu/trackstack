@@ -14,6 +14,10 @@
 - **Rule:** `src/features/{auth,dashboard,calories,expenses,heat}` owns route entry pages plus domain-local API wrappers.
 - **Rule:** Solid feature files should compose UI primitives instead of spraying layout classes around like confetti.
 - **Rule:** Repeated screen chrome in the Solid app belongs in semantic UI primitives first - think `Panel` header actions, list meta rows, compact counter pills, and action toggles - so feature files stay focused on domain mapping and state.
+- **Rule:** Route entry files under `src/features/**` are orchestration layers only. They load data, hold route-level state, wire mutations, and compose feature components. They do not define page-local cards, ad-hoc dialogs/sheets, or long inline view sections.
+- **Rule:** Feature-specific sections and cards belong in `src/features/<domain>/components/`. If a page starts growing subviews, extract them instead of letting `index.tsx` or sibling route files turn into a junk drawer.
+- **Rule:** Feature mapping/helpers must not import prop types from `src/components/ui/`. Domain and feature logic should return feature-local view models or primitives, and the final UI adapter lives at the component boundary.
+- **Rule:** Shared interaction patterns such as confirmation sheets, destructive action flows, skeleton structures, and reusable form layouts belong in `src/components/ui/` before they are repeated across features.
 
 ---
 
