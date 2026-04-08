@@ -79,7 +79,7 @@ export function ListItem(props: ListItemProps) {
 }
 
 export function ListMeta(props: { children: JSX.Element }) {
-  return <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-[0.68rem] text-text-muted">{props.children}</div>
+  return <div class="mt-1.5 flex min-w-0 flex-wrap items-center gap-1 text-[0.68rem] text-text-muted">{props.children}</div>
 }
 
 export function ListMetaDivider() {

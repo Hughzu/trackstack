@@ -1,7 +1,7 @@
 import { createMemo, createResource, createSignal, Show, Suspense } from 'solid-js'
 
-import { ActionButton, CheckToggleButton, FloatingActionGroup, IconButton } from '../../components/ui/ActionButton'
-import { BudgetBreakdown, type BudgetBreakdownItem, SkeletonBudgetBreakdown } from '../../components/ui/BudgetBreakdown'
+import { ActionButton, ActionLinkButton, CheckToggleButton, FloatingActionGroup, IconButton } from '../../components/ui/ActionButton'
+import { BudgetBreakdown, SkeletonBudgetBreakdown, type BudgetBreakdownItem } from '../../components/ui/BudgetBreakdown'
 import { ContentDeck } from '../../components/ui/ContentDeck'
 import { DataCell, DataRow } from '../../components/ui/DataRow'
 import { FilterGroup } from '../../components/ui/FilterGroup'
@@ -210,7 +210,7 @@ export default function ExpensesPage() {
       </Show>
 
       <Suspense fallback={<DashboardSkeleton />}>
-        <Show when={dashboard()} fallback={<Notice tone="error" message="Expenses dashboard failed to load." />}>
+        <Show when={dashboard()} fallback={dashboard.error ? <Notice tone="error" message="Expenses dashboard failed to load." /> : <DashboardSkeleton />}> 
           {(data) => (
             <>
               <SummaryCard dashboard={data()} />
@@ -227,7 +227,7 @@ export default function ExpensesPage() {
 
       <FloatingActionGroup>
         <DataCell flex><ActionButton block tone="ghost">Settings</ActionButton></DataCell>
-        <DataCell flex><ActionButton block tone="primary">Add Expense</ActionButton></DataCell>
+        <DataCell flex><ActionLinkButton href="/expenses/new" block>Add Expense</ActionLinkButton></DataCell>
       </FloatingActionGroup>
     </ContentDeck>
   )

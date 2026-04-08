@@ -8,7 +8,7 @@ type PillProps = {
 
 export function Pill(props: PillProps) {
   let className = props.size === 'sm' 
-    ? 'inline-flex w-fit rounded-full px-2 py-0.5 text-[0.55rem] font-bold uppercase tracking-wider'
+    ? 'inline-flex w-fit shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[0.55rem] font-bold uppercase tracking-wider'
     : 'inline-flex w-fit rounded-full px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.24em]'
 
   switch (props.tone) {

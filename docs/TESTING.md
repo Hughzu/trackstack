@@ -47,7 +47,7 @@ cd apps/web-next
 pnpm test:e2e
 ```
 
-The Solid Playwright flow currently covers guest redirect to `/login`, login success, authenticated shell visibility, logout, and re-protection of private routes. It also now covers `/expenses` interactions for category filtering, checklist completion, row deletion, and month closing. It expects `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` in `apps/web-next/.env.local` or your shell and assumes the Solid dev server plus Go API are already running.
+The Solid Playwright flow currently covers guest redirect to `/login`, login success, authenticated shell visibility, logout, and re-protection of private routes. It also now covers `/expenses` interactions for category filtering, checklist completion, row deletion, month closing, and creating a new expense through `/expenses/new`. It expects `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` in `apps/web-next/.env.local` or your shell and assumes the Solid dev server plus Go API are already running. By default it targets `http://localhost:5173`, but you can override that with `PLAYWRIGHT_BASE_URL` or by exporting `PORT`/`VITE_PORT` before the run.
 
 ### Backend-First Smoke Checks
 

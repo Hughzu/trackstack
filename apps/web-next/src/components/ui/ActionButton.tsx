@@ -1,4 +1,5 @@
 import type { JSX } from 'solid-js'
+import { A } from '@solidjs/router'
 
 export type ActionButtonProps = {
   type?: 'button' | 'submit'
@@ -29,6 +30,24 @@ export function ActionButton(props: ActionButtonProps) {
     >
       {props.children}
     </button>
+  )
+}
+
+export function ActionLinkButton(props: { href: string, tone?: 'primary' | 'ghost', block?: boolean, children: JSX.Element }) {
+  const toneClass =
+    props.tone === 'ghost'
+      ? 'border border-border bg-panel text-text-main hover:border-accent/40 hover:text-accent'
+      : 'bg-accent text-background hover:opacity-90'
+
+  const blockClass = props.block ? 'w-full' : ''
+
+  return (
+    <A
+      href={props.href}
+      class={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition ${toneClass} ${blockClass}`}
+    >
+      {props.children}
+    </A>
   )
 }
 

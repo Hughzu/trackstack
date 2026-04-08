@@ -30,6 +30,8 @@ if (existsSync(envFilePath)) {
 
 const e2eEmail = process.env.E2E_TEST_EMAIL
 const e2ePassword = process.env.E2E_TEST_PASSWORD
+const vitePort = process.env.PORT || process.env.VITE_PORT || '5173'
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${vitePort}`
 
 if (!e2eEmail || !e2ePassword) {
   throw new Error('Missing E2E_TEST_EMAIL or E2E_TEST_PASSWORD for Playwright runs.')
@@ -45,7 +47,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? [['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:5173',
+    baseURL,
     trace: 'on-first-retry',
   },
   projects: [
