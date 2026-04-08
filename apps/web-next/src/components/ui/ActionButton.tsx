@@ -5,7 +5,7 @@ export type ActionButtonProps = {
   type?: 'button' | 'submit'
   disabled?: boolean
   busy?: boolean
-  tone?: 'primary' | 'ghost'
+  tone?: 'primary' | 'ghost' | 'danger'
   block?: boolean
   ariaLabel?: string
   onClick?: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent>
@@ -16,7 +16,9 @@ export function ActionButton(props: ActionButtonProps) {
   const toneClass =
     props.tone === 'ghost'
       ? 'border border-border bg-panel text-text-main hover:border-accent/40 hover:text-accent'
-      : 'bg-accent text-background hover:opacity-90'
+      : props.tone === 'danger'
+        ? 'bg-danger text-background hover:opacity-90'
+        : 'bg-accent text-background hover:opacity-90'
 
   const blockClass = props.block ? 'w-full' : ''
 
