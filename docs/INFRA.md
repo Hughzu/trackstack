@@ -175,6 +175,7 @@ Local init:
 - Lambda execution role can only write logs and read runtime SSM parameters.
 - Assets bucket is not public and is only accessible via CloudFront OAC.
 - Lambda Function URL is IAM-authenticated and restricted to CloudFront. Because CloudFront uses `Authorization` for SigV4 signing to the Function URL origin, browser bearer tokens must be forwarded in `X-Trackstack-Authorization` instead of `Authorization` on deployed app requests.
+- Signed browser writes that travel through the CloudFront -> Lambda Function URL path must include `x-amz-content-sha256` for the final request body, including the SHA256 of the empty body for write methods without a payload.
 
 ## FinOps Guardrails
 

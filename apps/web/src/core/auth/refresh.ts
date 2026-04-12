@@ -1,4 +1,5 @@
 import { resolveBrowserApiUrl } from '../config/api'
+import { attachPayloadHashHeader } from '../api/payload-hash'
 import { clearAccessToken, writeAccessToken } from './token'
 
 type RefreshResult = {
@@ -18,11 +19,15 @@ const isRefreshResult = (value: unknown): value is RefreshResult => {
 
 export const refreshAccessToken = async (): Promise<RefreshResult | null> => {
   try {
+    const headers = new Headers({
+      Accept: 'application/json',
+    })
+
+    await attachPayloadHashHeader(headers, 'POST')
+
     const response = await fetch(resolveBrowserApiUrl('/api/auth/refresh'), {
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-      },
+      headers,
       credentials: 'include',
     })
 

@@ -4,6 +4,7 @@ import { refreshAccessToken } from '../auth/refresh'
 import { setGuest } from '../auth/state'
 import { readAccessToken } from '../auth/token'
 import { resolveBrowserApiUrl } from '../config/api'
+import { attachPayloadHashHeader } from './payload-hash'
 import type { paths } from './generated/schema'
 
 let refreshPromise: Promise<string | null> | null = null
@@ -18,8 +19,8 @@ const resolvePathname = (value: string) => {
   }
 }
 
-const createHeaders = (init: RequestInit | undefined, token: string | null) => {
-  const headers = new Headers(init?.headers)
+const createHeaders = (init: HeadersInit | undefined, token: string | null) => {
+  const headers = new Headers(init)
 
   headers.set('Accept', 'application/json')
 
@@ -31,9 +32,12 @@ const createHeaders = (init: RequestInit | undefined, token: string | null) => {
 }
 
 const executeRequest = async (input: RequestInfo | URL, init: RequestInit | undefined, token: string | null) => {
-  const headers = createHeaders(init, token)
+  const headers = createHeaders(init?.headers, token)
 
   if (typeof input === 'string') {
+    const method = init?.method ?? 'GET'
+    await attachPayloadHashHeader(headers, method, init?.body)
+
     return fetch(resolveBrowserApiUrl(input), {
       ...init,
       headers,
@@ -47,9 +51,11 @@ const executeRequest = async (input: RequestInfo | URL, init: RequestInit | unde
     let body = init?.body
 
     if (body === undefined && method !== 'GET' && method !== 'HEAD') {
-      const serializedBody = await request.text()
-      body = serializedBody ? serializedBody : undefined
+      const requestBody = await request.arrayBuffer()
+      body = requestBody.byteLength > 0 ? requestBody : null
     }
+
+    await attachPayloadHashHeader(headers, method, body)
 
     return fetch(resolveBrowserApiUrl(request.url), {
       method,
@@ -66,6 +72,9 @@ const executeRequest = async (input: RequestInfo | URL, init: RequestInit | unde
       signal: init?.signal ?? request.signal,
     })
   }
+
+  const method = init?.method ?? 'GET'
+  await attachPayloadHashHeader(headers, method, init?.body)
 
   return fetch(input, {
     ...init,

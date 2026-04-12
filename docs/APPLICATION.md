@@ -109,6 +109,7 @@
 - **Rule [API Mutations Only]:** UI components must never mutate data directly. Browser mutations must target canonical `/api/*` endpoints owned by Go.
 - **Deployment note:** In development, browser calls stay same-origin and use the Solid/Vite `/api` proxy. In production/static builds, browser calls target Go through `VITE_API_BASE_URL`.
 - **Rule [Auth Header]:** Protected browser mutations and confirm-modal requests attach the bearer token through `X-Trackstack-Authorization` so the deployed CloudFront -> Lambda path stays compatible with SigV4 origin signing.
+- **Rule [Payload Hash]:** Browser write requests that go through the serverless CloudFront -> Lambda Function URL path must attach `x-amz-content-sha256` for the exact request body. Empty-body `POST` requests still need the SHA256 of the empty payload or Lambda rejects the SigV4 signature.
 - **Rule [SigV4 Forms - CRITICAL]:** ANY form triggering a mutation must use the `data-api-form` attribute to be intercepted by `ApiFormHandler.astro`.
 - **Rule [Go Boundary]:** The browser should call Go-owned `/api/*` endpoints directly. Astro does not own API adapter routes.
 - **Rule [Timestamp Ownership]:** Calorie quick-add and manual meal logging should let the Go backend stamp the current UTC timestamp unless the product explicitly adds a backdating feature.
