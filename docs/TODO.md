@@ -3,9 +3,9 @@
 
 - audit the backend
 - audit the frontend
+- rewrite archi and application based on these audits. 
 
 - review all markdowns
-    - testing
     - infra
     - architecture
     - application

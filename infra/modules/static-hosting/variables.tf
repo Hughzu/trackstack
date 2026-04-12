@@ -49,20 +49,20 @@ variable "s3_path_patterns" {
   description = "CloudFront path patterns that should be routed to the S3 origin."
   type        = list(string)
   default = [
-    "/_astro/*",
     "/assets/*",
     "/sw.js",
     "/manifest.webmanifest",
     "/registerSW.js",
     "/workbox-*.js",
     "/favicon.svg",
+    "/icons.svg",
     "/android/*",
     "/ios/*"
   ]
 }
 
 variable "enable_directory_index_rewrite" {
-  description = "When true, rewrites extensionless frontend routes to '/index.html' style S3 object keys via CloudFront Function."
+  description = "When true, rewrites SPA routes without file extensions to the shared '/index.html' app shell via CloudFront Function."
   type        = bool
   default     = false
 }

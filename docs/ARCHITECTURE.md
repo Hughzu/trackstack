@@ -9,7 +9,7 @@ The rebuilt backend now lives at `apps/server`. Intentional frontend/backend con
 ```mermaid
 flowchart LR
   U[User Browser] --> CF[CloudFront Distribution]
-  CF -->|/assets/*, /_astro/*, HTML shell| S3[Static Assets Bucket]
+  CF -->|/assets/*, app shell, PWA assets| S3[Static Assets Bucket]
   CF -->|/api/*, /health, /openapi.yaml| API[Go API Runtime]
   API --> CAL[(Turso Calories)]
   API --> EXP[(Turso Expenses)]
@@ -22,15 +22,14 @@ flowchart LR
 Key points:
 
 - CloudFront is the only public ingress in serverless environments.
-- The Solid SPA in `apps/web-next` is shipped as static assets from S3.
+- The Solid SPA in `apps/web` is shipped as static assets from S3.
 - Go owns health, OpenAPI, auth, and business API routes.
 - The Go runtime is stateless; persistent state lives only in Turso.
 - The same assembled backend contract must run locally and in Lambda.
 
 ## Source Of Truth
 
-- `apps/web-next` owns the active frontend app, browser interaction, and the static SPA shell.
-- `apps/web` is legacy migration reference only until the folder swap is completed.
+- `apps/web` owns the active frontend app, browser interaction, and the static SPA shell.
 - `apps/server` owns backend contracts, domain rules, auth issuance/verification, and backend-owned tooling.
 - Historical references to the legacy compatibility backend remain in migration notes only; the repository path `apps/server` now refers to the rebuilt backend described here.
 - Frontend pages should talk to Go-owned `/api/*` endpoints rather than direct databases or Astro-owned API adapters.
@@ -236,7 +235,7 @@ Current auth contract:
 
 Current frontend note:
 
-- `apps/web-next` stores the bearer token client-side after login, replays it during auth bootstrap, and uses the same auth contract for protected browser reads and mutations.
+- `apps/web` stores the bearer token client-side after login, replays it during auth bootstrap, and uses the same auth contract for protected browser reads and mutations.
 
 ## Transport Contract
 
@@ -358,7 +357,7 @@ Backend-owned commands under `apps/server/cmd/**` should align with this same ru
 
 - serverless runtime secrets come from SSM
 - no secrets should be hardcoded in code or Terraform
-- `serverless-next` must provide `JWT_SECRET` in addition to domain database credentials
+- `serverless` must provide `JWT_SECRET` in addition to domain database credentials
 
 ## Deployment Shape
 
@@ -433,7 +432,7 @@ The first extracted runtime now exists for local split validation:
 ## Macro Boundaries
 
 - CloudFront is the only public ingress in serverless environments.
-- Astro owns the static frontend shell and browser runtime.
+- The Solid SPA owns the static frontend shell and browser runtime.
 - Go owns auth, health, OpenAPI, and all business API routes.
 - Turso is the only persistent store.
 - Compute is stateless.

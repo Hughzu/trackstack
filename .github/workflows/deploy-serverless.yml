@@ -1,4 +1,4 @@
-name: Deploy Serverless Next
+name: Deploy Serverless
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-serverless-next
+  group: deploy-serverless
   cancel-in-progress: true
 
 jobs:
@@ -99,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes, migrate]
     env:
-      SSM_PREFIX: /trackstack/serverless-next
+      SSM_PREFIX: /trackstack/serverless
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -124,7 +124,7 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: apps/web
 
-      - name: Build Astro
+      - name: Build web app
         run: pnpm build
         working-directory: apps/web
 

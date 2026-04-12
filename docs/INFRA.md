@@ -101,7 +101,7 @@ Notes:
 - Price class defaults to `PriceClass_100` to reduce cost.
 - Origin verification header is passed to Lambda origin.
 - Supports both legacy Lambda-default routing and static-first S3-default routing via module inputs.
-- Can rewrite extensionless frontend paths to `index.html` object keys through a CloudFront Function for static Astro deployments.
+- Can rewrite SPA frontend routes without file extensions back to the shared `/index.html` shell through a CloudFront Function.
 
 ### cost-guardrails
 
@@ -137,8 +137,8 @@ Composition:
 Location: `infra/environments/serverless-next`
 
 Purpose:
-- Parallel validation environment for the static Astro + Go API serverless contract.
-- Keeps the existing production serverless environment untouched during migration testing.
+- Legacy migration validation environment for the static frontend + Go API serverless contract.
+- Safe to destroy after the production `serverless` cutover is complete.
 
 Composition:
 - `module.lambda_api`: Go API Lambda using the custom Go runtime artifact.
@@ -188,8 +188,8 @@ Local init:
 
 - Run bootstrap scripts in `infra/bootstrap/bootstrap` once per account.
 - Create local `backend.hcl` files for Terraform init (not committed).
-- Set runtime secrets in SSM using `infra/environments/serverless/01-set-runtime-ssm.sh`.
-- For the migration environment, seed runtime config with `infra/environments/serverless-next/01-set-runtime-ssm.sh` before deploy validation; it should align with `apps/server/.env`, auto-load `JWT_SECRET` plus `TURSO_*_URL_HTTP` and `TURSO_*_TOKEN` when present, and exported env vars still win.
+- Seed production runtime config with `infra/environments/serverless/01-set-runtime-ssm.sh` before the first Terraform plan/apply; it should align with `apps/server/.env`, auto-load `JWT_SECRET` plus `TURSO_*_URL_HTTP` and `TURSO_*_TOKEN` when present, and exported env vars still win.
+- If you still need the old migration stack, seed its runtime config with `infra/environments/serverless-next/01-set-runtime-ssm.sh` before plan/apply.
 - The shared Lambda module no longer injects legacy app-specific runtime defaults automatically; each environment must define its own runtime contract explicitly.
 
 ## Local Compose
@@ -200,5 +200,5 @@ Local init:
 
 ## CI/CD Touchpoints
 
-- `.github/workflows/terraform-serverless.yml` currently manages the temporary `serverless-next` environment with OIDC, can build a bootstrap Go Lambda artifact for first apply, and only runs its job when the ref is `main`.
-- `.github/workflows/deploy-serverless.yml` currently deploys the temporary `serverless-next` environment: it builds static Astro assets, packages the Go Lambda custom runtime artifact, uploads both to S3, updates Lambda, invalidates CloudFront, and only runs jobs when the ref is `main`.
+- `.github/workflows/terraform-serverless.yml` manages the production `serverless` environment with OIDC, can build a bootstrap Go Lambda artifact for first apply, and only runs its job when the ref is `main`.
+- `.github/workflows/deploy-serverless.yml` deploys the production `serverless` environment: it builds the Solid/Vite frontend in `apps/web`, packages the Go Lambda custom runtime artifact, uploads both to S3, updates Lambda, invalidates CloudFront, and only runs jobs when the ref is `main`.

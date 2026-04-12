@@ -48,7 +48,7 @@ data "aws_iam_policy_document" "lambda_assume" {
 }
 
 resource "aws_iam_role" "lambda_exec" {
-  name               = "${var.resource_prefix}-astro-ssr-exec"
+  name               = "${var.resource_prefix}-lambda-api-exec"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
   tags               = var.tags
 }
@@ -65,7 +65,7 @@ data "aws_iam_policy_document" "lambda_exec" {
 }
 
 resource "aws_iam_role_policy" "lambda_exec" {
-  name   = "${var.resource_prefix}-astro-ssr-logs"
+  name   = "${var.resource_prefix}-lambda-api-logs"
   role   = aws_iam_role.lambda_exec.id
   policy = data.aws_iam_policy_document.lambda_exec.json
 }
@@ -85,7 +85,7 @@ data "aws_iam_policy_document" "lambda_ssm" {
 }
 
 resource "aws_iam_role_policy" "lambda_ssm" {
-  name   = "${var.resource_prefix}-astro-ssr-ssm"
+  name   = "${var.resource_prefix}-lambda-api-ssm"
   role   = aws_iam_role.lambda_exec.id
   policy = data.aws_iam_policy_document.lambda_ssm.json
 }

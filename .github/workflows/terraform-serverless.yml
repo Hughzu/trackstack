@@ -1,10 +1,10 @@
-name: Terraform Serverless Next
+name: Terraform Serverless
 
 on:
   push:
     branches: [main]
     paths:
-      - 'infra/environments/serverless-next/**'
+      - 'infra/environments/serverless/**'
       - 'infra/modules/**'
       - '.github/workflows/terraform-serverless.yml'
   workflow_dispatch:
@@ -38,7 +38,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: infra/environments/serverless-next
+        working-directory: infra/environments/serverless
 
 
     steps:

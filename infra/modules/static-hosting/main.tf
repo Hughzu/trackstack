@@ -116,7 +116,7 @@ resource "aws_cloudfront_function" "directory_index_rewrite" {
   name    = "${var.resource_prefix}-directory-index-rewrite"
   runtime = "cloudfront-js-2.0"
   publish = true
-  comment = "Rewrite extensionless routes to index.html objects"
+  comment = "Rewrite SPA routes to the app shell"
   code    = <<-EOF
   function handler(event) {
     var request = event.request;
@@ -128,12 +128,12 @@ resource "aws_cloudfront_function" "directory_index_rewrite" {
     }
 
     if (uri.endsWith("/")) {
-      request.uri = uri + "index.html";
+      request.uri = "/index.html";
       return request;
     }
 
     if (uri.indexOf(".") === -1) {
-      request.uri = uri + "/index.html";
+      request.uri = "/index.html";
     }
 
     return request;

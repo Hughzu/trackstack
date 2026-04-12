@@ -7,7 +7,7 @@ The only thing that matters is whether the app actually works for a user and run
 Playwright is the sole arbiter of truth for domain functionality. It catches regressions on specific features directly through the UI.
 
 **Setup:**
-You need a test user. Define it in `apps/web-next/.env.local`:
+You need a test user. Define it in `apps/web/.env.local`:
 ```env
 E2E_TEST_EMAIL=your-e2e-email@test.com
 E2E_TEST_PASSWORD=your-secret
@@ -15,7 +15,7 @@ E2E_TEST_PASSWORD=your-secret
 
 **Run:**
 ```bash
-cd apps/web-next
+cd apps/web
 pnpm test:e2e
 ```
 *Note: Make sure your Solid dev server and Go backend are running first.*
