@@ -273,6 +273,20 @@ This is the default local loop after changing Astro auth routes, Go handlers, or
   - Assert the authenticated shell shows private navigation plus logout
   - Log out through the shared shell and verify protected routes bounce back to `/login`
 
+- `apps/web-next/tests/e2e/calories.spec.ts`
+  - Log in through the Solid SPA and open `/calories`
+  - Create a meal through `/calories/new`
+  - Update calorie targets through `/calories/settings`
+  - Quick-add a recent meal from the dashboard chips
+  - Delete a calorie log through the shared confirmation sheet
+  - Assert canonical Go-owned calories endpoints (`/api/calories/log`, `/api/calories/target`, `/api/calories/logs/{id}`) succeed across the rewritten Solid flow
+
+- `apps/web-next/tests/e2e/heat.spec.ts`
+  - Log in through the Solid SPA and open `/heat`
+  - Create a refill through `/heat/new`
+  - Delete a refill from the dashboard history through the shared confirmation sheet
+  - Assert canonical Go-owned heat endpoints (`/api/heat/refills`, `/api/heat/refills/{id}`) succeed across the rewritten Solid flow
+
 - `apps/server/scripts/e2e.sh`
   - Backend-first curl smoke coverage for the rebuild runtime
   - Logs in with bearer auth and validates `GET /api/auth/session`

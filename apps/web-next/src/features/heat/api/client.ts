@@ -25,3 +25,15 @@ export const createRefill = async (body: CreateRefillRequest): Promise<Refill> =
 
   return unwrap(data, error, 'Unable to create heat refill')
 }
+
+export const deleteRefill = async (id: string): Promise<void> => {
+  const { error } = await apiClient.DELETE('/api/heat/refills/{id}', {
+    params: {
+      path: { id },
+    },
+  })
+
+  if (error) {
+    throw new Error('Unable to delete heat refill')
+  }
+}
