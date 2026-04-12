@@ -1,27 +1,67 @@
 # Application Architecture: AI Directives
 
-## 🗺️ Domains
-- **Auth:** `src/pages/login.astro`, `src/layouts/AuthBootstrap.astro`
-- **Dashboard:** `src/modules/dashboard`
-- **Calories:** `src/modules/calories`, `src/pages/calories`
-- **Expenses:** `src/modules/expenses`, `src/pages/expenses`
-- **Heat:** `src/modules/heat`, `src/pages/heat`
+## Active Frontend
+- **App:** `apps/web/` is the active frontend.
+- **Domains:** the active frontend owns `auth`, `dashboard`, `calories`, `expenses`, and `heat` under `apps/web/src/features/`.
 
-## Solid Migration Scaffold
-- **Location:** `apps/web-next/src`
+## Frontend Architecture
+- **Location:** `apps/web/src`
 - **Rule:** `src/core/` owns shared config, theme runtime, auth token helpers, refresh/bootstrap auth state, route guards, shared formatters, and the typed `openapi-fetch` client.
-- **Rule:** `src/components/ui/` is the only place where Tailwind utility composition should live in the Solid app.
-- **Rule:** `src/features/{auth,dashboard,calories,expenses,heat}` owns route entry pages plus domain-local API wrappers.
+- **Rule:** `src/components/ui/` is the design system. Tailwind utility composition lives there.
+- **Rule:** `src/features/{auth,dashboard,calories,expenses,heat}` owns route entry pages plus domain-local components and API wrappers.
 - **Rule:** Solid feature files should compose UI primitives instead of spraying layout classes around like confetti.
-- **Rule:** Repeated screen chrome in the Solid app belongs in semantic UI primitives first - think `Panel` header actions, list meta rows, compact counter pills, and action toggles - so feature files stay focused on domain mapping and state.
-- **Rule:** Route entry files under `src/features/**` are orchestration layers only. They load data, hold route-level state, wire mutations, and compose feature components. They do not define page-local cards, ad-hoc dialogs/sheets, or long inline view sections.
+- **Rule:** Repeated screen chrome in the Solid app belongs in semantic UI primitives first - think `Panel` header actions, list meta rows, compact counter pills, action toggles, destructive confirms, and shared skeleton structures - so feature files stay focused on domain mapping and state.
+- **Rule:** Route entry files under `src/features/**` are orchestration layers only. They load data, hold route-level mutation state, wire mutations, and compose extracted feature sections. They do not define long inline slabs, page-local cards, or one-off dialogs.
 - **Rule:** Feature-specific sections and cards belong in `src/features/<domain>/components/`. If a page starts growing subviews, extract them instead of letting `index.tsx` or sibling route files turn into a junk drawer.
 - **Rule:** Feature mapping/helpers must not import prop types from `src/components/ui/`. Domain and feature logic should return feature-local view models or primitives, and the final UI adapter lives at the component boundary.
-- **Rule:** Shared interaction patterns such as confirmation sheets, destructive action flows, skeleton structures, and reusable form layouts belong in `src/components/ui/` before they are repeated across features.
+- **Rule:** If the same interaction pattern appears across routes or domains, promote it into `src/components/ui/` instead of cloning bespoke versions inside features.
+- **Rule:** Features must not reach into sibling feature internals for API wrappers, display mappers, or components. If something is shared across domains, move it into `src/core/` or `src/components/ui/`, or expose an intentional public seam.
+
+## Frontend Stack
+- **Framework:** Solid.js SPA + Vite + PWA.
+- **Language:** TypeScript strict mode.
+- **State:** native Solid signals and memos.
+- **Routing:** `@solidjs/router` with explicit lazy routes in `apps/web/src/routes.tsx`.
+- **API client:** `openapi-fetch` against generated types from `apps/server/internal/app/monolithapi/openapi.yaml`.
+- **Theme runtime:** CSS custom properties driven by deploy target so the same app can brand differently without duplicating styles.
+
+## Frontend Principles
+- **No React, no framework sprawl:** keep the app fast, typed, and boring in the good way.
+- **Go owns the contract:** the browser talks to canonical Go-owned `/api/*` endpoints directly.
+- **Generated types only:** use `openapi-typescript` outputs as the source of truth; do not hand-roll backend contract types.
+- **Thin routes, thick seams:** route files orchestrate, feature components render, `core` and `ui` hold shared behavior.
+- **Shared before duplicated:** repeated interactions graduate into the design system instead of multiplying feature-local clones.
+- **Module isolation:** domains do not casually import each other. If reuse is real, make the seam explicit.
+
+## Loading And Skeleton Rules
+- **Ghost twin principle:** skeletons should be a structural 1:1 ghost of the final component.
+- **Physics parity:** match the same padding, radius, and spacing as the live surface.
+- **Typography parity:** skeleton bar heights should match the text they replace.
+- **Shell persistence:** keep the `AppShell` mounted; only skeletonize `main` content.
+- **Transitions:** use restrained `animate-pulse` placeholders and a soft content arrival instead of jarring swaps.
+
+## UI Composition Principles
+- **Semantic strictness:** UI atoms communicate through semantic props like `variant`, `tone`, and `color`, not raw utility-class props.
+- **Zero redundancy:** if detailed content already explains the state, do not add decorative recap junk beside it.
+- **Mobile first:** start from the phone layout, then adapt upward.
+- **Single-column bias:** default to one column unless information architecture genuinely breaks.
+- **Minimal surface rule:** avoid cards inside cards inside cards.
+- **Header restraint:** do not add ceremony when a short back link or title already says enough.
+- **Copy must earn its keep:** keep helper text short and useful.
+- **Action placement:** prefer inline or end-of-form actions over sticky theatrics unless page length truly demands it.
+- **Mock first, extract later:** rough route-level exploration is allowed, but once the UX is approved, extraction is mandatory.
+
+## Frontend Workflow Guardrails
+- **Migration checklist:** for each frontend change or new route, wire canonical Go endpoints, regenerate OpenAPI types when needed, keep the route file thin, extract reusable sections, promote repeated UI patterns, add/update Playwright coverage, and update docs when a boundary or contract changes.
+- **Playwright rule:** do not rely on full page reload assumptions like `waitForNavigation`; prefer response waits and visible-state assertions.
+- **Timestamp ownership:** calorie quick-add and meal logging should let Go stamp the current UTC timestamp unless backdating is explicitly introduced.
 
 ---
 
-## 📂 Architecture Rules
+## Legacy Astro Notes
+
+- The remaining rules in this section exist only for legacy reference while `apps/web/` still exists in the repository.
+- New frontend work should target `apps/web/`, not Astro.
 
 ### 1. `src/pages/` (Routing)
 - **Role:** Astro pages and static route shells.
@@ -45,19 +85,19 @@
 
 ---
 
-## 🧠 Core Directives
+## Browser And Backend Directives
 
 ### UI & Styling
 - **Rule [Tailwind]:** ALWAYS use Tailwind CSS. NEVER use inline `style="..."` or external `.css` files unless Tailwind absolutely cannot handle dynamic calculations.
 - **Rule [Content Separation]:** Protected app data loads in the browser after auth readiness and should come from Go endpoints, not Astro frontmatter.
 
-### Client Interactivity & Global State
+### Legacy Client Runtime Notes
 *The problem: Astro is incredible for fast, zero-JS page loads. But interactive UI features (like modals or dropdowns) need global state management without pulling in a heavy framework like React.*
 
 - **How it works (`ClientRuntime.astro`):** `apps/web/src/layouts/ClientRuntime.astro` acts as the single orchestrator for all vanilla JavaScript UI state across the app. It binds event listeners globally based on `data-*` attributes (e.g., `data-menu-trigger`) avoiding inline scripts spread across dozens of components. It manages accessibility (escape to close), click-outside behavior, and ensures UI state is correctly managed across view transitions.
 - **Rule [No Frameworks]:** Do NOT add React, Vue, or heavy client-side frameworks. Any generic interactive UI behaviors you build must be written in Vanilla JS and integrated into the global `ClientRuntime.astro` using data attribute bindings.
 
-### Mutations & Serverless Forms
+### Legacy Form Runtime Notes
 *The problem: The production application runs behind an AWS Lambda Function URL secured by AWS IAM. A standard HTML form submitted by the browser (`<form method="POST">`) doesn't know how to sign the payload with AWS SigV4 credentials, resulting in a `403 Forbidden` error.*
 
 - **How it works (`ApiFormHandler.astro`):** `apps/web/src/layouts/ApiFormHandler.astro` is a global interceptor script injected into the main layouts.
@@ -90,17 +130,17 @@
 - **Current page guard:** protected pages wait for browser-side auth bootstrap and redirect to `/login` on the client when the session is missing. Public-only pages redirect back to `/` once a valid session is confirmed.
 - **Current auth flow:** login, refresh, logout, and session verification are all direct browser-to-Go interactions over `/api/auth/*`. Successful login stores the short-lived bearer token client-side and gets a refresh token through an `HttpOnly` cookie; refresh rotates that cookie and returns a fresh access token.
 - **Session behavior:** protected routes still use bearer auth only, but session lifecycle is no longer fake-stateless nonsense. Full page reloads and Astro navigations revalidate the stored token against `GET /api/auth/session`, and browser retries can recover through `POST /api/auth/refresh`.
-- **Solid auth flow:** `apps/web-next/src/core/auth/store.ts` bootstraps auth once after the SPA mounts, keeps the access JWT in `sessionStorage`, lets route guards in `apps/web-next/src/core/auth/guards.tsx` own the checking/loading state, and logs out from the shared `AppShell` UI.
-- **Solid route UX:** `apps/web-next/src/components/ui/AppRoot.tsx` keeps the shared `AppShell` mounted at the router root and swaps only the `main` content with a skeleton fallback while lazy route chunks resolve, so first-visit navigations stop flashing the whole shell.
-- **Solid navigation loading:** client-side route changes in `apps/web-next/src/components/ui/AppRoot.tsx` now use the router pending signal to replace stale page content with a shared `RouteStatus` skeleton during tab switches, so navigation loading behaves consistently across dashboard, expenses, calories, and heat.
-- **Solid refresh contract:** `apps/web-next/src/core/api/client.ts` retries protected requests once after `401` by calling `POST /api/auth/refresh` with `credentials: include`; if Go does not expose that route yet, the Solid app falls back to a clean guest state instead of pretending everything is fine.
+- **Solid auth flow:** `apps/web/src/core/auth/store.ts` bootstraps auth once after the SPA mounts, keeps the access JWT in `sessionStorage`, lets route guards in `apps/web/src/core/auth/guards.tsx` own the checking/loading state, and logs out from the shared `AppShell` UI.
+- **Solid route UX:** `apps/web/src/components/ui/AppRoot.tsx` keeps the shared `AppShell` mounted at the router root and swaps only the `main` content with a skeleton fallback while lazy route chunks resolve, so first-visit navigations stop flashing the whole shell.
+- **Solid navigation loading:** client-side route changes in `apps/web/src/components/ui/AppRoot.tsx` now use the router pending signal to replace stale page content with a shared `RouteStatus` skeleton during tab switches, so navigation loading behaves consistently across dashboard, expenses, calories, and heat.
+- **Solid refresh contract:** `apps/web/src/core/api/client.ts` retries protected requests once after `401` by calling `POST /api/auth/refresh` with `credentials: include`; if Go does not expose that route yet, the Solid app falls back to a clean guest state instead of pretending everything is fine.
 - **Solid logout behavior:** an explicit logout writes a browser-side logout marker so the SPA does not silently rehydrate itself from a still-valid refresh cookie during the same session window.
-- **Solid dashboard wiring:** `apps/web-next/src/features/dashboard/index.tsx` now uses three independent `createResource` reads against the monolith contracts exposed through `apps/web-next/src/features/{expenses,calories,heat}/api/client.ts`, so each card keeps its own skeleton/error state instead of faking a single mocked payload.
+- **Solid dashboard wiring:** `apps/web/src/features/dashboard/index.tsx` now uses three independent `createResource` reads against the monolith contracts exposed through `apps/web/src/features/{expenses,calories,heat}/api/client.ts`, so each card keeps its own skeleton/error state instead of faking a single mocked payload.
 - **Solid expenses flow:** `/expenses` now owns live dashboard mutations for close-sheet, checklist completion, and entry deletion, `/expenses/new` posts real expense entries through the typed OpenAPI client, and `/expenses/settings` now reads and mutates live income, ratio, checklist-template, and recurring-template data from the canonical expenses endpoints through extracted settings sections instead of one giant route file.
 - **Solid expenses safeguard:** the `/expenses` close-month action now requires an explicit in-app confirmation before posting `POST /api/expenses/sheet/close`, so the UI stops treating period rollover like a casual click.
 - **Solid expenses delete UX:** expense history deletions now reuse the same confirmation-sheet pattern before calling `DELETE /api/expenses/entries/{id}`, so destructive actions behave consistently instead of firing on the first tap.
-- **Solid calories route UX:** the `apps/web-next/src/features/calories/{index,new,settings}.tsx` screens now follow the calmer expenses composition: one primary daily/entry surface, quieter supporting sections, and explicit form submit states instead of mock-only save buttons buried inside cards.
-- **Solid heat route UX:** the `apps/web-next/src/features/heat/{index,new}.tsx` screens now use the same page rhythm as expenses and calories: compact header chrome, one primary overview/details surface, list-based supporting history, extracted route sections, and end-of-form save actions instead of a full-width one-off CTA.
+- **Solid calories route UX:** the `apps/web/src/features/calories/{index,new,settings}.tsx` screens now follow the calmer expenses composition: one primary daily/entry surface, quieter supporting sections, and explicit form submit states instead of mock-only save buttons buried inside cards.
+- **Solid heat route UX:** the `apps/web/src/features/heat/{index,new}.tsx` screens now use the same page rhythm as expenses and calories: compact header chrome, one primary overview/details surface, list-based supporting history, extracted route sections, and end-of-form save actions instead of a full-width one-off CTA.
 - **Solid heat live wiring:** `/heat` now reads the live dashboard, deletes history rows through canonical `DELETE /api/heat/refills/{id}`, and `/heat/new` creates real refills through `POST /api/heat/refills` instead of leaning on browser-only mock state.
 - **Solid heat loading system:** heat now has dedicated dashboard skeletons plus shared form primitives, so the rewrite reuses the design system instead of cloning another pocket universe of one-off controls.
 - **Current split:** Go is the source of truth for login, logout, session verification, page data, and API contracts. The Astro app is now a static frontend shell plus client runtime.
