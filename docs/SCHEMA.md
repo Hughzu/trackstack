@@ -16,9 +16,9 @@ Each database has its own migration directory under `packages/db/migrations/` an
 ## Connection & Access Rules
 
 - Application request-path DB access is owned by `apps/server/`.
-- Astro does not connect to domain databases directly.
+e- The front-end (Solid.js SPA) does not connect to domain databases directly.
 - Runtime database config is resolved by the Go backend from environment variables.
-- Direct DB tooling should live with backend-owned commands, not the frontend app.
+- Direct DB tooling should live with backend-owned commands, not the front-end app.
 
 ## Migration Locations
 
@@ -105,15 +105,6 @@ atlas migrate apply \
 
 Repeat for `expenses` and `heat` with the matching migration directory.
 
-If the local database already has tables, Atlas will consider it dirty:
-
-```bash
-atlas migrate apply \
-  --dir file://migrations/calories \
-  --url "sqlite://<absolute-path-to>/src/data/calories.sqlite" \
-  --allow-dirty
-```
-
 ### Seed user
 
 The seed command creates a single email/password user in the `users` database.
@@ -123,7 +114,7 @@ cd apps/server
 go run ./cmd/seed-user --email you@example.com --password yourpass
 ```
 
-For e2e runs, the command can read `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` from `apps/web/.env`, `apps/server/.env`, or the shell environment.
+For e2e runs, the command can read `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` from `apps/server/.env`, or the shell environment.
 
 Database target precedence:
 
@@ -138,7 +129,7 @@ Notes:
 
 ## CI/CD Migrations
 
-The workflow `.github/workflows/deploy-serverless.yml` runs Atlas migrations on pushes that change `packages/db/migrations/**` while deploying the temporary `serverless-next` stack.
+The workflow `.github/workflows/deploy-serverless.yml` runs Atlas migrations on pushes that change `packages/db/migrations/**`.
 It applies migrations sequentially and only deploys the app if migrations succeed (or were skipped).
 
 Current order:
@@ -151,8 +142,6 @@ Rollback policy:
 ## Database Schemas
 
 ### users
-
-Migration: `packages/db/migrations/users/001_init.sql`
 
 **users**
 - `id` TEXT PK
@@ -184,8 +173,6 @@ Indexes:
 
 ### calories
 
-Migration: `packages/db/migrations/calories/001_init.sql`
-
 **calorie_logs**
 - `id` TEXT PK
 - `user_id` TEXT NOT NULL
@@ -209,11 +196,7 @@ Index:
 - `created_at` TEXT NOT NULL
 - `updated_at` TEXT NOT NULL
 
-Type mappings live in `apps/web/src/modules/calories/services/caloriesService.ts`.
-
 ### expenses
-
-Migration: `packages/db/migrations/expenses/001_init.sql`
 
 **expense_settings**
 - `id` TEXT PK
@@ -287,13 +270,7 @@ Index:
 Index:
 - `idx_expense_entries_sheet_date` on (`sheet_id`, `date`)
 
-Type mappings live in `apps/web/src/modules/expenses/types.ts` and service logic in `apps/web/src/modules/expenses/services/expensesService.ts`.
-
 ### heat
-
-Migrations:
-- `packages/db/migrations/heat/001_init.sql`
-- `packages/db/migrations/heat/002_backfill_season.sql`
 
 **refills**
 - `id` TEXT PK
@@ -307,11 +284,23 @@ Migrations:
 Index:
 - `idx_refills_user_date` on (`user_id`, `date`)
 
-Type mappings live in `apps/web/src/modules/heat/types.ts` and service logic in `apps/web/src/modules/heat/services/heatService.ts`.
-
 ## Mutation Rules
 
 - Database mutations in the application request path must occur through Go-owned APIs.
 - UI components and pages must call domain services, not raw SQL.
-- Frontend code must not access Turso directly.
+- Front-end code must not access Turso directly.
 - Migrations are the only source of truth for schema changes; update SQL + this doc together.
+
+## New Domain Database Checklist
+
+When adding a database for a new domain (e.g., `srl`), follow this checklist to ensure the schema and infrastructure are correctly integrated:
+
+- [ ] Create a new Turso database: `turso db create <domain>`.
+- [ ] Generate database tokens: `turso db tokens create <domain>`.
+- [ ] Add the migration directory: `packages/db/migrations/<domain>/`.
+- [ ] Create initial migration: `001_init.sql` (and `001_init.down.sql`).
+- [ ] Update `packages/db/migrations/atlas.hcl` to include the new environment.
+- [ ] Update this document (`docs/SCHEMA.md`) with the new schema and update the CI/CD documentation if needed.
+- [ ] Update GitHub Action secrets (`TURSO_<DOMAIN>_URL`, `TURSO_<DOMAIN>_TOKEN`) for CI/CD migrations.
+- [ ] Update `.github/workflows/deploy-serverless.yml` to apply migrations for the new domain in the correct sequence.
+- [ ] Update `infra/environments/serverless/01-set-runtime-ssm.sh` to inject the new Turso credentials into SSM for the Go backend.
