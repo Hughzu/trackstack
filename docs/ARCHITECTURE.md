@@ -235,10 +235,10 @@ Good news:
 - Monolith and Lambda share the same assembled handler.
 - Split runtimes only open the one database they need.
 - The backend stays stateless apart from Turso.
+- Database handles are opened lazily.
 
 Current pain points:
 
-- The monolith opens and pings all four databases at startup, even if one request only needs one domain.
 - Default pool settings are fine locally but a bit fat for cold-start-sensitive serverless traffic.
 - Split runtime assembly duplicates config/router/health wiring across packages.
 

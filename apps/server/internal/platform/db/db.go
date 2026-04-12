@@ -39,10 +39,5 @@ func Open(url, token string, pool PoolConfig) (*sql.DB, error) {
 		db.SetConnMaxIdleTime(pool.ConnMaxIdleTime)
 	}
 
-	if err := db.Ping(); err != nil {
-		_ = db.Close()
-		return nil, fmt.Errorf("failed to ping db: %w", err)
-	}
-
 	return db, nil
 }
