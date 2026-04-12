@@ -1,19 +1,4 @@
 - SOLID WIP :
-    - mock up de chacunes des pages
-        - dashboard done
-        - expenses
-            - read 
-            - write
-        - calories
-            - read
-            - write
-        - heat
-            - read
-            - write
-
-        - wiring of all the above
-
-        - delete astro 
         - deploy solid app 
 
 - audit the backend
@@ -21,9 +6,7 @@
 
 - review all markdowns
     - testing
-    - masterplan
     - infra
-    - decisions
     - architecture
     - application
     - some rules in a markdown in order to create faster new modules ? (like a check list ? )
