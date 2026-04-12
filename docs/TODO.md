@@ -21,6 +21,8 @@
 - Write a blog 
     - squash commit to make this repo public ? 
     - blog focus point is have a performant 0$ infra for your 900$ tokens expense tracker app. 
+    - Build a punchy PDF carousel highlighting the problem and the impact to bait the TikTok-brained HR reps, then drop the link to your full Article in the post for the CTOs who actually want to validate your architectural chops.
+    - You hook them with the pictures, and close them with the deep dive.
 
 - ECS Fargate
 
