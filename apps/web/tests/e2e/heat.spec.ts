@@ -1,57 +1,94 @@
-import { test, expect } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test'
 
-const e2eEmail = process.env.E2E_TEST_EMAIL ?? '';
-const e2ePassword = process.env.E2E_TEST_PASSWORD ?? '';
+const e2eEmail = process.env.E2E_TEST_EMAIL ?? ''
+const e2ePassword = process.env.E2E_TEST_PASSWORD ?? ''
+
+const loginUrl = /\/api\/auth\/login$/
+const dashboardUrl = /\/api\/heat\/dashboard(\?|$)/
+const createRefillUrl = /\/api\/heat\/refills$/
+const deleteRefillUrl = /\/api\/heat\/refills\//
 
 function uniqueSuffix() {
-    return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-async function login(page: import('@playwright/test').Page) {
-    await page.goto('/login');
-    const responsePromise = page.waitForResponse(response =>
-        response.url().includes('/api/auth/login') && response.request().method() === 'POST'
-    );
-    await page.fill('input[name="email"]', e2eEmail);
-    await page.fill('input[name="password"]', e2ePassword);
-    await page.click('button[type="submit"]');
-    const response = await responsePromise;
-    expect(response.ok()).toBeTruthy();
-    await page.waitForURL('/');
+function confirmSheet(page: Page) {
+  return page.locator('.fixed.inset-0.z-50').last()
 }
 
-test.describe('Heat Refill Flow', () => {
-    test('User can delete a refill from history', async ({ page }) => {
-        await login(page);
+async function loginAndOpenHeat(page: Page) {
+  await page.goto('/login')
+  await page.getByLabel('Email').fill(e2eEmail)
+  await page.getByLabel('Password').fill(e2ePassword)
 
-        const uniqueTemperature = 50 + Number(uniqueSuffix().slice(-2).replace(/\D/g, '').padEnd(2, '0').slice(0, 2));
+  const [loginResponse] = await Promise.all([
+    page.waitForResponse((response) => loginUrl.test(response.url()) && response.request().method() === 'POST'),
+    page.getByRole('button', { name: 'Sign in' }).click(),
+  ])
 
-        await page.goto('/heat/new');
-        await page.fill('input[name="bags"]', '1');
-        await page.fill('input[name="weightKg"]', '15');
-        await page.fill('input[name="date"]', '2025-03-10');
+  expect(loginResponse.ok()).toBeTruthy()
 
-        await page.fill('input[name="temperature"]', String(uniqueTemperature));
+  await page.goto('/heat')
+  await page.waitForResponse((response) => dashboardUrl.test(response.url()) && response.request().method() === 'GET')
+  await expect(page.getByRole('link', { name: 'Add refill' })).toBeVisible()
+}
 
-        await page.click('button[type="submit"]');
-        await expect(page).toHaveURL('/heat');
+async function createRefill(page: Page, options?: { bags?: string, date?: string, temperature?: string }) {
+  await page.getByRole('link', { name: 'Add refill' }).click()
+  await expect(page.getByRole('button', { name: 'Log refill' })).toBeVisible()
 
-        const createdRow = page.locator('[data-refill-history] > div').filter({ hasText: `Avg Temp: ${uniqueTemperature}degC` }).first();
-        await expect(createdRow).toBeVisible();
+  const suffix = uniqueSuffix()
+  const temperature = options?.temperature ?? String((Number(suffix.slice(-2).replace(/\D/g, '').padEnd(2, '0').slice(0, 2)) % 20) + 5)
+  const date = options?.date ?? '2025-03-10'
 
-        await createdRow.locator('[data-refill-delete]').click();
-        const deleteModal = page.locator('#refill-delete-modal');
-        await expect(deleteModal).toBeVisible();
+  await page.locator('#heat-bags').fill(options?.bags ?? '2')
+  await page.locator('#heat-date').fill(date)
+  await page.locator('#heat-temperature').fill(temperature)
 
-        const [deleteResponse] = await Promise.all([
-            page.waitForResponse(response =>
-                response.url().includes('/api/heat/refills/') && response.request().method() === 'DELETE'
-            ),
-            deleteModal.locator('[data-confirm-modal]').click(),
-        ]);
+  await Promise.all([
+    page.waitForResponse((response) => createRefillUrl.test(response.url()) && response.request().method() === 'POST'),
+    page.waitForResponse((response) => dashboardUrl.test(response.url()) && response.request().method() === 'GET'),
+    page.getByRole('button', { name: 'Log refill' }).click(),
+  ])
 
-        expect(deleteResponse.ok()).toBeTruthy();
-        await expect(deleteModal).toBeHidden();
-        await expect(page.locator('[data-refill-history] > div').filter({ hasText: `Avg Temp: ${uniqueTemperature}degC` })).toHaveCount(0);
-    });
-});
+  await expect(page).toHaveURL(/\/heat$/)
+  return { temperature, date }
+}
+
+test.describe('Heat page', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test('creates a refill from the add page', async ({ page }) => {
+    await loginAndOpenHeat(page)
+
+    const { temperature, date } = await createRefill(page)
+    const expectedDate = new Date(`${date}T00:00:00`).toLocaleDateString('en-IE', { month: 'short', day: 'numeric' })
+
+    const row = page.locator('[data-list-item-id]').filter({ hasText: expectedDate }).filter({ hasText: `${temperature} C` }).first()
+    await expect(row).toBeVisible()
+  })
+
+  test('deletes a refill from history', async ({ page }) => {
+    await loginAndOpenHeat(page)
+
+    const { temperature, date } = await createRefill(page, { bags: '1' })
+    const expectedDate = new Date(`${date}T00:00:00`).toLocaleDateString('en-IE', { month: 'short', day: 'numeric' })
+    const row = page.locator('[data-list-item-id]').filter({ hasText: expectedDate }).filter({ hasText: `${temperature} C` }).first()
+    await expect(row).toBeVisible()
+
+    const rowId = await row.getAttribute('data-list-item-id')
+    expect(rowId).toBeTruthy()
+
+    await row.getByRole('button', { name: `Delete refill ${expectedDate}` }).click()
+    const sheet = confirmSheet(page)
+    await expect(sheet.getByRole('heading', { name: 'Delete refill' })).toBeVisible()
+
+    await Promise.all([
+      page.waitForResponse((response) => deleteRefillUrl.test(response.url()) && response.request().method() === 'DELETE'),
+      page.waitForResponse((response) => dashboardUrl.test(response.url()) && response.request().method() === 'GET'),
+      sheet.getByRole('button', { name: 'Delete refill' }).click(),
+    ])
+
+    await expect(page.locator(`[data-list-item-id="${rowId}"]`)).toHaveCount(0)
+  })
+})

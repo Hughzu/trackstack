@@ -22,14 +22,15 @@ flowchart LR
 Key points:
 
 - CloudFront is the only public ingress in serverless environments.
-- Astro is shipped as static assets from S3.
+- The Solid SPA in `apps/web-next` is shipped as static assets from S3.
 - Go owns health, OpenAPI, auth, and business API routes.
 - The Go runtime is stateless; persistent state lives only in Turso.
 - The same assembled backend contract must run locally and in Lambda.
 
 ## Source Of Truth
 
-- `apps/web` owns pages, layouts, browser interaction, and the static frontend shell.
+- `apps/web-next` owns the active frontend app, browser interaction, and the static SPA shell.
+- `apps/web` is legacy migration reference only until the folder swap is completed.
 - `apps/server` owns backend contracts, domain rules, auth issuance/verification, and backend-owned tooling.
 - Historical references to the legacy compatibility backend remain in migration notes only; the repository path `apps/server` now refers to the rebuilt backend described here.
 - Frontend pages should talk to Go-owned `/api/*` endpoints rather than direct databases or Astro-owned API adapters.
@@ -235,7 +236,7 @@ Current auth contract:
 
 Current frontend note:
 
-- `apps/web` now stores the bearer token client-side after login, replays it during auth bootstrap, and uses the same auth contract for protected browser reads and mutations.
+- `apps/web-next` stores the bearer token client-side after login, replays it during auth bootstrap, and uses the same auth contract for protected browser reads and mutations.
 
 ## Transport Contract
 

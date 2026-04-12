@@ -1,7 +1,7 @@
 ## 🛠️ Technical Stack
 
 * **Backend:** Go (Golang) 1.26+ (Hexagonal Architecture).
-* **Frontend:** Astro (SSR & Static) + TailwindCSS in `apps/web/`.
+* **Frontend:** Solid.js SPA + TailwindCSS design system in `apps/web-next/`. `apps/web/` is now legacy migration reference only.
 * **Database:** Turso (SQLite at the Edge via HTTP/WebSockets).
 * **Infra:** Terraform (AWS) structured by environment.
 * **Deployment Matrix:**
@@ -26,7 +26,9 @@ When you change a contract or boundary, update the corresponding doc:
 ## 📝 Coding Standards for AI
 
 * **Go**: Prefer standard library. Use `slog` for structured logging. Return errors wrapped with context; never `panic()`.
-* **Astro**: Use Tailwind utility classes. Favor SSR for dynamic routes and Static for marketing/shell pages.
+* **Solid frontend**: `apps/web-next/src/components/ui/` is the only place where Tailwind utility composition should live. Keep `src/features/**` focused on state, wiring, and view-model mapping.
+* **Solid routes**: Treat `src/features/**/{index,new,settings}.tsx` as thin controllers only. Extract page sections immediately once a route grows panels, lists, or dialogs.
+* **Solid boundaries**: Avoid feature-to-feature imports unless going through an intentionally shared seam. Shared behavior belongs in `src/core/` or `src/components/ui/`, not by reaching into a sibling feature.
 * **Terraform**: Use Terraform `0.15+` syntax. Provide explicit `description` fields for all variables. Pin provider versions.
 * **Cost Awareness**: Before suggesting an AWS service, evaluate its minimum monthly cost. If it breaks the $0 Serverless rule without being in an ephemeral Lab, suggest a cheaper alternative.
 

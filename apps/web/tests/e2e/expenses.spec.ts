@@ -1,110 +1,160 @@
-import { test, expect } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
-const e2eEmail = process.env.E2E_TEST_EMAIL ?? '';
-const e2ePassword = process.env.E2E_TEST_PASSWORD ?? '';
+const e2eEmail = process.env.E2E_TEST_EMAIL ?? ''
+const e2ePassword = process.env.E2E_TEST_PASSWORD ?? ''
 
-function uniqueSuffix() {
-    return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const loginUrl = /\/api\/auth\/login$/
+const closeMonthUrl = /\/api\/expenses\/sheet\/close$/
+const completeChecklistUrl = /\/api\/expenses\/checklists\/complete$/
+const createEntryUrl = /\/api\/expenses\/entries$/
+const deleteEntryUrl = /\/api\/expenses\/entries\//
+const dashboardUrl = /\/api\/expenses\/sheet\/current(\?|$)/
+
+function confirmSheet(page: Page) {
+  return page.locator('.fixed.inset-0.z-50').last()
 }
 
-async function login(page: import('@playwright/test').Page) {
-    await page.goto('/login');
-    const responsePromise = page.waitForResponse(response =>
-        response.url().includes('/api/auth/login') && response.request().method() === 'POST'
-    );
-    await page.fill('input[name="email"]', e2eEmail);
-    await page.fill('input[name="password"]', e2ePassword);
-    await page.click('button[type="submit"]');
-    const response = await responsePromise;
-    expect(response.ok()).toBeTruthy();
-    await page.waitForURL('/');
+async function loginAndOpenExpenses(page: Page) {
+  await page.goto('/login')
+  await page.getByLabel('Email').fill(e2eEmail)
+  await page.getByLabel('Password').fill(e2ePassword)
+
+  await Promise.all([
+    page.waitForResponse((response) => loginUrl.test(response.url()) && response.request().method() === 'POST'),
+    page.getByRole('button', { name: 'Sign in' }).click(),
+  ])
+
+  await page.goto('/expenses')
+  await page.waitForResponse((response) => dashboardUrl.test(response.url()) && response.request().method() === 'GET')
+  await expect(page.getByText('Summary')).toBeVisible()
 }
 
-test.describe('Expenses Logging Flow', () => {
-    test('User can submit a new expense entry', async ({ page }) => {
-        await login(page);
+async function openObligationsPanel(page: Page) {
+  const button = page.getByRole('button', { name: /Obligations/i })
+  await expect(button).toBeVisible()
+  const panel = page.locator('section').filter({ has: page.getByText('Obligations') }).first()
+  if (await panel.locator('[data-list-item-id]').count()) {
+    return
+  }
+  await button.click()
+}
 
-        // 1. Visit the new expense page
-        await page.goto('/expenses/new');
+async function firstHistoryRow(page: Page): Promise<Locator> {
+  const historyPanel = page.locator('section').filter({ has: page.getByText('History') }).first()
+  return historyPanel.locator('[data-list-item-id]').first()
+}
 
-        // 2. Fill out the form
-        await page.fill('input[name="amount"]', '42.50');
-        // Click visible category tile to select the underlying radio input.
-        await page.getByText('Fundamentals').click();
-        await page.fill('input[name="title"]', 'Groceries');
+async function createExpenseFromAddPage(page: Page, options?: { title?: string, amount?: string, category?: 'Fund.' | 'Fun' | 'Future' }) {
+  const title = options?.title ?? `E2E expense ${Date.now()}`
+  const amount = options?.amount ?? '27.40'
+  const category = options?.category ?? 'Future'
 
-        // 3. Submit the form
-        const responsePromise = page.waitForResponse(response =>
-            response.url().includes('/api/expenses/entries') && response.request().method() === 'POST'
-        );
+  await page.getByRole('link', { name: 'Add Expense' }).click()
+  await expect(page.getByRole('button', { name: 'Save Expense' })).toBeVisible()
 
-        await page.click('button[type="submit"]');
+  await page.locator('#expense-amount').fill(amount)
+  await page.locator('[data-testid="expense-category-choice"]').getByRole('button', { name: new RegExp(`^${category}`) }).click()
+  await page.getByLabel('Title').fill(title)
 
-        // 4. Verify the response is successful
-        const response = await responsePromise;
-        expect(response.ok()).toBeTruthy();
+  await Promise.all([
+    page.waitForResponse((response) => createEntryUrl.test(response.url()) && response.request().method() === 'POST'),
+    page.waitForResponse((response) => dashboardUrl.test(response.url()) && response.request().method() === 'GET'),
+    page.getByRole('button', { name: 'Save Expense' }).click(),
+  ])
 
-        // 5. Verify the user is redirected to the expenses dashboard
-        await expect(page).toHaveURL('/expenses');
-    });
+  await expect(page).toHaveURL(/\/expenses$/)
+  return title
+}
 
-    test('User can save expense settings', async ({ page }) => {
-        await login(page);
+test.describe('Expenses page', () => {
+  test.describe.configure({ mode: 'serial' })
 
-        await page.goto('/expenses/settings');
-        await page.fill('input[name="income"]', '2800');
-        await page.fill('input[name="ratioFund"]', '55');
-        await page.fill('input[name="ratioFun"]', '20');
-        await page.fill('input[name="ratioFuture"]', '25');
+  test('filters by category', async ({ page }) => {
+    await loginAndOpenExpenses(page)
 
-        const responsePromise = page.waitForResponse(response =>
-            response.url().includes('/api/expenses/settings') && response.request().method() === 'POST'
-        );
+    const historyPanel = page.locator('section').filter({ has: page.getByText('History') }).first()
+    await expect(historyPanel.locator('[data-list-item-id]').first()).toBeVisible()
 
-        await page.click('#expenses-settings-form button[type="submit"]');
+    await historyPanel.getByRole('button', { name: 'Fun', exact: true }).click()
+    await expect(historyPanel.getByRole('button', { name: 'Fun', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expect(historyPanel.locator('[data-list-item-id]').filter({ hasText: 'Fund.' })).toHaveCount(0)
+    await expect(historyPanel.locator('[data-list-item-id]').filter({ hasText: 'Future' })).toHaveCount(0)
+  })
 
-        const response = await responsePromise;
-        expect(response.ok()).toBeTruthy();
-        await expect(page).toHaveURL('/expenses');
-    });
+  test('completes an obligation', async ({ page }) => {
+    await loginAndOpenExpenses(page)
+    await openObligationsPanel(page)
 
-    test('User can add monthly checklist and recurring templates', async ({ page }) => {
-        await login(page);
+    const obligationsPanel = page.locator('section').filter({ has: page.getByText('Obligations') }).first()
+    if (await obligationsPanel.locator('[data-list-item-id]').count() === 0) {
+      return
+    }
 
-        const suffix = uniqueSuffix();
-        const checklistTitle = `Checklist Test ${suffix}`;
-        const recurringTitle = `Recurring Test ${suffix}`;
+    const firstItem = obligationsPanel.locator('[data-list-item-id]').first()
+    await expect(firstItem).toBeVisible()
 
-        await page.goto('/expenses/settings');
+    await Promise.all([
+      page.waitForResponse((response) => completeChecklistUrl.test(response.url()) && response.request().method() === 'POST'),
+      page.waitForResponse((response) => dashboardUrl.test(response.url()) && response.request().method() === 'GET'),
+      firstItem.getByRole('button', { name: 'Mark as complete' }).click(),
+    ])
+  })
 
-        const checklistPostPromise = page.waitForResponse(response =>
-            response.url().includes('/api/expenses/checklists') && response.request().method() === 'POST'
-        );
+  test('deletes a history row', async ({ page }) => {
+    await loginAndOpenExpenses(page)
 
-        await page.locator('input[form="expense-checklist-form"][name="title"]').fill(checklistTitle);
-        await page.locator('input[form="expense-checklist-form"][name="amount"]').fill('18.75');
-        await page.locator('select[form="expense-checklist-form"][name="category"]').selectOption('fun');
-        await page.locator('button[form="expense-checklist-form"][type="submit"]').click();
+    const title = await createExpenseFromAddPage(page, { category: 'Future' })
 
-        const checklistResponse = await checklistPostPromise;
-        expect(checklistResponse.ok()).toBeTruthy();
-        await expect(page).toHaveURL('/expenses/settings');
-        const checklistRow = page.locator('[data-checklist-list] > div').filter({ hasText: checklistTitle }).first();
-        await expect(checklistRow).toBeVisible();
+    const historyPanel = page.locator('section').filter({ has: page.getByText('History') }).first()
+    const row = historyPanel.locator('[data-list-item-id]').filter({ hasText: title }).first()
+    await expect(row).toBeVisible()
 
-        const recurringPostPromise = page.waitForResponse(response =>
-            response.url().includes('/api/expenses/recurring') && response.request().method() === 'POST'
-        );
+    const rowId = await row.getAttribute('data-list-item-id')
+    expect(rowId).toBeTruthy()
 
-        await page.locator('input[form="expense-recurring-form"][name="title"]').fill(recurringTitle);
-        await page.locator('input[form="expense-recurring-form"][name="amount"]').fill('44.10');
-        await page.locator('select[form="expense-recurring-form"][name="category"]').selectOption('future');
-        await page.locator('button[form="expense-recurring-form"][type="submit"]').click();
+    await row.getByRole('button', { name: `Delete ${title}` }).click()
 
-        const recurringResponse = await recurringPostPromise;
-        expect(recurringResponse.ok()).toBeTruthy();
-        await expect(page).toHaveURL('/expenses/settings');
-        const recurringRow = page.locator('[data-recurring-list] > div').filter({ hasText: recurringTitle }).first();
-        await expect(recurringRow).toBeVisible();
-    });
-});
+    const sheet = confirmSheet(page)
+    await expect(sheet.getByRole('heading', { name: 'Delete expense' })).toBeVisible()
+    await expect(sheet.getByText(title, { exact: false })).toBeVisible()
+
+    await Promise.all([
+      page.waitForResponse((response) => deleteEntryUrl.test(response.url()) && response.request().method() === 'DELETE'),
+      page.waitForResponse((response) => dashboardUrl.test(response.url()) && response.request().method() === 'GET'),
+      sheet.getByRole('button', { name: 'Delete expense' }).click(),
+    ])
+
+    await expect(page.locator(`[data-list-item-id="${rowId}"]`)).toHaveCount(0)
+  })
+
+  test('closes the current month', async ({ page }) => {
+    await loginAndOpenExpenses(page)
+
+    const periodStat = page.getByTestId('expenses-period')
+    const initialPeriod = await periodStat.textContent()
+
+    await page.getByRole('button', { name: 'Close month' }).click()
+
+    const sheet = confirmSheet(page)
+    await expect(sheet.getByRole('heading', { name: 'Close month' })).toBeVisible()
+    await expect(sheet.getByText('Period rollover')).toBeVisible()
+
+    await Promise.all([
+      page.waitForResponse((response) => closeMonthUrl.test(response.url()) && response.request().method() === 'POST'),
+      page.waitForResponse((response) => dashboardUrl.test(response.url()) && response.request().method() === 'GET'),
+      sheet.getByRole('button', { name: 'Yes, close month' }).click(),
+    ])
+
+    await expect(page.getByRole('button', { name: 'Close month' })).toBeVisible()
+    if (initialPeriod) {
+      await expect(periodStat).not.toHaveText(initialPeriod)
+    }
+  })
+
+  test('creates a new expense from the add page', async ({ page }) => {
+    await loginAndOpenExpenses(page)
+
+    const title = await createExpenseFromAddPage(page, { category: 'Future' })
+    await expect(page.locator('[data-list-item-id]').filter({ hasText: title }).first()).toBeVisible()
+  })
+})

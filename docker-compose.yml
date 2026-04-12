@@ -37,7 +37,7 @@ services:
       - PUBLIC_API_BASE_URL=http://go-backend:8080/api
       - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
     env_file:
-      - ./apps/web/.env
+      - ./apps/web/.env.local
 
 volumes:
   web_node_modules:

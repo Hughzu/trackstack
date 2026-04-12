@@ -13,13 +13,21 @@
 
         - wiring of all the above
 
-- front
-    - Code deep dive
-        - understand what the fuck is going on in the astro side
-            - update docs & focus on DDD and dataflow
-            - understand tests
-            - design system ? (implement skills to create new pages ?)
-            - UI flickering, ... 
+        - delete astro 
+        - deploy solid app 
+
+- audit the backend
+- audit the frontend
+
+- review all markdowns
+    - testing
+    - masterplan
+    - infra
+    - decisions
+    - architecture
+    - application
+    - some rules in a markdown in order to create faster new modules ? (like a check list ? )
+
 
 - Infra deep dive
     - make a cli (???) to understand what the fuck is going on in bootstrap 

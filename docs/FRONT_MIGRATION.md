@@ -61,6 +61,8 @@ src/
 * **Feature Components:** When a route needs multiple panels, cards, forms, or sections, extract them into `src/features/<domain>/components/` immediately instead of nesting helper components inside the route file.
 * **Layering:** Feature display/mapping helpers must not import types from `src/components/ui/`. UI primitives should consume feature-local view models, not dictate the shape of domain mapping code.
 * **Shared Patterns:** If the same interaction pattern appears across routes or domains (confirmation sheets, destructive action flows, skeleton sections, repeated form action layouts), promote it into `src/components/ui/` instead of duplicating bespoke versions inside features.
+* **Feature Boundaries:** Features must not reach into sibling feature internals for API wrappers, display mappers, or components. If something is reused across domains, move it into `src/core/` or `src/components/ui/`, or expose an intentional public feature seam.
+* **Migration Checklist:** For each migrated route: wire canonical Go endpoints, regenerate OpenAPI types when needed, keep the route file thin, extract reusable sections, promote repeated UI patterns, add/update Playwright coverage, and update the docs when a boundary or contract changes.
 
 ## 7. Loading Experience (Skeletons)
 To maintain a premium feel and zero Cumulative Layout Shift (CLS):
