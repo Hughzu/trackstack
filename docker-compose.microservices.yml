@@ -10,18 +10,13 @@ services:
       - microservices_go_mod:/opt/gomodcache
     ports:
       - "18081:18081"
+    env_file:
+      - ./apps/server/.env
     environment:
       APP_ENV: ${APP_ENV:-local}
       PORT: 18081
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:4321}
-      JWT_SECRET: ${JWT_SECRET}
-      TURSO_USERS_URL_HTTP: ${TURSO_USERS_URL_HTTP}
-      TURSO_USERS_TOKEN: ${TURSO_USERS_TOKEN}
-      DB_MAX_OPEN_CONNS: ${DB_MAX_OPEN_CONNS:-10}
-      DB_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-5}
-      DB_CONN_MAX_LIFETIME_SECONDS: ${DB_CONN_MAX_LIFETIME_SECONDS:-300}
-      DB_CONN_MAX_IDLE_TIME_SECONDS: ${DB_CONN_MAX_IDLE_TIME_SECONDS:-60}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:5173}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18081/health >/dev/null 2>&1 || exit 1"]
       interval: 10s
@@ -40,18 +35,13 @@ services:
       - microservices_go_mod:/opt/gomodcache
     ports:
       - "18080:18080"
+    env_file:
+      - ./apps/server/.env
     environment:
       APP_ENV: ${APP_ENV:-local}
       PORT: 18080
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:4321}
-      JWT_SECRET: ${JWT_SECRET}
-      TURSO_HEAT_URL_HTTP: ${TURSO_HEAT_URL_HTTP}
-      TURSO_HEAT_TOKEN: ${TURSO_HEAT_TOKEN}
-      DB_MAX_OPEN_CONNS: ${DB_MAX_OPEN_CONNS:-10}
-      DB_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-5}
-      DB_CONN_MAX_LIFETIME_SECONDS: ${DB_CONN_MAX_LIFETIME_SECONDS:-300}
-      DB_CONN_MAX_IDLE_TIME_SECONDS: ${DB_CONN_MAX_IDLE_TIME_SECONDS:-60}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:5173}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18080/health >/dev/null 2>&1 || exit 1"]
       interval: 10s
@@ -68,18 +58,15 @@ services:
     volumes:
       - ./apps/server:/app
       - microservices_go_mod:/opt/gomodcache
+    ports:
+      - "18082:18082"
+    env_file:
+      - ./apps/server/.env
     environment:
       APP_ENV: ${APP_ENV:-local}
       PORT: 18082
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:4321}
-      JWT_SECRET: ${JWT_SECRET}
-      TURSO_CALORIES_URL_HTTP: ${TURSO_CALORIES_URL_HTTP}
-      TURSO_CALORIES_TOKEN: ${TURSO_CALORIES_TOKEN}
-      DB_MAX_OPEN_CONNS: ${DB_MAX_OPEN_CONNS:-10}
-      DB_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-5}
-      DB_CONN_MAX_LIFETIME_SECONDS: ${DB_CONN_MAX_LIFETIME_SECONDS:-300}
-      DB_CONN_MAX_IDLE_TIME_SECONDS: ${DB_CONN_MAX_IDLE_TIME_SECONDS:-60}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:5173}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18082/health >/dev/null 2>&1 || exit 1"]
       interval: 10s
@@ -96,18 +83,15 @@ services:
     volumes:
       - ./apps/server:/app
       - microservices_go_mod:/opt/gomodcache
+    ports:
+      - "18083:18083"
+    env_file:
+      - ./apps/server/.env
     environment:
       APP_ENV: ${APP_ENV:-local}
       PORT: 18083
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:4321}
-      JWT_SECRET: ${JWT_SECRET}
-      TURSO_EXPENSES_URL_HTTP: ${TURSO_EXPENSES_URL_HTTP}
-      TURSO_EXPENSES_TOKEN: ${TURSO_EXPENSES_TOKEN}
-      DB_MAX_OPEN_CONNS: ${DB_MAX_OPEN_CONNS:-10}
-      DB_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-5}
-      DB_CONN_MAX_LIFETIME_SECONDS: ${DB_CONN_MAX_LIFETIME_SECONDS:-300}
-      DB_CONN_MAX_IDLE_TIME_SECONDS: ${DB_CONN_MAX_IDLE_TIME_SECONDS:-60}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:5173}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18083/health >/dev/null 2>&1 || exit 1"]
       interval: 10s
@@ -131,21 +115,22 @@ services:
     ports:
       - "8088:8088"
 
-  astro-frontend:
+  web-frontend:
     build:
       context: ./apps/web
       dockerfile: Dockerfile.dev
     volumes:
       - ./apps/web:/app
       - web_node_modules:/app/node_modules
+      - web_pnpm_store:/pnpm/store
     ports:
-      - "4321:4321"
+      - "5173:5173"
     environment:
       API_PROXY_URL: http://api-edge:8088
-      PUBLIC_API_BASE_URL: http://localhost:8088
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      VITE_PORT: 5173
     env_file:
-      - ./apps/web/.env
+      - ./apps/web/.env.local
     depends_on:
       api-edge:
         condition: service_started
@@ -153,3 +138,4 @@ services:
 volumes:
   microservices_go_mod:
   web_node_modules:
+  web_pnpm_store:

@@ -192,6 +192,12 @@ Local init:
 - For the migration environment, seed runtime config with `infra/environments/serverless-next/01-set-runtime-ssm.sh` before deploy validation; it should align with `apps/server/.env`, auto-load `JWT_SECRET` plus `TURSO_*_URL_HTTP` and `TURSO_*_TOKEN` when present, and exported env vars still win.
 - The shared Lambda module no longer injects legacy app-specific runtime defaults automatically; each environment must define its own runtime contract explicitly.
 
+## Local Compose
+
+- The local frontend compose service is `web-frontend` and serves the Solid/Vite app from `http://localhost:5173`.
+- `web-frontend` keeps `node_modules` and the pnpm store in named volumes so bind-mounting `apps/web` does not nuke installed dependencies on container start.
+- Local browser-to-Go traffic stays same-origin through the Vite `/api` proxy; set `API_PROXY_URL` for the container network target and use `VITE_API_BASE_URL` only for direct static deployment origins.
+
 ## CI/CD Touchpoints
 
 - `.github/workflows/terraform-serverless.yml` currently manages the temporary `serverless-next` environment with OIDC, can build a bootstrap Go Lambda artifact for first apply, and only runs its job when the ref is `main`.

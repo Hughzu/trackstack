@@ -40,14 +40,7 @@ pnpm test:e2e
 
 `pnpm test:e2e` runs the Playwright browser flows against the currently running frontend/backend pair. If you want to refresh the backend test user first, run `pnpm seed:e2e-user` from `apps/web` on the host or `go run ./cmd/seed-user` from `apps/server`.
 
-For the Solid migration app:
-
-```bash
-cd apps/web-next
-pnpm test:e2e
-```
-
-The Solid Playwright flow currently covers guest redirect to `/login`, login success, authenticated shell visibility, logout, and re-protection of private routes. It also now covers `/expenses` interactions for category filtering, checklist completion, row deletion, month closing, and creating a new expense through `/expenses/new`. It expects `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` in `apps/web-next/.env.local` or your shell and assumes the Solid dev server plus Go API are already running. By default it targets `http://localhost:5173`, but you can override that with `PLAYWRIGHT_BASE_URL` or by exporting `PORT`/`VITE_PORT` before the run.
+The Solid Playwright flow currently covers guest redirect to `/login`, login success, authenticated shell visibility, logout, and re-protection of private routes. It also now covers `/expenses` interactions for category filtering, checklist completion, row deletion, month closing, and creating a new expense through `/expenses/new`. It expects `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` in `apps/web/.env.local` or your shell and assumes the Solid dev server plus Go API are already running. By default it targets `http://localhost:5173`, but you can override that with `PLAYWRIGHT_BASE_URL` or by exporting `PORT`/`VITE_PORT` before the run.
 
 ### Backend-First Smoke Checks
 
@@ -171,10 +164,10 @@ Notes:
 
 ### Split Compose Workflow: Identity + Heat
 
-Run the first split pair with explicit service-local env injection:
+Run the split stack directly:
 
 ```bash
-docker compose --env-file apps/server/.env -f docker-compose.microservices.yml up --build -d
+docker compose -f docker-compose.microservices.yml up --build -d
 ```
 
 Validate the services:
@@ -186,7 +179,7 @@ LOGIN_RESPONSE=$(curl -sS -X POST http://localhost:18081/api/auth/login \
 
 TOKEN=$(printf '%s' "$LOGIN_RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["accessToken"])')
 
-curl http://localhost:4321
+curl http://localhost:5173
 curl http://localhost:8088/health
 curl http://localhost:18081/health
 curl -H "Authorization: Bearer $TOKEN" http://localhost:18081/api/auth/session
@@ -196,7 +189,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8088/api/heat/dashboard
 
 Notes:
 
-- `astro-frontend` stays monolithic and talks to a local edge proxy at `http://localhost:8088`.
+- `web-frontend` stays monolithic and talks to a local edge proxy at `http://localhost:8088`.
 - the edge proxy sends `/api/calories/*` to `calories-api`, `/api/expenses/*` to `expenses-api`, `/api/auth/*` to `identity-api`, and `/api/heat/*` to `heat-api`.
 - the edge proxy serves `/health` and `/api/health` itself in split mode.
 - `/openapi.yaml` intentionally returns `404` in split compose because there is no single monolith spec worth pretending still exists there.
@@ -209,8 +202,8 @@ From repo root:
 ```bash
 docker compose up --build -d
 docker compose exec -T go-backend sh -lc 'go test ./...'
-docker compose exec -T astro-frontend sh -lc 'pnpm test'
-docker compose exec -T astro-frontend sh -lc 'pnpm test:e2e'
+docker compose exec -T web-frontend sh -lc 'pnpm test'
+docker compose exec -T web-frontend sh -lc 'pnpm test:e2e'
 ```
 
 This is the default local loop after changing Astro auth routes, Go handlers, or request/response contracts between them.
@@ -316,7 +309,7 @@ When a regression is found in the frontend/backend boundary:
 - If the homepage or any server-rendered page throws `fetch failed` in Docker:
   - rebuild `go-backend` after any `apps/server/go.mod` or Go runtime image change so the running container is not stuck on an older toolchain image.
 - If `pnpm test:e2e` fails before the browser starts:
-  - verify Playwright browsers are installed in the environment where the command is running, and verify `apps/web/.env` contains valid `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` values.
+  - verify Playwright browsers are installed in the environment where the command is running, and verify `apps/web/.env.local` contains valid `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` values.
 - If login e2e fails unexpectedly:
   - rerun `pnpm seed:e2e-user` on the host or `go run ./cmd/seed-user` from `apps/server`, then rerun `pnpm test:e2e`.
 - If Go tools are missing in container runs:

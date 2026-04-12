@@ -76,6 +76,4 @@ apps/web/playwright-report/
 apps/web/test-results/
 apps/server/seed-user
 apps/server/lambda
-apps/web-next/dev-dist/*
-apps/web-next/test-results/.last-run.json
-apps/web-next/test-results/*
+apps/web/dev-dist/*

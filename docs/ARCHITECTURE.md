@@ -325,7 +325,7 @@ Current intentional gaps vs the legacy backend:
 
 Frontend/browser integration values:
 
-- `PUBLIC_API_BASE_URL`
+- `VITE_API_BASE_URL`
 - `API_PROXY_URL`
 
 In local development, browser requests should stay same-origin and rely on the frontend proxy where applicable.

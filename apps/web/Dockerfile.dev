@@ -1,11 +1,14 @@
 FROM mcr.microsoft.com/playwright:v1.58.2-noble
 
+ENV PNPM_HOME=/pnpm
+ENV PATH=${PNPM_HOME}:${PATH}
+
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@10.18.3 --activate
+RUN mkdir -p /pnpm/store && pnpm config set store-dir /pnpm/store
 
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install
+COPY scripts/dev-entrypoint.sh /usr/local/bin/dev-entrypoint
+RUN chmod +x /usr/local/bin/dev-entrypoint
 
-# The rest of the files will be mounted via docker-compose volumes
-CMD ["pnpm", "dev", "--host", "0.0.0.0"]
+CMD ["dev-entrypoint"]
