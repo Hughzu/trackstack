@@ -5,11 +5,14 @@ type ContentDeckProps = {
   layout?: 'grid' | 'stacked'
   animate?: boolean
   hasFloatingActions?: boolean
+  density?: 'default' | 'compact'
 }
 
 export function ContentDeck(props: ContentDeckProps) {
-  let baseClass = props.layout === 'stacked' 
-    ? 'flex flex-col gap-4 sm:gap-6' 
+  let baseClass = props.layout === 'stacked'
+    ? props.density === 'compact'
+      ? 'flex flex-col gap-3 sm:gap-4'
+      : 'flex flex-col gap-4 sm:gap-6'
     : 'grid gap-4 sm:gap-5 md:grid-cols-2'
     
   if (props.animate) {

@@ -1,4 +1,5 @@
-import { createSignal } from 'solid-js'
+import { createEffect, createResource, createSignal, Show, Suspense } from 'solid-js'
+import { useNavigate } from '@solidjs/router'
 
 import { ActionButton } from '../../components/ui/ActionButton'
 import { AmountHeroField } from '../../components/ui/AmountHeroField'
@@ -6,42 +7,80 @@ import { ContentDeck } from '../../components/ui/ContentDeck'
 import { DataRow } from '../../components/ui/DataRow'
 import { FormActions, FormBackLink, FormSection, FormStack } from '../../components/ui/Form'
 import { Notice } from '../../components/ui/Notice'
-import { Panel } from '../../components/ui/Panel'
-import { Pill } from '../../components/ui/Pill'
+import { authState } from '../../core/auth/state'
+import { readCalorieTarget, updateCalorieTarget } from './api/client'
+import { CaloriesSettingsCard } from './components/calories-settings-card'
+import { CaloriesSettingsSkeleton } from './components/dashboard-skeleton'
+import { createTargetBadge, normalizeCalorieTargetInput } from './display'
+
+const readyKey = () => (authState().status === 'authenticated' ? 'ready' : undefined)
+
+const toNumberOrNull = (value: string) => {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const parsed = Number.parseFloat(trimmed)
+  return Number.isFinite(parsed) ? parsed : Number.NaN
+}
 
 export default function CaloriesSettingsPage() {
-  const [targetCalories, setTargetCalories] = createSignal('2400')
-  const [targetProtein, setTargetProtein] = createSignal('180')
+  const navigate = useNavigate()
+  const [target, { refetch }] = createResource(readyKey, readCalorieTarget)
+  const [targetCalories, setTargetCalories] = createSignal('')
+  const [targetProtein, setTargetProtein] = createSignal('')
+  const [targetCarbs, setTargetCarbs] = createSignal('')
+  const [targetFat, setTargetFat] = createSignal('')
   const [isSaving, setIsSaving] = createSignal(false)
-  const [feedbackMessage, setFeedbackMessage] = createSignal<string | undefined>()
   const [errorMessage, setErrorMessage] = createSignal<string | undefined>()
+
+  createEffect(() => {
+    const data = target()
+    if (!data) return
+
+    setTargetCalories(String(data.targetCalories))
+    setTargetProtein(String(data.targetProteinGrams))
+    setTargetCarbs(data.targetCarbGrams == null ? '' : String(data.targetCarbGrams))
+    setTargetFat(data.targetFatGrams == null ? '' : String(data.targetFatGrams))
+  })
 
   const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault()
 
     if (isSaving()) return
 
-    const nextCalories = Number.parseFloat(targetCalories())
-    const nextProtein = Number.parseFloat(targetProtein())
+    const nextCalories = Number.parseFloat(normalizeCalorieTargetInput(targetCalories()))
+    const nextProtein = Number.parseFloat(normalizeCalorieTargetInput(targetProtein()))
+    const nextCarbs = toNumberOrNull(targetCarbs())
+    const nextFat = toNumberOrNull(targetFat())
 
     if (!Number.isFinite(nextCalories) || nextCalories <= 0) {
       setErrorMessage('Daily target needs to be above zero.')
-      setFeedbackMessage(undefined)
       return
     }
 
     if (!Number.isFinite(nextProtein) || nextProtein <= 0) {
       setErrorMessage('Protein target needs to be above zero.')
-      setFeedbackMessage(undefined)
+      return
+    }
+
+    if ((nextCarbs != null && (!Number.isFinite(nextCarbs) || nextCarbs < 0)) || (nextFat != null && (!Number.isFinite(nextFat) || nextFat < 0))) {
+      setErrorMessage('Optional carb and fat targets need valid positive numbers.')
       return
     }
 
     setIsSaving(true)
     setErrorMessage(undefined)
-    setFeedbackMessage(undefined)
 
     try {
-      setFeedbackMessage('Settings saved. Your calorie targets are locked in.')
+      await updateCalorieTarget({
+        targetCalories: nextCalories,
+        targetProteinGrams: nextProtein,
+        targetCarbGrams: nextCarbs,
+        targetFatGrams: nextFat,
+      })
+
+      await refetch()
+      void navigate('/calories', { replace: true })
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Unable to save calorie settings')
     } finally {
@@ -55,73 +94,71 @@ export default function CaloriesSettingsPage() {
         <FormBackLink href="/calories">Back</FormBackLink>
       </DataRow>
 
-      {errorMessage() ? <Notice tone="error" message={errorMessage()!} /> : null}
-      {feedbackMessage() ? <Notice tone="info" message={feedbackMessage()!} /> : null}
+      <Show when={errorMessage()}>
+        {(message) => <Notice tone="error" message={message()} />}
+      </Show>
 
-      <FormStack onSubmit={handleSubmit}>
-        <FormSection>
-          <AmountHeroField
-            inputId="calories-target"
-            label="Daily target"
-            unit="KCAL"
-            value={targetCalories()}
-            placeholder="0"
-            badge="Intake goal"
-            onInput={(event) => setTargetCalories(event.currentTarget.value)}
-          />
-
-          <Panel title="Macros" description={<Pill tone="success">Protein required</Pill>}>
-            <div class="flex flex-col gap-4">
-              <div class="border-b border-border/40 pb-4 text-sm text-text-muted">
-                Protein is the only macro target worth pinning here.
-              </div>
-
-              <div class="divide-y divide-border/30 rounded-2xl border border-border/40 bg-panel/35 px-4">
-                <MacroSettingRow
-                  label="Protein"
-                  tone="success"
-                  value={targetProtein()}
-                  onInput={(event) => setTargetProtein(event.currentTarget.value)}
+      <Suspense fallback={<CaloriesSettingsSkeleton />}>
+        <Show when={target()} fallback={target.error ? <Notice tone="error" message="Calories settings failed to load." /> : <CaloriesSettingsSkeleton />}>
+          {(data) => (
+            <FormStack onSubmit={handleSubmit}>
+              <FormSection>
+                <AmountHeroField
+                  inputId="calories-target"
+                  name="targetCalories"
+                  label="Daily target"
+                  unit="KCAL"
+                  value={targetCalories()}
+                  placeholder="0"
+                  badge={createTargetBadge(data())}
+                  required
+                  min="0"
+                  step="1"
+                  onInput={(event) => setTargetCalories(event.currentTarget.value)}
                 />
-              </div>
-            </div>
-          </Panel>
-        </FormSection>
 
-        <FormActions>
-          <ActionButton type="submit" busy={isSaving()} disabled={isSaving()}>
-            {isSaving() ? 'Saving...' : 'Save settings'}
-          </ActionButton>
-        </FormActions>
-      </FormStack>
+                <CaloriesSettingsCard
+                  fields={[
+                    {
+                      id: 'calories-target-protein',
+                      name: 'targetProteinGrams',
+                      label: 'Protein',
+                      unit: 'g',
+                      value: targetProtein(),
+                      tone: 'success',
+                      onInput: (event) => setTargetProtein(event.currentTarget.value),
+                    },
+                    {
+                      id: 'calories-target-carbs',
+                      name: 'targetCarbGrams',
+                      label: 'Carbs',
+                      unit: 'g',
+                      value: targetCarbs(),
+                      tone: 'warning',
+                      onInput: (event) => setTargetCarbs(event.currentTarget.value),
+                    },
+                    {
+                      id: 'calories-target-fat',
+                      name: 'targetFatGrams',
+                      label: 'Fat',
+                      unit: 'g',
+                      value: targetFat(),
+                      tone: 'danger',
+                      onInput: (event) => setTargetFat(event.currentTarget.value),
+                    },
+                  ]}
+                />
+              </FormSection>
+
+              <FormActions>
+                <ActionButton type="submit" busy={isSaving()} disabled={isSaving()}>
+                  {isSaving() ? 'Saving...' : 'Save settings'}
+                </ActionButton>
+              </FormActions>
+            </FormStack>
+          )}
+        </Show>
+      </Suspense>
     </ContentDeck>
-  )
-}
-
-function MacroSettingRow(props: {
-  label: string
-  tone: 'success'
-  value: string
-  onInput: (event: InputEvent & { currentTarget: HTMLInputElement, target: HTMLInputElement }) => void
-}) {
-  const dotClass = 'bg-emerald-400'
-
-  return (
-    <label class="flex items-center justify-between gap-4 py-4 first:pt-4 last:pb-0">
-      <div class="flex min-w-0 items-center gap-3">
-        <span class={`h-2 w-2 rounded-full ${dotClass}`} />
-        <span class="text-sm font-semibold text-text-main">{props.label}</span>
-      </div>
-
-      <div class="flex w-28 items-center justify-end gap-2 border-b border-border/50 pb-1.5">
-        <input
-          type="number"
-          value={props.value}
-          onInput={props.onInput}
-          class="w-full bg-transparent text-right text-lg font-semibold text-text-main outline-none"
-        />
-        <span class="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">g</span>
-      </div>
-    </label>
   )
 }

@@ -8,15 +8,18 @@ type PanelProps = {
   headerAction?: JSX.Element
   href?: string
   collapsibleId?: string
+  density?: 'default' | 'compact'
   children?: JSX.Element
 }
 
-const frameClass =
-  'relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface p-5 text-text-main transition-all duration-300'
+const getFrameClass = (density: PanelProps['density']) => {
+  const spacingClass = density === 'compact' ? 'p-4' : 'p-5'
+  return `relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface ${spacingClass} text-text-main transition-all duration-300`
+}
 
-function PanelHeader(props: { title: string, description?: string | JSX.Element, headerAction?: JSX.Element }) {
+function PanelHeader(props: { title: string, description?: string | JSX.Element, headerAction?: JSX.Element, density?: PanelProps['density'] }) {
   return (
-    <div class="mb-4 flex items-center justify-between">
+    <div class={props.density === 'compact' ? 'mb-3 flex items-center justify-between' : 'mb-4 flex items-center justify-between'}>
       <h2 class="text-xs font-bold uppercase tracking-widest text-accent">{props.title}</h2>
       <div class="flex items-center gap-2 text-[0.68rem] text-text-muted">
         {props.description ? <div>{props.description}</div> : null}
@@ -29,8 +32,8 @@ function PanelHeader(props: { title: string, description?: string | JSX.Element,
 function PanelBody(props: PanelProps) {
   return (
     <>
-      <PanelHeader title={props.title} description={props.description} headerAction={props.headerAction} />
-      <div class="flex flex-1 flex-col gap-3 text-sm leading-6 text-text-main">
+      <PanelHeader title={props.title} description={props.description} headerAction={props.headerAction} density={props.density} />
+      <div class={props.density === 'compact' ? 'flex flex-1 flex-col gap-2.5 text-sm leading-6 text-text-main' : 'flex flex-1 flex-col gap-3 text-sm leading-6 text-text-main'}>
         {props.children}
       </div>
     </>
@@ -40,7 +43,7 @@ function PanelBody(props: PanelProps) {
 export function Panel(props: PanelProps) {
   if (props.href) {
     return (
-      <A href={props.href} class={`${frameClass} hover:border-accent/30 hover:shadow-lg hover:shadow-black/30 hover:ring-1 hover:ring-accent/20`}>
+      <A href={props.href} class={`${getFrameClass(props.density)} hover:border-accent/30 hover:shadow-lg hover:shadow-black/30 hover:ring-1 hover:ring-accent/20`}>
         <PanelBody {...props} />
       </A>
     )
@@ -58,9 +61,9 @@ export function Panel(props: PanelProps) {
     }
 
     return (
-      <section class={`${frameClass} shadow-lg shadow-black/20`}>
+      <section class={`${getFrameClass(props.density)} shadow-lg shadow-black/20`}>
         <button type="button" class="flex flex-col text-left outline-none" onClick={toggle}>
-          <div class="flex items-center justify-between w-full mb-4">
+          <div class={props.density === 'compact' ? 'flex items-center justify-between w-full mb-3' : 'flex items-center justify-between w-full mb-4'}>
             <h2 class="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-2">
               {props.title}
               <svg class={`h-3 w-3 transition-transform ${isOpen() ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -74,7 +77,9 @@ export function Panel(props: PanelProps) {
           </div>
         </button>
         <Show when={isOpen()}>
-          <div class="flex flex-1 flex-col gap-3 text-sm leading-6 text-text-main animate-in fade-in slide-in-from-top-2 duration-300">
+          <div class={props.density === 'compact'
+            ? 'flex flex-1 flex-col gap-2.5 text-sm leading-6 text-text-main animate-in fade-in slide-in-from-top-2 duration-300'
+            : 'flex flex-1 flex-col gap-3 text-sm leading-6 text-text-main animate-in fade-in slide-in-from-top-2 duration-300'}>
             {props.children}
           </div>
         </Show>
@@ -83,7 +88,7 @@ export function Panel(props: PanelProps) {
   }
 
   return (
-    <section class={`${frameClass} shadow-lg shadow-black/20`}>
+    <section class={`${getFrameClass(props.density)} shadow-lg shadow-black/20`}>
       <PanelBody {...props} />
     </section>
   )
