@@ -175,7 +175,15 @@ Local init:
 - Lambda execution role can only write logs and read runtime SSM parameters.
 - Assets bucket is not public and is only accessible via CloudFront OAC.
 - Lambda Function URL is IAM-authenticated and restricted to CloudFront. Because CloudFront uses `Authorization` for SigV4 signing to the Function URL origin, browser bearer tokens must be forwarded in `X-Trackstack-Authorization` instead of `Authorization` on deployed app requests.
-- Signed browser writes that travel through the CloudFront -> Lambda Function URL path must include `x-amz-content-sha256` for the final request body, including the SHA256 of the empty body for write methods without a payload.
+
+### Lambda URL SigV4 Contract
+
+- CloudFront OAC signs origin requests to the Lambda Function URL with SigV4 against the Lambda URL host, not the public CloudFront host.
+- Browser requests must treat `Authorization` as reserved for CloudFront signing. App auth travels in `X-Trackstack-Authorization` so CloudFront can keep its own SigV4 header intact.
+- Browser write requests that travel through the CloudFront -> Lambda Function URL path must include `x-amz-content-sha256` for the exact final request body.
+- Empty-body write requests still need the SHA256 of the empty payload. AWS Lambda Function URLs do not accept unsigned payloads for `POST`, `PUT`, or `PATCH`, and missing hashes can also break other write-style requests routed through the same signed path.
+- When this header is missing or wrong, AWS rejects the request before app code runs. The usual symptom is `403 InvalidSignatureException` with a message about the calculated request signature not matching.
+- `GET` and `HEAD` can still work while writes fail, so a healthy `/health` endpoint does not prove login or mutations are wired correctly.
 
 ## FinOps Guardrails
 
