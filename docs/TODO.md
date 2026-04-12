@@ -1,18 +1,11 @@
-- SOLID WIP :
-        - deploy solid app 
-
-- audit the backend
-- audit the frontend
-- rewrite archi and application based on these audits. 
-
-- review all markdowns
-    - infra
-    - architecture
-    - application
-    - some rules in a markdown in order to create faster new modules ? (like a check list ? )
-
-
 - Infra deep dive
+
+    - understand what's done
+    - how does it perform in a platform engineer scenario
+    - better module structure ? 
+    - better onboarding instead of bashes script ? ( a newbie has to make it work from my base framework)
+    - rewrite infra.md ? 
+
     - make a cli (???) to understand what the fuck is going on in bootstrap 
         - idea is to have an AWS cli set up (with root access)
         - github cli set up

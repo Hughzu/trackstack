@@ -1,62 +1,68 @@
 # Architecture
 
-This document defines the Trackstack system shape, the backend target vocabulary, and the current migration status. It replaces the need for a separate backend target note.
+This is the current system shape of TrackStack.
 
-The rebuilt backend now lives at `apps/server`. Intentional frontend/backend contract breaks are tracked separately in `docs/BACKEND_BREAKING_CHANGES.md`.
-
-## System Flow
-
-```mermaid
-flowchart LR
-  U[User Browser] --> CF[CloudFront Distribution]
-  CF -->|/assets/*, app shell, PWA assets| S3[Static Assets Bucket]
-  CF -->|/api/*, /health, /openapi.yaml| API[Go API Runtime]
-  API --> CAL[(Turso Calories)]
-  API --> EXP[(Turso Expenses)]
-  API --> HEAT[(Turso Heat)]
-  API --> USERS[(Turso Users)]
-
-  CF -. origin verification .-> API
-```
-
-Key points:
-
-- CloudFront is the only public ingress in serverless environments.
-- The Solid SPA in `apps/web` is shipped as static assets from S3.
-- Go owns health, OpenAPI, auth, and business API routes.
-- The Go runtime is stateless; persistent state lives only in Turso.
-- The same assembled backend contract must run locally and in Lambda.
+If you are new here, read this file with `docs/MASTERPLAN.md`, then read `docs/APPLICATION.md` for the frontend and feature map.
 
 ## Source Of Truth
 
-- `apps/web` owns the active frontend app, browser interaction, and the static SPA shell.
-- `apps/server` owns backend contracts, domain rules, auth issuance/verification, and backend-owned tooling.
-- Historical references to the legacy compatibility backend remain in migration notes only; the repository path `apps/server` now refers to the rebuilt backend described here.
-- Frontend pages should talk to Go-owned `/api/*` endpoints rather than direct databases or Astro-owned API adapters.
+- Active frontend: `apps/web`
+- Active backend: `apps/server`
+- Backend contract source: `apps/server/internal/app/monolithapi/openapi.yaml`
+- Generated frontend contract types: `apps/web/src/core/api/generated/schema.ts`
+- Persistent state: four Turso databases (`users`, `calories`, `expenses`, `heat`)
 
-## Reference Backend Shape
+There is no `apps/web-next` app in the current repo. If you see docs claiming otherwise, they are stale.
 
-The target backend structure is the one implemented in `apps/server`:
+## System Shape
+
+```mermaid
+flowchart LR
+  B[Browser SPA] --> CF[CloudFront]
+  CF -->|static assets| S3[Static frontend bundle]
+  CF -->|/api/* /health /openapi.yaml| API[Go runtime]
+  API --> U[(Turso Users)]
+  API --> C[(Turso Calories)]
+  API --> E[(Turso Expenses)]
+  API --> H[(Turso Heat)]
+```
+
+Key rules:
+
+- The browser never talks to Turso directly.
+- Go owns auth, health, OpenAPI, and all business endpoints.
+- The same business code must survive local, Lambda, and split-runtime deployments.
+- Production stays serverless and cheap; split services are a lab seam, not the default money burner.
+
+## Backend Layout
 
 ```text
 apps/server/
 ├── cmd/
-│   ├── lambda/                    # AWS Lambda custom-runtime entrypoint
-│   ├── seed-user/                 # backend-owned db tooling for e2e/local flows
-│   └── server/                    # local/container HTTP entrypoint
+│   ├── monolith-api/      # local/container HTTP server
+│   ├── lambda/            # Lambda entrypoint using the same monolith handler
+│   ├── identity-api/      # split-runtime validation: auth + users
+│   ├── calories-api/      # split-runtime validation
+│   ├── expenses-api/      # split-runtime validation
+│   ├── heat-api/          # split-runtime validation
+│   └── seed-user/         # backend-owned CLI tooling
 └── internal/
     ├── app/
-    │   └── bootstrap/             # composition root, router, openapi, module builders
+    │   ├── monolithapi/   # actual monolith composition root
+    │   ├── authruntime/   # shared auth assembly
+    │   ├── identityapi/   # split identity runtime
+    │   ├── caloriesapi/   # split calories runtime
+    │   ├── expensesapi/   # split expenses runtime
+    │   └── heatapi/       # split heat runtime
     ├── contexts/
     │   ├── auth/
+    │   ├── users/
     │   ├── calories/
     │   ├── expenses/
-    │   ├── heat/
-    │   └── users/
+    │   └── heat/
     └── platform/
-        ├── authcontext/           # request-scope identity handoff at transport boundary
-        ├── aws/
-        │   └── functionurl/       # Lambda Function URL adapter
+        ├── authcontext/
+        ├── aws/functionurl/
         ├── config/
         ├── db/
         ├── logging/
@@ -64,204 +70,104 @@ apps/server/
         └── timeutil/
 ```
 
-Possible expansion path later, only if justified:
 
-- `cmd/service/<domain>/` for extracted runtimes
-- more outbound adapters under `contexts/<name>/adapters/outbound/`
-- more inbound adapters under `contexts/<name>/adapters/inbound/`
+## Backend Boundaries
 
-## Backend Vocabulary
+Each business context follows the same shape:
 
-### `platform/`
+```text
+contexts/<name>/
+├── adapters/
+│   ├── inbound/http/
+│   └── outbound/db/
+├── application/
+│   ├── ports/
+│   └── services/
+└── domain/
+```
 
-Shared technical building blocks used across contexts.
+Dependency direction:
 
-Examples:
+- `adapters/inbound -> application -> domain`
+- `application -> application ports <- adapters/outbound`
+- `internal/app/*` is allowed to wire concrete implementations together
+- `platform/` holds technical plumbing only, not business rules
 
-- config loading and validation
-- database opening and pooling
-- logging
-- shared middleware
-- AWS runtime adapters
-- time helpers and transport-scoped auth context helpers
+What is true today:
 
-`platform` must never become a hidden business-logic bucket.
+- Handlers are thin and pass explicit `userID` values into use cases.
+- Outbound repositories implement application-owned ports.
+- `users` is a supporting context inside the identity boundary, not an independent public API.
+- The code is hexagonal enough to move across runtimes, but it is still pragmatic Go, not rich textbook DDD.
 
-### `app/bootstrap/`
+## Runtime Matrix
 
-The composition root.
+### Monolith
 
-Responsibilities:
+- `apps/server/cmd/monolith-api/main.go` starts the local/container HTTP server.
+- `apps/server/internal/app/monolithapi/runtime.go` loads config, connects databases, wires modules, and returns one `http.Handler`.
 
-- load config
-- open all required database pools
-- build context modules
-- create the shared router
-- expose one assembled `http.Handler`
-- serve shared runtime endpoints like `/health` and `/openapi.yaml`
+### Lambda
 
-`bootstrap` is allowed to know the full concrete dependency graph. Context packages are not.
+- `apps/server/cmd/lambda/main.go` builds the same monolith runtime.
+- `apps/server/internal/platform/aws/functionurl/handler.go` adapts that `http.Handler` to Lambda Function URLs.
 
-The current assembly pattern is intentionally split by concern:
+This is the strongest write-once-run-anywhere path in the repo today.
 
-- `database.go` opens and closes domain database pools
-- `*_module.go` wires each context vertically
-- `router.go` mounts global middleware and route groups
-- `runtime.go` returns the assembled runtime used by both `cmd/monolith-api` and `cmd/lambda`
+### Split Runtimes
 
-### `contexts/<name>/domain/`
+- `apps/server/cmd/identity-api`
+- `apps/server/cmd/calories-api`
+- `apps/server/cmd/expenses-api`
+- `apps/server/cmd/heat-api`
 
-Pure business concepts and invariants.
+These reuse the same contexts and use cases, but each runtime has its own config loading, router wiring, and DB bootstrapping package under `internal/app/*api`.
 
-Examples:
+That means:
 
-- entities and value objects
-- domain-specific validation rules
-- domain errors
-- logic that should survive transport or persistence changes
+- business logic is reusable across deployment targets
+- runtime assembly is still duplicated enough to drift if you are careless
 
-The domain must not know about HTTP, Lambda, SQL drivers, Chi, or AWS packages.
+## Approved Service Boundaries
 
-### `contexts/<name>/application/ports/`
+If the monolith is split, the approved seams are:
 
-Interfaces owned by the application layer.
+- `identity` = `auth` + `users`
+- `calories`
+- `expenses`
+- `heat`
 
-- inbound ports define use cases the adapters can call
-- outbound ports define what the use cases need from infrastructure
-- command/query structs carry explicit typed inputs when a use case needs more than a primitive
+Do not split `users` away from `auth` just because microservices give some people brain worms.
 
-Ports should stay narrow and use-case-shaped.
+## Authentication And Transport
 
-### `contexts/<name>/application/services/`
+Auth flow:
 
-Use cases and orchestration.
+1. `POST /api/auth/login` verifies credentials through the identity boundary.
+2. The backend returns an access JWT and sets an `HttpOnly` refresh cookie.
+3. `POST /api/auth/refresh` rotates the refresh session and returns a fresh access token.
+4. `POST /api/auth/logout` revokes the refresh session and clears the cookie.
+5. `GET /api/auth/session` verifies the bearer token and returns the current session identity.
 
-Application services may:
+Transport rules:
 
-- validate commands and queries
-- coordinate repositories and external dependencies
-- build read models
-- apply domain rules
-- materialize explicit defaults when that behavior is part of the contract
+- JSON over HTTP is the canonical API contract.
+- Global endpoints: `GET /health`, `GET /api/health`, `GET /openapi.yaml`
+- Protected routes use bearer auth.
+- In local/direct flows the backend accepts `Authorization: Bearer <jwt>`.
+- In the CloudFront -> Lambda Function URL path it also accepts `X-Trackstack-Authorization: Bearer <jwt>` because CloudFront reserves `Authorization` for SigV4 signing.
+- Error payloads use `{ "error": "..." }`.
 
-Application services must not parse HTTP or contain SQL details.
+## Current Domain Surface
 
-### `contexts/<name>/adapters/inbound/`
-
-Entry points into the application.
-
-Today this is mainly HTTP. Later it could include async consumers or service-specific transports.
-
-Inbound adapters should stay thin:
-
-- mount their own subroutes
-- parse and validate transport input
-- extract the authenticated user at the boundary
-- call one use case
-- map the result into HTTP status + JSON
-
-Note: request context may carry authenticated identity resolved by middleware, but handlers are still responsible for turning that into explicit application inputs.
-
-### `contexts/<name>/adapters/outbound/`
-
-Technical implementations of outbound ports.
-
-Today this is mostly Turso/libSQL access. These packages own SQL and persistence details, not business decisions.
-
-## Dependency Rules
-
-The dependency direction is strict:
-
-`inbound adapters -> application -> domain`
-
-`application -> outbound ports <- outbound adapters`
-
-Rules:
-
-- contexts must not import `bootstrap`
-- domain packages must not import transport or AWS packages
-- handlers depend on application ports, never the reverse
-- outbound adapters implement application-owned ports
-- compatibility shims belong at the transport boundary, not in domain logic
-- middleware may inject authenticated identity into request context, but application services still receive explicit `userID` values from handlers
-- prefer explicit commands and queries over hidden inputs
-- prefer explicit create/bootstrap flows; if a read path materializes defaults, document it and test it as part of the contract
-
-## Runtime Assembly
-
-The shared runtime is built once in `apps/server/internal/app/monolithapi` and reused by all deployment targets.
-
-### Local HTTP Runtime
-
-- `apps/server/cmd/monolith-api/main.go` is intentionally thin
-- it loads `.env`, builds the runtime, starts `http.Server`, and handles graceful shutdown
-
-### Lambda Runtime
-
-- `apps/server/cmd/lambda/main.go` is intentionally thin
-- it builds the same runtime and passes the assembled `http.Handler` into `apps/server/internal/platform/aws/functionurl`
-- the Function URL adapter is a deployment/runtime concern, not a domain transport concern
-
-### Backend-Owned Tooling
-
-- `apps/server/cmd/seed-user` creates or updates the e2e/local test user directly in the users database
-- backend-owned CLI tools may reuse the same runtime config family without needing the full HTTP runtime
-
-## Authentication And Identity Flow
-
-`apps/server` uses bearer access tokens plus stateful refresh sessions.
-
-Flow:
-
-1. `POST /api/auth/login` verifies credentials through the users context, creates a refresh session in `users.sessions`, returns a signed access JWT, and sets an `HttpOnly` refresh cookie.
-2. `POST /api/auth/refresh` accepts only the refresh cookie, rotates the refresh session, and returns a new access JWT plus a rotated cookie.
-3. `ResolveSession` middleware validates bearer auth locally using `JWT_SECRET`. In direct/local runtimes it reads `Authorization: Bearer <jwt>`; in the CloudFront + Lambda Function URL deployment it also accepts `X-Trackstack-Authorization: Bearer <jwt>` because the origin request uses `Authorization` for SigV4 signing.
-4. The middleware injects `userID` and `sessionID` into request context through `platform/authcontext`.
-5. Inbound handlers read that identity and pass explicit values into application commands and queries.
-6. Domain and application layers never parse bearer headers, and non-auth routes never treat the refresh cookie as proof of identity.
-
-Design note:
-
-- the current `platform/authcontext` helper is an intentional transport-boundary convenience, not permission for application services to read hidden request values directly.
-- the desired rule remains: handlers extract request-scoped identity and pass explicit `userID` values into use cases.
-
-Current auth contract:
-
-- `POST /api/auth/login` returns JSON with `accessToken`, `tokenType`, `expiresAt`, and `userId`, and sets a refresh cookie
-- `POST /api/auth/refresh` rotates the refresh cookie and returns the same JSON token shape as login
-- `GET /api/auth/session` requires bearer auth
-- `POST /api/auth/logout` revokes the presented refresh session, clears the refresh cookie, and returns `204`
-- protected domain routes under `/api/calories/*`, `/api/expenses/*`, and `/api/heat/*` require bearer auth
-
-Current frontend note:
-
-- `apps/web` stores the bearer token client-side after login, replays it during auth bootstrap, and uses the same auth contract for protected browser reads and mutations.
-
-## Transport Contract
-
-The backend transport is JSON-over-HTTP.
-
-Global runtime endpoints:
-
-- `GET /health`
-- `GET /api/health`
-- `GET /openapi.yaml`
-
-Auth endpoints:
+Auth:
 
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `GET /api/auth/session`
 
-Heat endpoints:
-
-- `GET /api/heat/dashboard`
-- `GET /api/heat/refills`
-- `POST /api/heat/refills`
-- `DELETE /api/heat/refills/{id}`
-
-Calories endpoints:
+Calories:
 
 - `GET /api/calories/dashboard`
 - `GET /api/calories/target`
@@ -269,7 +175,7 @@ Calories endpoints:
 - `POST /api/calories/log`
 - `DELETE /api/calories/logs/{id}`
 
-Expenses endpoints:
+Expenses:
 
 - `GET /api/expenses/settings`
 - `POST /api/expenses/settings`
@@ -283,158 +189,77 @@ Expenses endpoints:
 - `DELETE /api/expenses/recurring/{id}`
 - `POST /api/expenses/sheet/close`
 
-Shared transport rules:
+Heat:
 
-- HTTP status carries the main error classification
-- JSON errors use `{ "error": "..." }`
-- CORS is configured globally at the router level
-- OpenAPI is served by the backend and must stay in sync with the route surface
-- the aggregate `GET /api/dashboard` route is intentionally removed from `apps/server`
+- `GET /api/heat/dashboard`
+- `GET /api/heat/refills`
+- `POST /api/heat/refills`
+- `DELETE /api/heat/refills/{id}`
 
-Intentional compatibility breaks live in `docs/BACKEND_BREAKING_CHANGES.md`, not in this file.
-
-## Current Context Status
-
-The reference backend shape is no longer hypothetical. `apps/server` currently includes:
-
-- `auth`
-- `users`
-- `heat`
-- `calories`
-- `expenses`
-
-Current replacement-oriented runtime capabilities:
-
-- shared bootstrap-based assembly
-- local HTTP entrypoint
-- Lambda entrypoint
-- CORS middleware
-- OpenAPI endpoint
-- backend-owned user seeding command
-- curl-based end-to-end smoke coverage in `apps/server/scripts/e2e.sh`
-
-Current intentional gaps vs the legacy backend:
-
-- the old aggregate `/api/dashboard` route is not carried forward
-- accepted route/payload differences are documented in `docs/BACKEND_BREAKING_CHANGES.md`
+For exact request and response shapes, treat `apps/server/internal/app/monolithapi/openapi.yaml` as the source of truth.
 
 ## Environment Variables
 
-### Frontend
-
-Frontend/browser integration values:
-
-- `VITE_API_BASE_URL`
-- `API_PROXY_URL`
-
-In local development, browser requests should stay same-origin and rely on the frontend proxy where applicable.
-
-### Backend Runtime
-
-The `apps/server` runtime currently depends on:
+Shared backend runtime config currently includes:
 
 - `APP_ENV`
 - `PORT`
 - `LOG_LEVEL`
 - `CORS_ALLOWED_ORIGIN`
 - `JWT_SECRET`
+- `ACCESS_TOKEN_TTL_MINUTES`
+- `REFRESH_TOKEN_TTL_HOURS`
+- `REFRESH_TOKEN_ABSOLUTE_TTL_HOURS`
+- `REFRESH_COOKIE_NAME`
+- `REFRESH_COOKIE_SECURE`
+- `REFRESH_COOKIE_DOMAIN`
+- `TURSO_USERS_URL_HTTP`
+- `TURSO_USERS_TOKEN`
 - `TURSO_CALORIES_URL_HTTP`
 - `TURSO_CALORIES_TOKEN`
 - `TURSO_EXPENSES_URL_HTTP`
 - `TURSO_EXPENSES_TOKEN`
 - `TURSO_HEAT_URL_HTTP`
 - `TURSO_HEAT_TOKEN`
-- `TURSO_USERS_URL_HTTP`
-- `TURSO_USERS_TOKEN`
 - `DB_MAX_OPEN_CONNS`
 - `DB_MAX_IDLE_CONNS`
 - `DB_CONN_MAX_LIFETIME_SECONDS`
 - `DB_CONN_MAX_IDLE_TIME_SECONDS`
 
-Backend-owned commands under `apps/server/cmd/**` should align with this same runtime family unless a command intentionally narrows the required config surface.
+Serverless secrets come from environment or SSM. Never hardcode them.
 
-### CI/CD And Runtime Secrets
+## Cost And Performance Reality
 
-- serverless runtime secrets come from SSM
-- no secrets should be hardcoded in code or Terraform
-- `serverless` must provide `JWT_SECRET` in addition to domain database credentials
+Good news:
 
-## Deployment Shape
+- Monolith and Lambda share the same assembled handler.
+- Split runtimes only open the one database they need.
+- The backend stays stateless apart from Turso.
 
-The architecture must support multiple runtimes without changing context business logic.
+Current pain points:
 
-Current required runtimes:
+- The monolith opens and pings all four databases at startup, even if one request only needs one domain.
+- Default pool settings are fine locally but a bit fat for cold-start-sensitive serverless traffic.
+- Split runtime assembly duplicates config/router/health wiring across packages.
 
-- local HTTP server
-- AWS Lambda Function URL runtime
+If you are optimizing for side-project cost, keep production on the serverless monolith unless the split runtimes prove something worth paying for.
 
-Current split-validation runtime:
+## Known Architectural Debt
 
-- `cmd/calories-api` for the standalone calories service process
-- `cmd/expenses-api` for the standalone expenses service process
-- `cmd/identity-api` for the standalone identity service process
-- `cmd/heat-api` for the standalone heat service process
-- `docker-compose.microservices.yml` for running the extracted services beside the monolithic frontend, with a local edge proxy routing business API traffic directly to the split services and serving health locally
+- Some read paths materialize defaults on first access:
+  - calories target
+  - expenses settings
+  - expenses open sheet
+- Domain models are mostly pragmatic data structures plus validation/errors, not rich aggregates.
+- Auth updates `last_login` asynchronously after login; acceptable, but worth remembering in short-lived runtimes.
+- Split runtimes prove portability, but they are not yet assembled from a truly shared runtime kernel.
 
-Possible later runtime:
+## Onboarding Short Path
 
-- extracted service per approved service boundary
+If you need to start working quickly:
 
-Deployment rules:
-
-- `cmd/monolith-api` and `cmd/lambda` stay thin
-- runtime-specific adapters stay in `platform/`, not in contexts
-- contexts must not import server or Lambda packages
-- static frontend deployment stays separate from the Go API runtime
-
-## Approved Service Boundaries
-
-The next extraction step is not "one service per package because microservices are trendy." The approved service seams are:
-
-- `identity` service = `auth` + `users`
-- `calories` service
-- `expenses` service
-- `heat` service
-
-Rationale:
-
-- `calories`, `expenses`, and `heat` already behave like strong domain boundaries
-- `auth` and `users` do not currently behave like independent runtime boundaries and should be extracted together as one identity boundary
-- the service split should happen at runtime assembly boundaries, not by tearing apart context-internal hexagonal structure that is already working
-
-Identity rules:
-
-- the `identity` service owns login and JWT issuance
-- `users` remains a separate internal hexagon inside the identity service rather than a separate microservice
-- the `identity` service is not an API gateway
-
-JWT verification rules for the split:
-
-- each protected domain service validates JWTs locally
-- handlers still extract `userID` from verified claims and pass it explicitly into application commands and queries
-- domain services must not make a network call to `identity` on every request just to validate a token
-- if a service needs user data beyond JWT claims, it should call `identity` explicitly for that specific use case
-
-Expected first extracted runtimes:
-
-- `cmd/identity-api`
-- `cmd/calories-api`
-- `cmd/expenses-api`
-- `cmd/heat-api`
-
-The first extracted runtime now exists for local split validation:
-
-- `apps/server/cmd/calories-api`
-- `apps/server/cmd/expenses-api`
-- `apps/server/cmd/identity-api`
-- `apps/server/cmd/heat-api`
-
-## Macro Boundaries
-
-- CloudFront is the only public ingress in serverless environments.
-- The Solid SPA owns the static frontend shell and browser runtime.
-- Go owns auth, health, OpenAPI, and all business API routes.
-- Turso is the only persistent store.
-- Compute is stateless.
-- Secrets come from environment or SSM, never from checked-in infra/code.
-- `platform/` may hold technical helpers, but never domain rules.
+1. Read `docs/MASTERPLAN.md` for the deployment philosophy.
+2. Read this file for backend and runtime boundaries.
+3. Read `docs/APPLICATION.md` for the SPA, feature structure, and frontend transport rules.
+4. Read `apps/server/internal/app/monolithapi/openapi.yaml` for the exact API surface.
+5. Only then start editing a context or feature.

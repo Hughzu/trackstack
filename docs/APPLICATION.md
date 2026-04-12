@@ -1,173 +1,249 @@
-# Application Architecture: AI Directives
+# Application
 
-## Active Frontend
-- **App:** `apps/web/` is the active frontend.
-- **Domains:** the active frontend owns `auth`, `dashboard`, `calories`, `expenses`, and `heat` under `apps/web/src/features/`.
+This is the practical guide for working in the current app.
 
-## Frontend Architecture
-- **Location:** `apps/web/src`
-- **Rule:** `src/core/` owns shared config, theme runtime, auth token helpers, refresh/bootstrap auth state, route guards, shared formatters, and the typed `openapi-fetch` client.
-- **Rule:** `src/components/ui/` is the design system. Tailwind utility composition lives there.
-- **Rule:** `src/features/{auth,dashboard,calories,expenses,heat}` owns route entry pages plus domain-local components and API wrappers.
-- **Rule:** Solid feature files should compose UI primitives instead of spraying layout classes around like confetti.
-- **Rule:** Repeated screen chrome in the Solid app belongs in semantic UI primitives first - think `Panel` header actions, list meta rows, compact counter pills, action toggles, destructive confirms, and shared skeleton structures - so feature files stay focused on domain mapping and state.
-- **Rule:** Route entry files under `src/features/**` are orchestration layers only. They load data, hold route-level mutation state, wire mutations, and compose extracted feature sections. They do not define long inline slabs, page-local cards, or one-off dialogs.
-- **Rule:** Feature-specific sections and cards belong in `src/features/<domain>/components/`. If a page starts growing subviews, extract them instead of letting `index.tsx` or sibling route files turn into a junk drawer.
-- **Rule:** Feature mapping/helpers must not import prop types from `src/components/ui/`. Domain and feature logic should return feature-local view models or primitives, and the final UI adapter lives at the component boundary.
-- **Rule:** If the same interaction pattern appears across routes or domains, promote it into `src/components/ui/` instead of cloning bespoke versions inside features.
-- **Rule:** Features must not reach into sibling feature internals for API wrappers, display mappers, or components. If something is shared across domains, move it into `src/core/` or `src/components/ui/`, or expose an intentional public seam.
+If you are new here, pair this with `docs/ARCHITECTURE.md` and `docs/MASTERPLAN.md`.
 
-## Frontend Stack
-- **Framework:** Solid.js SPA + Vite + PWA.
-- **Language:** TypeScript strict mode.
-- **State:** native Solid signals and memos.
-- **Routing:** `@solidjs/router` with explicit lazy routes in `apps/web/src/routes.tsx`.
-- **API client:** `openapi-fetch` against generated types from `apps/server/internal/app/monolithapi/openapi.yaml`.
-- **Theme runtime:** CSS custom properties driven by deploy target so the same app can brand differently without duplicating styles.
+## Current Truth
 
-## Frontend Principles
-- **No React, no framework sprawl:** keep the app fast, typed, and boring in the good way.
-- **Go owns the contract:** the browser talks to canonical Go-owned `/api/*` endpoints directly.
-- **Generated types only:** use `openapi-typescript` outputs as the source of truth; do not hand-roll backend contract types.
-- **Thin routes, thick seams:** route files orchestrate, feature components render, `core` and `ui` hold shared behavior.
-- **Shared before duplicated:** repeated interactions graduate into the design system instead of multiplying feature-local clones.
-- **Module isolation:** domains do not casually import each other. If reuse is real, make the seam explicit.
+- Active frontend: `apps/web`
+- Active backend consumed by the frontend: `apps/server`
+- Browser contract source: `apps/server/internal/app/monolithapi/openapi.yaml`
+- Generated frontend types: `apps/web/src/core/api/generated/schema.ts`
 
-## Loading And Skeleton Rules
-- **Ghost twin principle:** skeletons should be a structural 1:1 ghost of the final component.
-- **Physics parity:** match the same padding, radius, and spacing as the live surface.
-- **Typography parity:** skeleton bar heights should match the text they replace.
-- **Shell persistence:** keep the `AppShell` mounted; only skeletonize `main` content.
-- **Transitions:** use restrained `animate-pulse` placeholders and a soft content arrival instead of jarring swaps.
 
-## UI Composition Principles
-- **Semantic strictness:** UI atoms communicate through semantic props like `variant`, `tone`, and `color`, not raw utility-class props.
-- **Zero redundancy:** if detailed content already explains the state, do not add decorative recap junk beside it.
-- **Mobile first:** start from the phone layout, then adapt upward.
-- **Single-column bias:** default to one column unless information architecture genuinely breaks.
-- **Minimal surface rule:** avoid cards inside cards inside cards.
-- **Header restraint:** do not add ceremony when a short back link or title already says enough.
-- **Copy must earn its keep:** keep helper text short and useful.
-- **Action placement:** prefer inline or end-of-form actions over sticky theatrics unless page length truly demands it.
-- **Mock first, extract later:** rough route-level exploration is allowed, but once the UX is approved, extraction is mandatory.
+## Frontend Layout
 
-## Frontend Workflow Guardrails
-- **Migration checklist:** for each frontend change or new route, wire canonical Go endpoints, regenerate OpenAPI types when needed, keep the route file thin, extract reusable sections, promote repeated UI patterns, add/update Playwright coverage, and update docs when a boundary or contract changes.
-- **Playwright rule:** do not rely on full page reload assumptions like `waitForNavigation`; prefer response waits and visible-state assertions.
-- **Timestamp ownership:** calorie quick-add and meal logging should let Go stamp the current UTC timestamp unless backdating is explicitly introduced.
+```text
+apps/web/src/
+├── components/ui/     # shared UI primitives and composed surfaces
+├── core/              # auth, API client, config, formatting
+├── features/
+│   ├── auth/
+│   ├── dashboard/
+│   ├── calories/
+│   ├── expenses/
+│   └── heat/
+├── routes.tsx         # lazy route table + guards
+└── index.tsx          # SPA mount, theme apply, auth bootstrap
+```
 
----
+## Frontend Operating Model
 
-## Legacy Astro Notes
+### `src/core/`
 
-- The remaining rules in this section exist only for legacy reference while `apps/web/` still exists in the repository.
-- New frontend work should target `apps/web/`, not Astro.
+Shared runtime behavior lives here:
 
-### 1. `src/pages/` (Routing)
-- **Role:** Astro pages and static route shells.
-- **Rule:** Map URLs to views and frontend navigation concerns. Astro pages must not act as backend adapters.
-- **Rule:** NO complex business logic here. Defer to `src/modules/`, `src/server/`, or the Go backend.
+- API client and fetch policy
+- auth state, bootstrap, refresh, token storage, route guards
+- deploy-target config and theme selection
+- shared formatters and generated contract types
 
-### 2. `src/components/` & `src/layouts/` (UI Elements)
-- **Role:** "Dumb" presentational UI.
-- **Rule:** NO data fetching. NO DB connections. NO direct mutations.
-- **Rule:** Receive data exclusively via `Astro.props`.
+Important files:
 
-### 3. `src/modules/` (Business Logic)
-- **Role:** Domain-specific logic and queries.
-- **Rule:** Keep domains isolated (e.g., Calories cannot query Expenses directly).
-- **Rule:** New mutation logic should prefer the Go backend unless there is a documented reason to keep it in Astro.
-- **Rule:** As domains migrate, Astro modules should become view-model helpers and page data loaders, not the source of mutation rules.
+- `apps/web/src/core/api/client.ts`
+- `apps/web/src/core/auth/store.ts`
+- `apps/web/src/core/auth/guards.tsx`
+- `apps/web/src/core/auth/token.ts`
+- `apps/web/src/core/config/api.ts`
+- `apps/web/src/core/config/theme.ts`
 
-### 4. `src/server/`
-- **Role:** Reserved for future frontend-only helpers if needed.
-- **Rule:** Do not rebuild backend-like auth or data access layers here.
+### `src/components/ui/`
 
----
+This is the shared UI library. It contains primitives and repeatable interaction patterns such as:
 
-## Browser And Backend Directives
+- shell and tabs
+- panels and list surfaces
+- form layout primitives
+- buttons, pills, notices, stats, skeletons
+- confirm/delete sheets
 
-### UI & Styling
-- **Rule [Tailwind]:** ALWAYS use Tailwind CSS. NEVER use inline `style="..."` or external `.css` files unless Tailwind absolutely cannot handle dynamic calculations.
-- **Rule [Content Separation]:** Protected app data loads in the browser after auth readiness and should come from Go endpoints, not Astro frontmatter.
+Important files:
 
-### Legacy Client Runtime Notes
-*The problem: Astro is incredible for fast, zero-JS page loads. But interactive UI features (like modals or dropdowns) need global state management without pulling in a heavy framework like React.*
+- `apps/web/src/components/ui/AppRoot.tsx`
+- `apps/web/src/components/ui/AppShell.tsx`
+- `apps/web/src/components/ui/Panel.tsx`
+- `apps/web/src/components/ui/Form.tsx`
+- `apps/web/src/components/ui/ActionButton.tsx`
+- `apps/web/src/components/ui/ConfirmSheet.tsx`
 
-- **How it works (`ClientRuntime.astro`):** `apps/web/src/layouts/ClientRuntime.astro` acts as the single orchestrator for all vanilla JavaScript UI state across the app. It binds event listeners globally based on `data-*` attributes (e.g., `data-menu-trigger`) avoiding inline scripts spread across dozens of components. It manages accessibility (escape to close), click-outside behavior, and ensures UI state is correctly managed across view transitions.
-- **Rule [No Frameworks]:** Do NOT add React, Vue, or heavy client-side frameworks. Any generic interactive UI behaviors you build must be written in Vanilla JS and integrated into the global `ClientRuntime.astro` using data attribute bindings.
+### `src/features/<domain>/`
 
-### Legacy Form Runtime Notes
-*The problem: The production application runs behind an AWS Lambda Function URL secured by AWS IAM. A standard HTML form submitted by the browser (`<form method="POST">`) doesn't know how to sign the payload with AWS SigV4 credentials, resulting in a `403 Forbidden` error.*
+Each domain owns its route entry files, local components, local view-model mapping, and domain-specific API wrappers.
 
-- **How it works (`ApiFormHandler.astro`):** `apps/web/src/layouts/ApiFormHandler.astro` is a global interceptor script injected into the main layouts.
-  - **Interception:** It listens for submisssion events on any form carrying the `data-api-form` attribute and prevents the browser's default navigation behavior.
-  - **Serialization:** It extracts the form inputs via the `FormData` API and serializes them into a clean JSON object.
-  - **SigV4 Signing Prep:** AWS SigV4 requires the request payload to be hashed. The script uses the browser's native `window.crypto.subtle` API to calculate the `SHA-256` hash of the JSON body and injects it into the `x-amz-content-sha256` header.
-  - **Auth wiring:** On successful `POST /api/auth/login`, it stores the returned bearer token in browser storage. On successful `POST /api/auth/logout`, it clears that client token before redirect or reload.
-  - **Fetching & UI Feedback:** Finally, it performs an AJAX `fetch` request using `window.signedFetch` (created by the runtime when needed). Based on the HTTP response status, it either reloads the page, navigates to `data-redirect`, or automatically reveals a hidden error element defined by `data-error-target` containing the JSON error message sent back by the server.
-- **Rule [API Mutations Only]:** UI components must never mutate data directly. Browser mutations must target canonical `/api/*` endpoints owned by Go.
-- **Deployment note:** In development, browser calls stay same-origin and use the Solid/Vite `/api` proxy. In production/static builds, browser calls target Go through `VITE_API_BASE_URL`.
-- **Rule [Auth Header]:** Protected browser mutations and confirm-modal requests attach the bearer token through `X-Trackstack-Authorization` so the deployed CloudFront -> Lambda path stays compatible with SigV4 origin signing.
-- **Rule [Payload Hash]:** Browser write requests that go through the serverless CloudFront -> Lambda Function URL path must attach `x-amz-content-sha256` for the exact request body. Empty-body `POST` requests still need the SHA256 of the empty payload or Lambda rejects the SigV4 signature.
-- **Rule [Failure Mode]:** If login or another mutation returns `403 InvalidSignatureException` while `GET /health` still works, assume the frontend forgot the payload hash or corrupted the final request body after hashing it. That failure happens at AWS request validation time, before Go sees the request.
-- **Solid transport note:** `apps/web/src/core/api/payload-hash.ts` computes the SHA256 for browser write requests, and `apps/web/src/core/api/client.ts` plus `apps/web/src/core/auth/refresh.ts` attach the resulting `x-amz-content-sha256` header automatically for deployed serverless traffic.
-- **Rule [SigV4 Forms - CRITICAL]:** ANY form triggering a mutation must use the `data-api-form` attribute to be intercepted by `ApiFormHandler.astro`.
-- **Rule [Go Boundary]:** The browser should call Go-owned `/api/*` endpoints directly. Astro does not own API adapter routes.
-- **Rule [Timestamp Ownership]:** Calorie quick-add and manual meal logging should let the Go backend stamp the current UTC timestamp unless the product explicitly adds a backdating feature.
-- **Usage:**
-  - `data-redirect="/path"` controls the success destination. 
-  - `data-error-target="element-id"` injects the API error message softly on failure avoiding a full page crash.
-  - *Example:* `<form method="POST" action="/api/calories" data-api-form data-redirect="/calories" data-error-target="error-id">`
+Current feature layout:
 
-### Database (Turso Distributed SQLite)
-*The problem: We need to connect to 4 completely separate Turso databases simultaneously (Users, Calories, Expenses, Heat). Furthermore, local development uses hardcoded `.env` secrets, but AWS Lambda must securely fetch connection strings from AWS SSM Parameter Store at runtime to prevent leaks.*
+- `apps/web/src/features/auth`
+- `apps/web/src/features/dashboard`
+- `apps/web/src/features/calories`
+- `apps/web/src/features/expenses`
+- `apps/web/src/features/heat`
 
-- **Rule [Frontend DB Boundary]:** Astro application runtime must not read or write domain databases directly. Page data, auth verification, and mutations go through Go endpoints.
-- **Rule [Backend-Owned Tooling]:** Direct Turso access for seeding or maintenance belongs in backend-owned commands under `apps/server/cmd`, not inside the frontend app.
+Typical feature shape:
 
-### Authentication
-*The problem: We need a secure, custom session system that protects both API routes and server-rendered pages without constantly prop-drilling a `userId` through every UI component and business logic function.*
+```text
+features/<domain>/
+├── api/         # typed wrappers over openapi-fetch
+├── components/  # domain-specific UI sections
+├── display.ts   # view-model and formatting helpers
+├── index.tsx    # main route
+├── new.tsx      # create route when needed
+└── settings.tsx # settings route when needed
+```
 
-- **How it works (`AuthBootstrap.astro`):** `apps/web/src/layouts/AuthBootstrap.astro` reads the stored bearer token, performs a browser-side session bootstrap against `GET /api/auth/session`, and publishes auth readiness into the client runtime. In the CloudFront -> Lambda Function URL deployment, the browser token travels in `X-Trackstack-Authorization` so CloudFront can keep using `Authorization` for SigV4 origin signing.
-- **Current page guard:** protected pages wait for browser-side auth bootstrap and redirect to `/login` on the client when the session is missing. Public-only pages redirect back to `/` once a valid session is confirmed.
-- **Current auth flow:** login, refresh, logout, and session verification are all direct browser-to-Go interactions over `/api/auth/*`. Successful login stores the short-lived bearer token client-side and gets a refresh token through an `HttpOnly` cookie; refresh rotates that cookie and returns a fresh access token.
-- **Session behavior:** protected routes still use bearer auth only, but session lifecycle is no longer fake-stateless nonsense. Full page reloads and Astro navigations revalidate the stored token against `GET /api/auth/session`, and browser retries can recover through `POST /api/auth/refresh`.
-- **Solid auth flow:** `apps/web/src/core/auth/store.ts` bootstraps auth once after the SPA mounts, keeps the access JWT in `sessionStorage`, lets route guards in `apps/web/src/core/auth/guards.tsx` own the checking/loading state, and logs out from the shared `AppShell` UI.
-- **Solid route UX:** `apps/web/src/components/ui/AppRoot.tsx` keeps the shared `AppShell` mounted at the router root and swaps only the `main` content with a skeleton fallback while lazy route chunks resolve, so first-visit navigations stop flashing the whole shell.
-- **Solid navigation loading:** client-side route changes in `apps/web/src/components/ui/AppRoot.tsx` now use the router pending signal to replace stale page content with a shared `RouteStatus` skeleton during tab switches, so navigation loading behaves consistently across dashboard, expenses, calories, and heat.
-- **Solid refresh contract:** `apps/web/src/core/api/client.ts` retries protected requests once after `401` by calling `POST /api/auth/refresh` with `credentials: include`; if Go does not expose that route yet, the Solid app falls back to a clean guest state instead of pretending everything is fine.
-- **Solid logout behavior:** an explicit logout writes a browser-side logout marker so the SPA does not silently rehydrate itself from a still-valid refresh cookie during the same session window.
-- **Solid dashboard wiring:** `apps/web/src/features/dashboard/index.tsx` now uses three independent `createResource` reads against the monolith contracts exposed through `apps/web/src/features/{expenses,calories,heat}/api/client.ts`, so each card keeps its own skeleton/error state instead of faking a single mocked payload.
-- **Solid expenses flow:** `/expenses` now owns live dashboard mutations for close-sheet, checklist completion, and entry deletion, `/expenses/new` posts real expense entries through the typed OpenAPI client, and `/expenses/settings` now reads and mutates live income, ratio, checklist-template, and recurring-template data from the canonical expenses endpoints through extracted settings sections instead of one giant route file.
-- **Solid expenses safeguard:** the `/expenses` close-month action now requires an explicit in-app confirmation before posting `POST /api/expenses/sheet/close`, so the UI stops treating period rollover like a casual click.
-- **Solid expenses delete UX:** expense history deletions now reuse the same confirmation-sheet pattern before calling `DELETE /api/expenses/entries/{id}`, so destructive actions behave consistently instead of firing on the first tap.
-- **Solid calories route UX:** the `apps/web/src/features/calories/{index,new,settings}.tsx` screens now follow the calmer expenses composition: one primary daily/entry surface, quieter supporting sections, and explicit form submit states instead of mock-only save buttons buried inside cards.
-- **Solid heat route UX:** the `apps/web/src/features/heat/{index,new}.tsx` screens now use the same page rhythm as expenses and calories: compact header chrome, one primary overview/details surface, list-based supporting history, extracted route sections, and end-of-form save actions instead of a full-width one-off CTA.
-- **Solid heat live wiring:** `/heat` now reads the live dashboard, deletes history rows through canonical `DELETE /api/heat/refills/{id}`, and `/heat/new` creates real refills through `POST /api/heat/refills` instead of leaning on browser-only mock state.
-- **Solid heat loading system:** heat now has dedicated dashboard skeletons plus shared form primitives, so the rewrite reuses the design system instead of cloning another pocket universe of one-off controls.
-- **Current split:** Go is the source of truth for login, logout, session verification, page data, and API contracts. The Astro app is now a static frontend shell plus client runtime.
-- **Milestone reached:** the home, calories, expenses, and heat dashboards plus the calories and expenses settings pages now load their authenticated read models in the browser after auth bootstrap, so they no longer depend on `getCurrentUserId()` or SSR request-local auth context.
-- **Overview behavior:** the home overview no longer waits on a single aggregated `/api/dashboard` response. It loads expenses, calories, and heat cards independently from their canonical module endpoints so one cold module path does not block the whole screen.
-- **Shared browser auth transport:** `ApiFormHandler.astro`, `ClientRuntime.astro`, and the client-loaded dashboard/settings modules attach `X-Trackstack-Authorization: Bearer <jwt>` on protected browser calls.
+## Routing And App Shell
 
-### Go Backend Boundary
+- `apps/web/src/routes.tsx` lazy-loads all routes.
+- Route access is enforced through `ProtectedRoute` and `PublicOnlyRoute`.
+- `apps/web/src/components/ui/AppRoot.tsx` keeps the `AppShell` mounted while route content swaps.
+- `apps/web/src/index.tsx` applies the deploy theme and runs `bootstrapAuth()` on mount.
 
-- **Role:** Go backend business logic now centers on context-local boundaries under `apps/server/internal/contexts/{auth,users,heat,calories,expenses}/**`.
-- **Role:** Runtime assembly in `apps/server` lives under `apps/server/internal/app/monolithapi` and is shared by both `apps/server/cmd/monolith-api` and `apps/server/cmd/lambda`.
-- **Rule:** New domain behavior should be added in Go first.
-- **Rule:** Transport code in Go stays thin: parse request, call service, map status/error, serialize JSON.
-- **Rule:** Mutating Go endpoints should prefer a single JSON request contract; the frontend runtime may still submit JSON from forms, but Astro pages do not adapt requests server-side.
-- **Rule:** Expenses mutations and command-like actions (`close sheet`, `complete checklist`, template upserts/deletes) should call Go over HTTP rather than reimplementing logic in Astro routes.
-- **Rule:** Delete-style Go endpoints should use an explicit URL identifier contract rather than accepting ids from multiple locations.
-- **Rule:** Go route aliases should be temporary migration shims only; once the browser uses the canonical backend paths, remove the aliases from Go and OpenAPI.
-- **Rule:** Astro forms and UI triggers should use the canonical migrated API paths directly once those paths are stable.
-- **Rule:** When changing a Go endpoint contract, update the frontend client runtime, transport tests, and e2e coverage together.
-- **Heat transition note:** heat now owns its inbound HTTP adapter under `apps/server/internal/contexts/heat/adapters/inbound/http`, and the browser delete flow now targets canonical `DELETE /api/heat/refills/{id}` while the query-param delete route remains as a temporary compatibility alias.
-- **Heat facade note:** runtime assembly and Go transport depend on the context-local heat application facade in `apps/server/internal/contexts/heat/application/service.go`; the legacy backend `internal/modules/heat` package has been removed.
-- **Heat rebuild note:** `apps/server/internal/contexts/heat/**` now exposes `GET /api/heat/refills`, `POST /api/heat/refills`, and canonical `DELETE /api/heat/refills/{id}` with bearer-auth enforced by shared middleware at the runtime boundary.
-- **Calories rebuild note:** `apps/server/internal/contexts/calories/**` now exposes `GET /api/calories/dashboard`, `GET /api/calories/target`, `POST /api/calories/target`, `POST /api/calories/log`, and canonical `DELETE /api/calories/logs/{id}`. Unlike the legacy calories contract, the rebuild intentionally uses explicit nutrient field names such as `proteinGrams`, `carbGrams`, `fatGrams`, `targetCalories`, and `targetProteinGrams`. Any accepted contract break must be recorded in `docs/BACKEND_BREAKING_CHANGES.md`.
-- **Expenses rebuild note:** `apps/server/internal/contexts/expenses/**` now exposes `GET /api/expenses/settings`, `POST /api/expenses/settings`, `GET /api/expenses/sheet/current`, `POST /api/expenses/entries`, `POST /api/expenses/checklists`, `POST /api/expenses/checklists/complete`, `POST /api/expenses/recurring`, and `POST /api/expenses/sheet/close` with the existing frontend JSON contract for settings, dashboard, entries, and templates.
-- **Expenses delete contract note:** the rebuild intentionally removes legacy query-param deletes and uses canonical resource routes instead: `DELETE /api/expenses/entries/{id}`, `DELETE /api/expenses/checklists/{id}`, and `DELETE /api/expenses/recurring/{id}`. Accepted contract breaks must be recorded in `docs/BACKEND_BREAKING_CHANGES.md`.
-- **Expenses dashboard note:** the expenses dashboard use case now depends on a snapshot-style read port in Go so the application layer does not orchestrate several separate read calls for one page against Turso.
-- **Backend-first rebuild verification note:** `apps/server/scripts/e2e.sh` is the current backend smoke harness and should be kept aligned with auth and route contract changes.
+That shell-persistence choice matters. It keeps navigation from flashing the whole app like a cheap carnival ride.
+
+## Auth And API Transport
+
+The frontend auth model is:
+
+- access token stored in `sessionStorage`
+- refresh token stored in an `HttpOnly` cookie
+- browser auth bootstraps once on SPA start
+- protected requests retry once after `401` by calling refresh
+- explicit logout drops the access token and writes a logout marker so the app does not silently rehydrate itself from a still-valid cookie in the same session
+
+Important files:
+
+- `apps/web/src/core/auth/store.ts`
+- `apps/web/src/core/auth/token.ts`
+- `apps/web/src/core/auth/refresh.ts`
+- `apps/web/src/core/auth/transport.ts`
+- `apps/web/src/core/api/client.ts`
+
+Deployment-specific transport rule:
+
+- The browser sends bearer auth in `X-Trackstack-Authorization`, not `Authorization`, because CloudFront needs `Authorization` for SigV4 signing to the Lambda Function URL origin.
+- Mutating requests may need `x-amz-content-sha256`; `apps/web/src/core/api/payload-hash.ts` and `apps/web/src/core/api/client.ts` handle that.
+
+## Design System Reality
+
+The shared UI library is real and heavily used.
+
+But here is the honest version: boundary enforcement is still convention-based.
+
+What is true today:
+
+- shared patterns like buttons, panels, shell, list surfaces, notices, confirm sheets, and form layout already live in `src/components/ui/`
+- features compose those primitives instead of rebuilding the whole world every time
+- feature-local components still contain some raw Tailwind composition when the shared seam is not abstracted enough yet
+
+So the rule is not "all styling only in `ui`" because the codebase does not actually honor that yet. The real rule is:
+
+- repeated interaction patterns belong in `src/components/ui/`
+- one-off domain rendering can stay inside feature components until repetition becomes obvious
+
+## Current Feature Boundary Rules
+
+These are the rules you should follow now, because they reflect the repo as it exists and the direction it should keep:
+
+- Features may own domain-specific API wrappers under `features/<domain>/api/`.
+- Features may own domain-specific mapping helpers under `features/<domain>/display.ts`.
+- Shared logic used across multiple domains should move to `src/core/`.
+- Shared UI patterns used across multiple domains should move to `src/components/ui/`.
+- Do not reach into another feature's random internals from a sibling feature.
+
+Current exception you should know about:
+
+- `apps/web/src/features/dashboard/index.tsx` imports sibling feature API and display helpers directly.
+
+Treat that as tolerated technical debt, not the pattern to copy.
+
+If a cross-feature seam is needed, make it deliberate. A small shared module is better than secret tunnel imports.
+
+## Route Thickness Rules
+
+Routes are controllers, but not every current route is as thin as the ideal.
+
+What route files should do:
+
+- gate on auth readiness
+- load route-level resources
+- manage route-level mutation state
+- call feature API helpers
+- compose extracted sections and shared UI primitives
+
+What route files should not turn into:
+
+- giant mixed files containing fetch logic, validation, multiple forms, modal flows, and bespoke rendering all at once
+
+Reality check:
+
+- `apps/web/src/features/expenses/settings.tsx` is still heavy and is the best example of where extraction should continue.
+- `apps/web/src/features/dashboard/index.tsx` still contains card implementations inline.
+
+If a route starts to feel like a junk drawer, that feeling is usually correct.
+
+## Data Loading Rules
+
+The current pattern is straightforward:
+
+- wait for auth state to become authenticated
+- create route resources with `createResource`
+- refetch after successful mutations
+- prefer independent resource loading when one slow domain should not block another
+
+Examples:
+
+- dashboard loads expenses, calories, and heat independently
+- calories, expenses, and heat route pages refetch their own dashboard resource after mutations
+
+This is simple and maintainable. It is not the most optimized thing on earth, but for a side project it is a good default until perf data says otherwise.
+
+## Theme And Deploy Targets
+
+The same SPA can brand itself by deploy target.
+
+- Theme selection lives in `apps/web/src/core/config/theme.ts`.
+- Current targets: `serverless`, `vps`, `k8s`.
+- `ecs`, `eks`, `kubernetes`, and `lambda` are normalized aliases.
+
+This is a branding/runtime skin seam, not a different app.
+
+## API Client Rules
+
+Use the generated contract, not handwritten fantasy types.
+
+- Source OpenAPI: `apps/server/internal/app/monolithapi/openapi.yaml`
+- Generated schema: `apps/web/src/core/api/generated/schema.ts`
+- Friendly aliases: `apps/web/src/core/api/types.ts`
+- Runtime client: `apps/web/src/core/api/client.ts`
+
+Feature API wrappers should stay thin. They should call `apiClient`, unwrap the response, and return typed data.
+
+## What A New Coworker Know First
+
+Before editing anything, understand these seams:
+
+1. `apps/web` is the active frontend.
+2. `apps/server` owns the backend contract.
+3. Auth is bearer access token + refresh cookie, with SPA bootstrap and one refresh retry.
+4. The CloudFront/Lambda deployment uses `X-Trackstack-Authorization` and payload hashing rules.
+5. Repeated UI patterns belong in `src/components/ui/`.
+6. Cross-feature imports are mostly a smell unless the seam is intentional.
+7. The dashboard currently cheats a bit by importing sibling feature clients; do not multiply that pattern.
+
+## Current Gaps And Debt
+
+- Feature boundary rules are not enforced by tooling yet.
+- Some route files are thicker than they should be.
+- Some feature components still contain raw Tailwind composition that should eventually be promoted into better shared primitives.
+- `Router preload={true}` may be worth revisiting if route chunk eagerness starts fighting your performance goals.
+
+## Safe Workflow For Changes
+
+If you are adding or changing a frontend feature:
+
+1. Start from the Go contract or update it first.
+2. Regenerate frontend types if the contract changed.
+3. Keep route files focused on orchestration.
+4. Extract reusable sections before the route becomes gross.
+5. Promote repeated patterns into `src/components/ui/`.
+6. Update this doc if you changed a boundary, workflow, or rule another engineer would need.
