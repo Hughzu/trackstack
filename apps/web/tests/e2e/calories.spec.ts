@@ -66,6 +66,25 @@ test.describe('Calories page', () => {
     await expect(page.locator('[data-list-item-id]').filter({ hasText: title }).first()).toBeVisible()
   })
 
+  test('keeps macro input focus while typing on the add meal page', async ({ page }) => {
+    await loginAndOpenCalories(page)
+
+    await page.getByRole('link', { name: 'Add Meal' }).click()
+    await expect(page.getByRole('button', { name: 'Save meal' })).toBeVisible()
+
+    const proteinInput = page.locator('#calorie-protein')
+    await proteinInput.click()
+    await expect(proteinInput).toBeFocused()
+
+    await page.keyboard.press('4')
+    await expect(proteinInput).toBeFocused()
+    await expect(proteinInput).toHaveValue('4')
+
+    await page.keyboard.press('2')
+    await expect(proteinInput).toBeFocused()
+    await expect(proteinInput).toHaveValue('42')
+  })
+
   test('updates calorie targets from settings', async ({ page }) => {
     await loginAndOpenCalories(page)
 

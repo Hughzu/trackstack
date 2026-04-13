@@ -1,4 +1,4 @@
-import { For } from 'solid-js'
+import { Index } from 'solid-js'
 
 import { MetricField } from '../../../components/ui/MetricField'
 import { Panel } from '../../../components/ui/Panel'
@@ -17,9 +17,19 @@ export function SettingsRatioCard(props: { items: RatioItem[] }) {
   return (
     <Panel title="Ratio architecture" description={<Pill tone="neutral">Adjust the split</Pill>}>
       <div class="divide-y divide-border/50">
-        <For each={props.items}>
-          {(item) => <RatioEditorRow {...item} />}
-        </For>
+        <Index each={props.items}>
+          {(item) => (
+            <RatioEditorRow
+              id={item().id}
+              title={item().title}
+              caption={item().caption}
+              tone={item().tone}
+              value={item().value}
+              amount={item().amount}
+              onInput={item().onInput}
+            />
+          )}
+        </Index>
       </div>
     </Panel>
   )

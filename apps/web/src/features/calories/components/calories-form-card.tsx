@@ -1,4 +1,4 @@
-import { For, type JSX } from 'solid-js'
+import { Index, type JSX } from 'solid-js'
 
 import { FormFieldRow, FormSection } from '../../../components/ui/Form'
 import { MetricField } from '../../../components/ui/MetricField'
@@ -41,23 +41,23 @@ export function CaloriesFormCard(props: {
 
         <p class="text-sm font-semibold text-text-main">Macros</p>
         <FormFieldRow density={props.compact ? 'compact' : 'default'}>
-          <For each={leadMacroFields()}>
+          <Index each={leadMacroFields()}>
             {(field) => (
               <MetricField
-                id={field.id}
-                name={field.name}
-                label={field.label}
+                id={field().id}
+                name={field().name}
+                label={field().label}
                 unit="g"
-                value={field.value}
-                tone={field.tone}
+                value={field().value}
+                tone={field().tone}
                 density={props.compact ? 'compact' : 'default'}
                 min="0"
                 step="1"
                 inputMode="decimal"
-                onInput={field.onInput}
+                onInput={field().onInput}
               />
             )}
-          </For>
+          </Index>
         </FormFieldRow>
 
         <MetricField
